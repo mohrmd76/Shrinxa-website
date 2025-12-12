@@ -1349,10 +1349,6 @@
 <div class="hero-orbit">
 <img alt="Shrinxa logo decorative" src="shrinxa_transparent_4000px.png"/>
 </div>
-<div class="hero-badge">
-<span class="dot"></span>
-        Live cart simulator – test orders locally
-      </div>
 </div>
 </section>
 <!-- FACTORY IMAGE BLOCK -->
@@ -2237,6 +2233,7 @@
 
   function openPaymentModal() {
     if (!paymentModal) return;
+    if (!requireLogin()) return;
     paymentModal.style.display = "flex";
     paymentModal.setAttribute("aria-hidden", "false");
   }
@@ -2249,6 +2246,7 @@
 
   function openInvoiceModal(options) {
     if (!invoiceModal) return;
+    if (!requireLogin()) return;
 
     const ids = Object.keys(cart);
     if (!ids.length) return;
@@ -2584,7 +2582,18 @@
     }
   }
 
-  function saveCurrentUser(user) {
+  
+  function requireLogin() {
+    const user = loadCurrentUser();
+    if (!user || !user.email) {
+      alert("Please sign in to continue with your purchase.");
+      setView("signin");
+      return false;
+    }
+    return true;
+  }
+
+function saveCurrentUser(user) {
     try {
       if (user) {
         localStorage.setItem(STORAGE_KEY_CURRENT, JSON.stringify(user));
@@ -2942,6 +2951,7 @@ function fmt(n) {
   // Add to cart buttons
   document.querySelectorAll(".product-card .btn-add").forEach(btn => {
     btn.addEventListener("click", () => {
+      if (!requireLogin()) return;
       const card = btn.closest(".product-card");
       const id = card.dataset.id;
       const name = card.dataset.name;
