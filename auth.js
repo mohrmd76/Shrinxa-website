@@ -1,210 +1,168 @@
 console.log("AUTH.JS IS LOADED ✅");
+// auth.js — New file + ONLY point 1 (auto navbar UI updater)
 
-// Shared Supabase auth helper for Shrinxa (Option 3: store profile in Auth user_metadata)
-// - Uses ONLY Supabase Auth (no public.profiles writes) to avoid RLS issues.
-// - Your signup form should collect: full_name, company, phone, address, city, province, email, password.
-//
-// IMPORTANT: Keep SECRET keys off the front-end. Use only the publishable/anon key here.
+(function () {
+  // Always expose Auth first (so login.html never breaks)
+  const api = {};
+  window.Auth = api;
+  window.ShrinxaAuth = api;
 
-const SUPABASE_URL = "https://fgrjojxwevllnjdixiyd.supabase.co";
-const SUPABASE_KEY = "sb_publishable_k5D9JKO5lMCHlju-WhlSAQ_XEiEruT_";
+  const SUPABASE_URL = "https://fgrjojxwevllnjdixiyd.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_k5D9JKO5lMCHlju-WhlSAQ_XEiEruT_";
 
-// Requires <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> BEFORE this file.
-// If this file loads before supabase-js, auth will not work.
-if (!window.supabase || !window.supabase.createClient) {
-  console.error(
-    "[ShrinxaAuth] Supabase library not found. Make sure supabase-js loads BEFORE auth.js:\n" +
-    '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>\n' +
-    '<script src="auth.js"></script>'
-  );
-}
+  let supabaseClient = null;
 
-// Create client (will be undefined if supabase-js isn't loaded)
-const supabaseClient = window.supabase?.createClient
-  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
-  : null;
+  try {
+    if (window.supabase && window.supabase.createClient) {
+      supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+    }
+  } catch (e) {}
 
-// ---------- Basics ----------
+  api.supabaseClient = supabaseClient;
 
-async function getCurrentUser() {
-  if (!supabaseClient) return null;
-
-  // Prefer session user (fast + works on refresh)
-  const session = await getSession();
-  if (session?.user) return session.user;
-
-  // Fallback
-  const { data, error } = await supabaseClient.auth.getUser();
-  if (error) {
-    console.error("getCurrentUser:", error.message);
-    return null;
+  function needClient() {
+    if (!supabaseClient) {
+      throw new Error("Supabase not loaded");
+    }
+    return supabaseClient;
   }
-  return data.user ?? null;
-}
 
-async function getSession() {
-  if (!supabaseClient) return null;
+  // ---------- AUTH CORE ----------
 
-  const { data, error } = await supabaseClient.auth.getSession();
-  if (error) {
-    console.error("getSession:", error.message);
-    return null;
-  }
-  return data.session ?? null;
-}
-
-async function requireAuth() {
-  const user = await getCurrentUser();
-  if (!user) {
-    // Always redirect to your real login page
-    window.location.href = "login.html";
-    return null;
-  }
-  return user;
-}
-
-async function logout(redirectTo = "index.html") {
-  if (!supabaseClient) return;
-  await supabaseClient.auth.signOut();
-  window.location.href = redirectTo;
-}
-
-// ---------- Auth actions ----------
-
-async function signIn(email, password) {
-  if (!supabaseClient) throw new Error("Supabase client not initialized. Check script load order.");
-
-  const { data, error } = await supabaseClient.auth.signInWithPassword({
-    email,
-    password,
-  });
-  if (error) throw error;
-  return data;
-}
-
-// Option 3: Store profile fields in Auth user_metadata (no profiles table insert)
-async function signUpWithProfile(payload) {
-  if (!supabaseClient) throw new Error("Supabase client not initialized. Check script load order.");
-
-  const {
-    email,
-    password,
-    full_name,
-    company,
-    phone,
-    address,
-    city,
-    province,
-    // ignore any extra fields safely
-  } = payload;
-
-  const { data, error } = await supabaseClient.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        full_name: full_name ?? "",
-        company: company ?? "",
-        phone: phone ?? "",
-        address: address ?? "",
-        city: city ?? "",
-        province: province ?? "",
-      },
-    },
-  });
-
-  if (error) throw error;
-  return data;
-}
-
-// Read profile from user_metadata
-function getProfileFromUser(user) {
-  const m = (user && user.user_metadata) ? user.user_metadata : {};
-  return {
-    id: user?.id ?? null,
-    email: user?.email ?? null,
-    full_name: m.full_name ?? "",
-    company: m.company ?? "",
-    phone: m.phone ?? "",
-    address: m.address ?? "",
-    city: m.city ?? "",
-    province: m.province ?? "",
+  api.signIn = async (email, password) => {
+    const c = needClient();
+    const { data, error } = await c.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    return data;
   };
-}
 
-// Optional: allow user to update their metadata later
-async function updateProfileMetadata(profilePatch) {
-  if (!supabaseClient) throw new Error("Supabase client not initialized. Check script load order.");
+  api.getSession = async () => {
+    const c = needClient();
+    const { data } = await c.auth.getSession();
+    return data.session ?? null;
+  };
 
-  // profilePatch can include: full_name, company, phone, address, city, province
-  const { data, error } = await supabaseClient.auth.updateUser({
-    data: { ...profilePatch },
-  });
-  if (error) throw error;
-  return data;
-}
+  api.getCurrentUser = async () => {
+    const session = await api.getSession();
+    if (session?.user) return session.user;
 
-// ---------- Expose helpers globally ----------
-window.ShrinxaAuth = {
-  supabaseClient,
-  getCurrentUser,
-  getSession,
-  requireAuth,
-  logout,
-  signIn,
-  signUpWithProfile,
-  getProfileFromUser,
-  updateProfileMetadata,
-};
+    const c = needClient();
+    const { data } = await c.auth.getUser();
+    return data.user ?? null;
+  };
 
+  api.requireAuth = async (redirectTo = "login.html") => {
+    const user = await api.getCurrentUser();
+    if (!user) {
+      window.location.href = redirectTo;
+      return null;
+    }
+    return user;
+  };
 
-// ---------- Optional UI binding (multi-page) ----------
-// If your pages have:
-// - a Sign in link with class "nav-signin"
-// - a user menu container with id "user-menu" (and optional span id "userMenuName")
-// this will automatically show/hide them based on Supabase session.
-function initNavAuthUI() {
-  if (!supabaseClient) return;
+  api.signOut = async () => {
+    const c = needClient();
+    await c.auth.signOut();
+  };
 
-  const signins = document.querySelectorAll(".nav-signin");
-  const userMenu = document.getElementById("user-menu");
-  const userMenuName = document.getElementById("userMenuName");
+  api.logout = async (redirectTo = "index.html") => {
+    await api.signOut();
+    window.location.href = redirectTo;
+  };
 
-  const apply = async () => {
-    // ✅ Use session on every load (this is what fixes “refresh but not logged in” UI)
-    const session = await getSession();
+  // ---------- PROFILE ----------
+
+  api.signUpWithProfile = async (payload) => {
+    const c = needClient();
+    const {
+      email, password, full_name, company, phone, address, city, province,
+    } = payload || {};
+
+    const { data, error } = await c.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: full_name ?? "",
+          company: company ?? "",
+          phone: phone ?? "",
+          address: address ?? "",
+          city: city ?? "",
+          province: province ?? "",
+        },
+      },
+    });
+
+    if (error) throw error;
+    return data;
+  };
+
+  api.getProfileFromUser = (user) => {
+    const m = user?.user_metadata || {};
+    return {
+      id: user?.id ?? null,
+      email: user?.email ?? null,
+      full_name: m.full_name ?? "",
+      company: m.company ?? "",
+      phone: m.phone ?? "",
+      address: m.address ?? "",
+      city: m.city ?? "",
+      province: m.province ?? "",
+    };
+  };
+
+  api.updateProfileMetadata = async (profilePatch) => {
+    const c = needClient();
+    const { data, error } = await c.auth.updateUser({
+      data: { ...(profilePatch || {}) },
+    });
+    if (error) throw error;
+    return data;
+  };
+
+  // ---------- POINT 1: AUTO NAVBAR UI UPDATER ----------
+
+  api.initNavAuthUI = async () => {
+    let session = null;
+    try { session = await api.getSession(); } catch (_) {}
+
     const user = session?.user ?? null;
 
+    const signins = document.querySelectorAll(".nav-signin");
+    const userMenu = document.getElementById("user-menu");
+    const userMenuName = document.getElementById("userMenuName");
+
     if (user) {
-      const p = getProfileFromUser(user);
-      signins.forEach(el => el.style.display = "none");
+      const p = api.getProfileFromUser(user);
+      signins.forEach(el => (el.style.display = "none"));
       if (userMenu) userMenu.style.display = "flex";
       if (userMenuName) {
         userMenuName.textContent = p.full_name
-          ? ("Hi " + p.full_name)
-          : ("Hi " + (user.email || "Customer"));
+          ? "Hi " + p.full_name
+          : "Hi " + (user.email || "User");
       }
     } else {
-      signins.forEach(el => el.style.display = "");
+      signins.forEach(el => (el.style.display = ""));
       if (userMenu) userMenu.style.display = "none";
     }
   };
 
-  // initial
-  apply();
+  // Auto run on page load
+  if (typeof document !== "undefined") {
+    document.addEventListener("DOMContentLoaded", () => {
+      try { api.initNavAuthUI(); } catch (_) {}
+    });
+  }
 
-  // live updates
+  // Auto update on login / logout
   try {
-    supabaseClient.auth.onAuthStateChange(() => apply());
-  } catch (e) {}
-}
-
-// Auto-run on every page (safe: does nothing if elements not present)
-if (typeof document !== "undefined") {
-  document.addEventListener("DOMContentLoaded", () => {
-    try { initNavAuthUI(); } catch (e) {}
-  });
-}
-
-// Expose
-window.ShrinxaAuth.initNavAuthUI = initNavAuthUI;
+    if (supabaseClient) {
+      supabaseClient.auth.onAuthStateChange(() => {
+        try { api.initNavAuthUI(); } catch (_) {}
+      });
+    }
+  } catch (_) {}
+})();
