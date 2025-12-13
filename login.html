@@ -1487,7 +1487,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const password = document.getElementById("password").value;
 
     try {
-      const { error } = await ShrinxaAuth.signIn(email, password);
+      await ShrinxaAuth.signIn(email, password);
 
 	if (error) {
   	show(error.message || "Invalid email or password", "err");
