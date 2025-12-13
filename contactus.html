@@ -1323,47 +1323,93 @@
 </button></div></div>
 </header>
 <main>
-<section class="hero page-section" data-page="home" id="top">
-<div>
-<div class="hero-kicker">Industrial-grade stretch wrap &amp; tape</div>
-<h1>Wrap smart. <span class="accent">Ship with Shrinxa.</span></h1>
-<p class="lede">
-        Canadian packaging supplier providing premium stretch films, pre-stretch wrap, and adhesive
-        tape rolls for warehouses, 3PLs, logistics hubs and e-commerce operations across Canada.
-        Free delivery on orders over $300 within our service area.
-      </p>
-<div class="hero-cta">
-<a class="btn-primary" onclick="setView('products'); applyFilter('all');" href="products.html">Browse product catalogue ↓</a>
-<a class="btn-ghost" onclick="setView('about');" href="about.html">Learn about Shrinxa</a>
-<a class="btn-ghost" onclick="setView('contact');" href="contactus.html">Get a Quote</a></div>
-<div class="hero-meta">
-<span>Fast GTA delivery</span>
-<span>Wholesale-ready pricing</span>
-<span>13% HST applied on all orders</span>
+<section class="page-section" data-page="contact" id="contact">
+<h2>Contact &amp; Quote</h2>
+<p class="section-lede">
+      Use this simulator to estimate orders, then email us your cart summary or send a quote request
+      using the form below. All items are subject to 13% HST.
+    </p>
+<div class="contact-layout">
+<div class="contact-grid">
+<div class="contact-card">
+<strong>Website</strong>
+<div><a href="https://www.shrinxa.com" rel="noreferrer" target="_blank">www.shrinxa.com</a></div>
+</div>
+<div class="contact-card">
+<strong>Email</strong>
+<div><div>For quotes: <a href="mailto:sales@shrinxa.com">sales@shrinxa.com</a></div><div>General questions: <a href="mailto:info@shrinxa.com">info@shrinxa.com</a></div></div>
+</div>
+<div class="contact-card">
+<strong>Phone</strong>
+<div>+1 (613) 640-5302</div>
+</div>
+<div class="contact-card">
+<strong>Location</strong>
+<div>Greater Toronto Area, Canada</div>
 </div>
 </div>
-<div class="hero-visual">
-<div class="hero-orbit">
-<img alt="Shrinxa logo decorative" src="shrinxa_transparent_4000px.png"/>
-</div>
-</div>
-</section>
-<section class="factory-hero page-section" data-page="home">
-<div class="factory-image-wrap">
-<!-- Replace this file with your real 4K factory photo -->
-<img alt="Shrink wrap production line with pallets ready for shipping" src="factory-hero-4k.jpg"/>
-</div>
-<div class="factory-copy">
-<h2>Built for busy warehouses and production floors</h2>
+<div class="quote-card">
+<h3>Get a Quote</h3>
 <p>
-        High-clarity stretch film, pre-stretch wrap and tape rolls designed to keep pallets
-        secure from the end of your line to the customer’s dock door.
-      </p>
-<div class="factory-points">
-<div>Crystal-clear film for easy barcode and label scanning.</div>
-<div>Reliable containment on mixed-height and high-value pallets.</div>
-<div>Roll lengths optimized to reduce changeovers and downtime.</div>
-<div>Perfect fit for 3PLs, distributors, manufacturers and e-commerce hubs.</div>
+          Tell us what you use today, and we’ll help you find the best Shrinxa option—often at a better price.
+        </p>
+<form class="quote-form">
+<div>
+<label class="quote-label" for="q-name">Full Name</label>
+<input class="quote-input" id="q-name" name="full_name" placeholder="John Doe" type="text"/>
+</div>
+<div>
+<label class="quote-label" for="q-company">Company Name</label>
+<input class="quote-input" id="q-company" name="company_name" placeholder="Warehouse / 3PL / Business name" type="text"/>
+</div>
+<div>
+<label class="quote-label" for="q-email">Email</label>
+<input class="quote-input" id="q-email" name="email" placeholder="you@example.com" type="email"/>
+</div>
+<div>
+<label class="quote-label" for="q-phone">Phone Number (optional)</label>
+<input class="quote-input" id="q-phone" name="phone" placeholder="+1 (___) ___-____" type="tel"/>
+</div>
+<div>
+<label class="quote-label" for="q-address">Address</label>
+<input class="quote-input" id="q-address" name="address" placeholder="Street address, unit, etc." type="text"/>
+</div>
+<div>
+<label class="quote-label" for="q-postal">Postal Code (optional)</label>
+<input class="quote-input" id="q-postal" name="postal" placeholder="A1A 1A1" type="text"/>
+</div>
+<div>
+<label class="quote-label" for="q-products">Products of interest</label>
+<select class="quote-select" id="q-products" name="products">
+<option value="">Select one or more (describe in message)</option>
+<option value="shrink-wrap">Shrink Wrap</option>
+<option value="pre-stretch">Pre-Stretch</option>
+<option value="hot-melt-tape">Hot Melt Tape</option>
+<option value="water-activated-tape">Water-Activated Tape</option>
+<option value="other">Other</option>
+</select>
+</div>
+<div>
+<label class="quote-label" for="q-usage">Approximate monthly usage</label>
+<select class="quote-select" id="q-usage" name="usage">
+<option value="">Select an option</option>
+<option value="1-10">1–10 boxes</option>
+<option value="10-50">10–50 boxes</option>
+<option value="50-100">50–100 boxes</option>
+<option value="100-plus">100+ boxes</option>
+</select>
+</div>
+<div class="full">
+<label class="quote-label" for="q-message">Message</label>
+<textarea class="quote-textarea" id="q-message" name="message" placeholder="Tell us about your current film or tape, pallet types, and any issues you’d like to solve (breakage, shifting, too much film, etc.)."></textarea>
+</div>
+<div class="full">
+<button class="quote-submit" onclick="alert('This is a demo form. Connect it to your email or CRM when you go live.')" type="button">
+              Submit quote request
+            </button>
+</div>
+</form>
+<div class="quote-helper">Prefer to talk directly? For quotes email sales@shrinxa.com. For general questions email info@shrinxa.com.</div>
 </div>
 </div>
 </section>
@@ -1381,7 +1427,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 <script>
-// Products dropdown toggle (index.html)
+// Products dropdown toggle (site-wide)
 document.addEventListener("DOMContentLoaded", () => {
   const toggle = document.querySelector(".nav-dropdown-toggle");
   const menu = document.querySelector(".nav-dropdown-menu");
