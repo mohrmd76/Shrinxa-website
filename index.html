@@ -3349,6 +3349,40 @@ cartBody.addEventListener("change", (e) => {
     Thank you for your business with us.
   </p>
 </div>
+
+<script>
+(async function () {
+  function setText(name) {
+    const el = document.getElementById("userMenuName");
+    if (el) el.textContent = "Hi " + name;
+  }
+
+  // Wait a little for auth.js to load (GitHub Pages can delay scripts)
+  for (let i = 0; i < 50; i++) {
+    if (window.ShrinxaAuth?.getCurrentUser) break;
+    await new Promise(r => setTimeout(r, 50));
+  }
+
+  if (!window.ShrinxaAuth?.getCurrentUser) return;
+
+  try {
+    const user = await ShrinxaAuth.getCurrentUser();
+    if (!user) return;
+
+    const profile = ShrinxaAuth.getProfileFromUser(user) || {};
+    if (profile.full_name && profile.full_name.trim()) {
+      setText(profile.full_name.trim());
+    } else {
+      // fallback: keep email or show "Customer"
+      setText(profile.email || "Customer");
+    }
+  } catch (e) {
+    console.log("Greeting error:", e);
+  }
+})();
+</script>
+
+
 </body>
 </html>
     `;
