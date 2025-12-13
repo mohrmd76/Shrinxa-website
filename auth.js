@@ -1,3 +1,5 @@
+console.log("AUTH.JS IS LOADED ✅");
+
 // Shared Supabase auth helper for Shrinxa (Option 3: store profile in Auth user_metadata)
 // - Uses ONLY Supabase Auth (no public.profiles writes) to avoid RLS issues.
 // - Your signup form should collect: full_name, company, phone, address, city, province, email, password.
