@@ -1487,10 +1487,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const password = document.getElementById("password").value;
 
     try {
-      await ShrinxaAuth.signIn(email, password);
-      const params = new URLSearchParams(window.location.search);
-      const next = params.get("next");
-      window.location.href = next ? next : "index.html";
+      const { error } = await ShrinxaAuth.signIn(email, password);
+
+	if (error) {
+  	show(error.message || "Invalid email or password", "err");
+  	return;
+	}
+
+	const params = new URLSearchParams(window.location.search);
+	const next = params.get("next");
+	window.location.href = next ? next : "index.html";
     } catch (err) {
       console.error(err);
       show(err?.message || "Sign in failed. Please check your email/password.", "err");
