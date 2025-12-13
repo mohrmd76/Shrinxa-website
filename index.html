@@ -62,7 +62,7 @@
       border-radius: 999px;
       overflow: hidden;
       box-shadow: 0 0 0 2px rgba(30,166,255,0.35);
-      background: radial-gradient(circle at 30% 0, #45d9ff, #004f8f);
+      background: #ffffff;
       padding: 4px;
     }
     .nav-logo img {
@@ -246,8 +246,7 @@
       width: 260px;
       height: 260px;
       border-radius: 999px;
-      background: radial-gradient(circle at 30% 0, rgba(111,207,255,0.8), transparent 60%),
-                  radial-gradient(circle at 70% 90%, rgba(46,116,255,0.8), transparent 60%);
+      background: #ffffff;
       box-shadow:
         0 0 0 1px rgba(117,160,255,0.4),
         0 26px 70px rgba(0, 0, 0, 0.85);
@@ -1301,7 +1300,7 @@
 </div>
 </div>
 <nav class="nav-links">
-<a class="nav-anchor nav-home" data-nav="home" href="#">Home</a>
+<a class="nav-anchor nav-home" data-nav="home" href="login.html">Home</a>
 <div class="nav-dropdown">
 <button class="nav-anchor nav-dropdown-toggle" data-nav="products" type="button">Products ▾</button>
 <div class="nav-dropdown-menu">
@@ -1315,7 +1314,7 @@
 <a class="nav-anchor nav-delivery" data-nav="delivery" href="#delivery">Delivery</a>
 <a class="nav-anchor nav-contact" data-nav="contact" href="#contact">Contact us</a>
 <a class="nav-anchor nav-admin" data-nav="admin" href="#admin" style="display:none;">Admin</a>
-<a class="nav-anchor nav-signin" data-nav="signin" href="#signin">Sign in</a></nav>
+<a class="nav-anchor nav-signin" data-nav="signin" href="login.html">Sign in</a></nav>
 <div class="nav-right"><div class="user-menu" id="user-menu" style="display:none; position:relative;"><button class="user-menu-toggle" id="userMenuToggle" type="button"><span id="userMenuName">Profile</span> ▾</button><div class="user-menu-dropdown" id="userMenuDropdown"><button class="user-menu-item" type="button" data-action="profile">Profile</button><button class="user-menu-item" type="button" data-action="history">Purchase History</button><button class="user-menu-item" type="button" data-action="signout">Sign out</button></div></div><div class="user-greeting" id="user-greeting"></div><button class="cart-chip" id="openCartBtn">
       🧺 Cart <span class="badge" id="cartCount">0</span>
 </button></div></div>
@@ -2004,18 +2003,9 @@
     <div>No purchases recorded yet.</div>
   </div>
 </section>
-<section class="page-section admin-section" data-page="admin" id="admin">
-<h2>👤 Admin – Customer accounts</h2>
-<p class="section-lede">
-  Manage account tiers, free delivery thresholds, wholesale breakpoints, and Platinum customer pricing.
-</p>
-<div id="admin-customers-empty" style="display:none; margin-top:1rem; font-size:0.9rem; color:var(--text-muted);">
-  No registered customer accounts yet. Customers appear here after using "Create account".
-</div>
-<div id="admin-customers-list" class="admin-customers-grid"></div>
-</section>
+
 </main>
-<section class="page-section signin-section" data-page="signin" id="signin"><div class="auth-grid"><div class="auth-card"><h3>Existing customers – Sign in</h3><p class="auth-intro">Use the same email and password you registered with to access the simulator as a returning customer.</p><form class="auth-form" id="signin-form"><div class="full-row"><label class="auth-label" for="signin-email">Email</label><input class="auth-input" id="signin-email" placeholder="you@example.com" required="True" type="email"/></div><div class="full-row"><label class="auth-label" for="signin-password">Password</label><input class="auth-input" id="signin-password" placeholder="••••••••" required="True" type="password"/></div><div class="auth-actions full-row"><button class="auth-submit" type="submit">Sign in</button><div class="auth-note">This demo stores your account locally in your browser for testing.</div></div></form></div><div class="auth-card"><h3>Create a new account</h3><p class="auth-intro">Register your warehouse or business so we can prepare quotes faster and recommend the right films and tapes.</p><form class="auth-form" id="signup-form"><div><label class="auth-label" for="signup-name">Full Name</label><input class="auth-input" id="signup-name" placeholder="John Doe" required="True" type="text"/></div><div><label class="auth-label" for="signup-company">Company Name</label><input class="auth-input" id="signup-company" placeholder="Warehouse / 3PL / Business" type="text"/></div><div><label class="auth-label" for="signup-email">Email</label><input class="auth-input" id="signup-email" placeholder="you@example.com" required="True" type="email"/></div><div><label class="auth-label" for="signup-phone">Phone Number</label><input class="auth-input" id="signup-phone" placeholder="+1 (___) ___-____" type="tel"/></div><div><label class="auth-label" for="signup-address">Address</label><input class="auth-input" id="signup-address" placeholder="Street address, unit, etc." type="text"/></div><div><label class="auth-label" for="signup-postal">Postal Code (optional)</label><input class="auth-input" id="signup-postal" placeholder="A1A 1A1" type="text"/></div><div><label class="auth-label" for="signup-type">Business type</label><select class="auth-select" id="signup-type"><option value="warehouse">Warehouse / Distribution</option><option value="3pl">3PL / Fulfillment</option><option value="manufacturer">Manufacturer</option><option value="ecom">E-commerce brand</option><option value="other">Other</option></select></div><div><label class="auth-label" for="signup-password">Password</label><input class="auth-input" id="signup-password" placeholder="Create a password" required="True" type="password"/></div><div><label class="auth-label" for="signup-password2">Confirm password</label><input class="auth-input" id="signup-password2" placeholder="Repeat password" required="True" type="password"/></div><div class="full-row"><label class="auth-check"><input id="signup-terms" type="checkbox"/>I agree that Shrinxa may contact me with quotes and product recommendations.</label></div><div class="auth-actions full-row"><button class="auth-submit" type="submit">Create account</button><div class="auth-note">All new accounts start on Standard pricing. Shrinxa can upgrade you to Gold or Platinum based on agreed volumes.</div></div></form><div class="auth-footnote">For special Platinum pricing, Shrinxa can customize certain items or delivery terms for your account.</div></div></div></section><footer>
+<footer>
   © <span id="year"></span> Shrinxa. All rights reserved. Demo site for catalogue &amp; cart simulation.
 </footer>
 <!-- CART PANEL -->
@@ -2504,7 +2494,7 @@
     if (!container) return;
     const u = loadCurrentUser();
     if (!u || u.role === "admin") {
-      container.innerHTML = "<div>Please sign in to view your purchase history.</div>";
+      container.innerHTML = "";
       return;
     }
     const history = u.purchaseHistory || [];
@@ -2585,9 +2575,10 @@
   
   function requireLogin() {
     const user = loadCurrentUser();
-    if (!user || !user.email) {
-      alert("Please sign in to continue with your purchase.");
-      setView("signin");
+    if (!user) {
+      // Redirect to dedicated login page
+      const next = window.location.pathname + window.location.search + window.location.hash;
+      window.location.href = "login.html?next=" + encodeURIComponent(next);
       return false;
     }
     return true;
@@ -2730,7 +2721,7 @@ function initAuthFlows() {
 
     if (signupForm) {
       signupForm.addEventListener("submit", (e) => {
-        e.preventDefault();
+
         const name = document.getElementById("signup-name").value.trim();
         const email = document.getElementById("signup-email").value.trim().toLowerCase();
         const password = document.getElementById("signup-password").value;
@@ -2788,7 +2779,7 @@ function initAuthFlows() {
 
     if (signinForm) {
       signinForm.addEventListener("submit", (e) => {
-        e.preventDefault();
+
         const email = document.getElementById("signin-email").value.trim().toLowerCase();
         const password = document.getElementById("signin-password").value;
         if (!email || !password) {
@@ -2833,7 +2824,7 @@ function initAuthFlows() {
       populateProfileFormFromCurrentUser();
 
       profileForm.addEventListener("submit", (e) => {
-        e.preventDefault();
+
         const u2 = loadCurrentUser();
         if (!u2 || u2.role === "admin") {
           alert("Please sign in as a customer to update your profile.");
@@ -2864,7 +2855,7 @@ function initAuthFlows() {
 
     if (passwordForm) {
       passwordForm.addEventListener("submit", (e) => {
-        e.preventDefault();
+
         const currentPw = document.getElementById("profile-current-password").value;
         const newPw = document.getElementById("profile-new-password").value;
         const newPw2 = document.getElementById("profile-new-password2").value;
@@ -3152,7 +3143,7 @@ cartBody.addEventListener("change", (e) => {
   // Payment form events
   if (paymentForm) {
     paymentForm.addEventListener("submit", (e) => {
-      e.preventDefault();
+
       const nameVal = document.getElementById("pay-name").value.trim();
       const cardVal = document.getElementById("pay-card").value.trim();
       const expVal = document.getElementById("pay-exp").value.trim();
@@ -3636,7 +3627,7 @@ function applyFilter(filter) {
   const productsMenu = document.querySelector(".nav-dropdown-menu");
   if (productsToggle && productsMenu) {
     productsToggle.addEventListener("click", (e) => {
-      e.preventDefault();
+
       e.stopPropagation();
       productsMenu.classList.toggle("open");
     });
@@ -3650,7 +3641,7 @@ function applyFilter(filter) {
 // Nav product dropdown items
   document.querySelectorAll(".nav-dropdown-item").forEach(item => {
     item.addEventListener("click", (e) => {
-      e.preventDefault();
+
       const filter = item.dataset.filter;
       setView("products");
       applyFilter(filter);
@@ -3665,19 +3656,19 @@ function applyFilter(filter) {
   });
 (link => {
     link.addEventListener("click", (e) => {
-      e.preventDefault();
+
       setView("about");
     });
   });
   document.querySelectorAll(".nav-delivery").forEach(link => {
     link.addEventListener("click", (e) => {
-      e.preventDefault();
+
       setView("delivery");
     });
   });
   document.querySelectorAll(".nav-contact").forEach(link => {
     link.addEventListener("click", (e) => {
-      e.preventDefault();
+
       setView("contact");
     });
   });
@@ -3686,25 +3677,25 @@ function applyFilter(filter) {
   // Top nav behaviour using setView
   document.querySelectorAll(".nav-home").forEach(link => {
     link.addEventListener("click", (e) => {
-      e.preventDefault();
+
       setView("home");
     });
   });
   document.querySelectorAll(".nav-about").forEach(link => {
     link.addEventListener("click", (e) => {
-      e.preventDefault();
+
       setView("about");
     });
   });
   document.querySelectorAll(".nav-delivery").forEach(link => {
     link.addEventListener("click", (e) => {
-      e.preventDefault();
+
       setView("delivery");
     });
   });
   document.querySelectorAll(".nav-contact").forEach(link => {
     link.addEventListener("click", (e) => {
-      e.preventDefault();
+
       setView("contact");
     });
   });
@@ -3712,7 +3703,7 @@ function applyFilter(filter) {
 
     document.querySelectorAll(".nav-admin").forEach(link => {
     link.addEventListener("click", (e) => {
-      e.preventDefault();
+
       if (!isAdmin()) {
         alert("Admin access only.");
         return;
@@ -3725,10 +3716,10 @@ function applyFilter(filter) {
 
 document.querySelectorAll(".nav-signin").forEach(link=>{
   link.addEventListener("click",(e)=>{
-    e.preventDefault();
+
     const u = loadCurrentUser();
     if (!u || !u.name) {
-      setView("signin");
+      window.location.href = "login.html";
     }
   });
 });
