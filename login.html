@@ -1403,7 +1403,7 @@
     <h1 class="login-title">Sign in</h1>
     <p class="login-sub">Use your email and password.</p>
 
-    <form id="loginForm" autocomplete="on" id="login-form">
+    <form id="login-form" autocomplete="on">
       <div class="login-field">
         <label for="email">Email</label>
         <input id="email" type="email" autocomplete="email" required />
@@ -1447,19 +1447,34 @@
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("login-form");
+  const msg = document.getElementById("msg");
+  const emailEl = document.getElementById("email");
+  const passEl = document.getElementById("password");
   if (!form) return;
+
+  const show = (text, type) => {
+    if (!msg) return;
+    msg.textContent = text;
+    msg.classList.remove("err");
+    if (type === "err") msg.classList.add("err");
+    msg.style.display = "block";
+  };
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const email = document.querySelector('input[type="email"]').value.trim();
-    const password = document.querySelector('input[type="password"]').value.trim();
+    const email = (emailEl?.value || "").trim();
+    const password = (passEl?.value || "").trim();
 
     try {
-      await ShrinxaAuth.signIn(email, password);
-      window.location.href = "index.html";
+      if (!window.ShrinxaAuth?.signIn) throw new Error("Auth not loaded");
+      await window.ShrinxaAuth.signIn(email, password);
+
+      const params = new URLSearchParams(window.location.search);
+      const next = params.get("next");
+      window.location.href = next ? next : "index.html";
     } catch (err) {
-      alert(err.message || "Invalid email or password");
+      show(err?.message || "Invalid email or password", "err");
     }
   });
 });
