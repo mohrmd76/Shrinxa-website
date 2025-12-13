@@ -126,3 +126,47 @@ window.ShrinxaAuth = {
   getProfileFromUser,
   updateProfileMetadata,
 };
+
+
+// ---------- Optional UI binding (multi-page) ----------
+// If your pages have:
+// - a Sign in link with class "nav-signin"
+// - a user menu container with id "user-menu" (and optional span id "userMenuName")
+// this will automatically show/hide them based on Supabase session.
+function initNavAuthUI() {
+  const signins = document.querySelectorAll(".nav-signin");
+  const userMenu = document.getElementById("user-menu");
+  const userMenuName = document.getElementById("userMenuName");
+
+  const apply = async () => {
+    const user = await getCurrentUser();
+    if (user) {
+      const p = getProfileFromUser(user);
+      signins.forEach(el => el.style.display = "none");
+      if (userMenu) userMenu.style.display = "flex";
+      if (userMenuName) userMenuName.textContent = (p.full_name ? ("Hi " + p.full_name) : ("Hi " + (p.email || "Customer")));
+    } else {
+      signins.forEach(el => el.style.display = "");
+      if (userMenu) userMenu.style.display = "none";
+    }
+  };
+
+  // initial
+  apply();
+
+  // live updates
+  try {
+    supabaseClient.auth.onAuthStateChange(() => apply());
+  } catch (e) {}
+}
+
+// Auto-run on every page (safe: does nothing if elements not present)
+if (typeof document !== "undefined") {
+  document.addEventListener("DOMContentLoaded", () => {
+    try { initNavAuthUI(); } catch (e) {}
+  });
+}
+
+// Expose
+window.ShrinxaAuth.initNavAuthUI = initNavAuthUI;
+
