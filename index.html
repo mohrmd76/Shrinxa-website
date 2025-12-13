@@ -2180,6 +2180,10 @@
     </div>
   </div>
 </div>
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
 <script>
   const yearSpan = document.getElementById("year");
   yearSpan.textContent = new Date().getFullYear();
@@ -2221,9 +2225,9 @@
   const invoicePrintBtn = document.getElementById("invoicePrint");
   const invoiceCloseBtn = document.getElementById("invoiceClose");
 
-  function openPaymentModal() {
+  async function openPaymentModal() {
     if (!paymentModal) return;
-    if (!requireLogin()) return;
+    if (!(await requireLogin())) return;
     paymentModal.style.display = "flex";
     paymentModal.setAttribute("aria-hidden", "false");
   }
@@ -2234,9 +2238,9 @@
     paymentModal.setAttribute("aria-hidden", "true");
   }
 
-  function openInvoiceModal(options) {
+  async function openInvoiceModal(options) {
     if (!invoiceModal) return;
-    if (!requireLogin()) return;
+    if (!(await requireLogin())) return;
 
     const ids = Object.keys(cart);
     if (!ids.length) return;
@@ -2484,7 +2488,7 @@
     }
     updateCart();
     closeCart();
-    applyUserGreeting();
+    syncUserUI();
     updateVisiblePricesForTier();
     setView("home");
   }
@@ -2573,14 +2577,51 @@
   }
 
   
-  function requireLogin() {
-    const user = loadCurrentUser();
+  async function requireLogin() {
+    const user = await ShrinxaAuth.getCurrentUser();
     if (!user) {
-      // Redirect to dedicated login page
       const next = window.location.pathname + window.location.search + window.location.hash;
       window.location.href = "login.html?next=" + encodeURIComponent(next);
       return false;
     }
+
+
+async function syncUserUI() {
+  const user = await ShrinxaAuth.getCurrentUser();
+  const signLinks = document.querySelectorAll(".nav-signin");
+  const userMenu = document.getElementById("user-menu");
+  const userMenuName = document.getElementById("userMenuName");
+
+  if (user) {
+    const p = ShrinxaAuth.getProfileFromUser(user);
+    signLinks.forEach(l => l.style.display = "none");
+    if (userMenu) userMenu.style.display = "flex";
+    if (userMenuName) userMenuName.textContent = p.full_name || p.email;
+  } else {
+    signLinks.forEach(l => l.style.display = "");
+    if (userMenu) userMenu.style.display = "none";
+  }
+}
+
+function initSupabaseUI() {
+  // initial
+  syncUserUI();
+  // keep in sync
+  try {
+    ShrinxaAuth.supabaseClient.auth.onAuthStateChange(() => {
+      syncUserUI();
+    });
+  } catch (e) {
+    // ignore
+  }
+
+  // sign out from dropdown
+  document.addEventListener("click", (e) => {
+    const signout = e.target.closest(".user-menu-item[data-action='signout']");
+    if (signout) ShrinxaAuth.logout("index.html");
+  });
+}
+
     return true;
   }
 
@@ -2706,7 +2747,7 @@ function applyUserGreeting() {
 
 
 function initAuthFlows() {
-    applyUserGreeting();
+    syncUserUI();
     updateVisiblePricesForTier();
 
     const current = loadCurrentUser();
@@ -2720,7 +2761,7 @@ function initAuthFlows() {
     const passwordForm = document.getElementById("password-form");
 
     if (signupForm) {
-      signupForm.addEventListener("submit", (e) => {
+      signupForm.addEventListener("submit", async (e) => {
 
         const name = document.getElementById("signup-name").value.trim();
         const email = document.getElementById("signup-email").value.trim().toLowerCase();
@@ -2770,7 +2811,7 @@ function initAuthFlows() {
         saveUsers(users);
         saveCurrentUser(user);
         alert("Account created! You are now signed in.");
-        applyUserGreeting();
+        syncUserUI();
         updateVisiblePricesForTier();
         hydrateCartFromUser(user);
         setView("home");
@@ -2778,7 +2819,7 @@ function initAuthFlows() {
     }
 
     if (signinForm) {
-      signinForm.addEventListener("submit", (e) => {
+      signinForm.addEventListener("submit", async (e) => {
 
         const email = document.getElementById("signin-email").value.trim().toLowerCase();
         const password = document.getElementById("signin-password").value;
@@ -2795,7 +2836,7 @@ function initAuthFlows() {
             tier: "platinum"
           };
           saveCurrentUser(adminUser);
-          applyUserGreeting();
+          syncUserUI();
           updateVisiblePricesForTier();
           alert("Signed in as admin.");
           setView("admin");
@@ -2810,7 +2851,7 @@ function initAuthFlows() {
           return;
         }
         saveCurrentUser(match);
-        applyUserGreeting();
+        syncUserUI();
         updateVisiblePricesForTier();
         hydrateCartFromUser(match);
         alert("Signed in as " + (match.name || match.email) + ".");
@@ -2823,7 +2864,7 @@ function initAuthFlows() {
     if (profileForm) {
       populateProfileFormFromCurrentUser();
 
-      profileForm.addEventListener("submit", (e) => {
+      profileForm.addEventListener("submit", async (e) => {
 
         const u2 = loadCurrentUser();
         if (!u2 || u2.role === "admin") {
@@ -2848,13 +2889,13 @@ function initAuthFlows() {
         users[idx] = updated;
         saveUsers(users);
         saveCurrentUser(updated);
-        applyUserGreeting();
+        syncUserUI();
         alert("Profile updated.");
       });
     }
 
     if (passwordForm) {
-      passwordForm.addEventListener("submit", (e) => {
+      passwordForm.addEventListener("submit", async (e) => {
 
         const currentPw = document.getElementById("profile-current-password").value;
         const newPw = document.getElementById("profile-new-password").value;
@@ -2896,7 +2937,7 @@ function initAuthFlows() {
 
     // User menu dropdown
     if (userMenuToggle && userMenuDropdown) {
-      userMenuToggle.addEventListener("click", () => {
+      userMenuToggle.addEventListener("click", async () => {
         userMenuDropdown.classList.toggle("open");
       });
 
@@ -2941,8 +2982,8 @@ function fmt(n) {
 
   // Add to cart buttons
   document.querySelectorAll(".product-card .btn-add").forEach(btn => {
-    btn.addEventListener("click", () => {
-      if (!requireLogin()) return;
+    btn.addEventListener("click", async () => {
+      if (!(await requireLogin())) return;
       const card = btn.closest(".product-card");
       const id = card.dataset.id;
       const name = card.dataset.name;
@@ -3122,7 +3163,7 @@ cartBody.addEventListener("change", (e) => {
 
   // Buy Now handler (Pay now / Pay on delivery)
   if (buyNowBtn) {
-    buyNowBtn.addEventListener("click", () => {
+    buyNowBtn.addEventListener("click", async () => {
       const ids = Object.keys(cart);
       if (!ids.length) {
         alert("Your cart is empty.");
@@ -3142,7 +3183,7 @@ cartBody.addEventListener("change", (e) => {
 
   // Payment form events
   if (paymentForm) {
-    paymentForm.addEventListener("submit", (e) => {
+    paymentForm.addEventListener("submit", async (e) => {
 
       const nameVal = document.getElementById("pay-name").value.trim();
       const cardVal = document.getElementById("pay-card").value.trim();
@@ -3167,7 +3208,7 @@ cartBody.addEventListener("change", (e) => {
   }
 
   if (paymentCancelBtn) {
-    paymentCancelBtn.addEventListener("click", () => {
+    paymentCancelBtn.addEventListener("click", async () => {
       closePaymentModal();
     });
   }
@@ -3355,7 +3396,7 @@ cartBody.addEventListener("change", (e) => {
   }
 
   if (invoicePrintBtn) {
-    invoicePrintBtn.addEventListener("click", () => {
+    invoicePrintBtn.addEventListener("click", async () => {
       const htmlDoc = buildInvoiceDocumentHTML();
       const w = window.open("", "_blank");
       if (!w) return;
@@ -3368,7 +3409,7 @@ cartBody.addEventListener("change", (e) => {
   }
 
   if (invoiceDownloadBtn) {
-    invoiceDownloadBtn.addEventListener("click", () => {
+    invoiceDownloadBtn.addEventListener("click", async () => {
       const htmlDoc = buildInvoiceDocumentHTML();
       const w = window.open("", "_blank");
       if (!w) return;
@@ -3382,7 +3423,7 @@ cartBody.addEventListener("change", (e) => {
   }
 
   if (invoiceCloseBtn) {
-    invoiceCloseBtn.addEventListener("click", () => {
+    invoiceCloseBtn.addEventListener("click", async () => {
       closeInvoiceModalAndClearCart();
     });
   }
@@ -3507,7 +3548,7 @@ function buildAdminCustomersUI() {
       });
 
       const saveBtn = card.querySelector(".admin-save-btn");
-      saveBtn.addEventListener("click", () => {
+      saveBtn.addEventListener("click", async () => {
         const allUsers = loadUsers();
         const idx = allUsers.findIndex(u => u.email === user.email);
         if (idx === -1) return;
@@ -3545,7 +3586,7 @@ function buildAdminCustomersUI() {
         const current = loadCurrentUser();
         if (current && !current.role && current.email === updatedUser.email) {
           saveCurrentUser(updatedUser);
-          applyUserGreeting();
+          syncUserUI();
           updateVisiblePricesForTier();
         }
       });
@@ -3612,7 +3653,7 @@ function applyFilter(filter) {
 
   // Pills
   document.querySelectorAll(".pill").forEach(pill => {
-    pill.addEventListener("click", () => {
+    pill.addEventListener("click", async () => {
       document.querySelectorAll(".pill").forEach(p => p.classList.remove("active"));
       pill.classList.add("active");
       const filter = pill.dataset.filter;
@@ -3727,7 +3768,7 @@ document.querySelectorAll(".nav-signin").forEach(link=>{
 // Initial state// Initial state: home view with products hidden until selected from nav
   applyFilter("all");
   setView("home");
-  initAuthFlows();
+  initSupabaseUI();
 </script>
 </body>
 </html>
