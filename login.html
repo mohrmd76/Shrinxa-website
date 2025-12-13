@@ -1403,7 +1403,7 @@
     <h1 class="login-title">Sign in</h1>
     <p class="login-sub">Use your email and password.</p>
 
-    <form id="loginForm" autocomplete="on">
+    <form id="loginForm" autocomplete="on" id="login-form">
       <div class="login-field">
         <label for="email">Email</label>
         <input id="email" type="email" autocomplete="email" required />
@@ -1437,79 +1437,33 @@
 <script src="auth.js"></script>
 
 <!-- Dropdown toggle (same as index) -->
-<script>
-// Products dropdown toggle (site-wide)
-document.addEventListener("DOMContentLoaded", () => {
-  const toggle = document.querySelector(".nav-dropdown-toggle");
-  const menu = document.querySelector(".nav-dropdown-menu");
-  if (!toggle || !menu) return;
 
-  const close = () => {
-    menu.classList.remove("open");
-    toggle.setAttribute("aria-expanded", "false");
-  };
-
-  toggle.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const isOpen = menu.classList.toggle("open");
-    toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
-  });
-
-  document.addEventListener("click", (e) => {
-    if (!menu.contains(e.target) && !toggle.contains(e.target)) close();
-  });
-
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") close();
-  });
-});
-</script>
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("loginForm");
-  const msg = document.getElementById("msg");
-  const btn = document.getElementById("btnLogin");
-
-  function show(text, type) {
-    msg.style.display = "block";
-    msg.className = "login-msg " + (type || "");
-    msg.textContent = text;
-  }
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    msg.style.display = "none";
-    btn.disabled = true;
-
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-
-    try {
-      await ShrinxaAuth.signIn(email, password);
-
-	if (error) {
-  	show(error.message || "Invalid email or password", "err");
-  	return;
-	}
-
-	const params = new URLSearchParams(window.location.search);
-	const next = params.get("next");
-	window.location.href = next ? next : "index.html";
-    } catch (err) {
-      console.error(err);
-      show(err?.message || "Sign in failed. Please check your email/password.", "err");
-    } finally {
-      btn.disabled = false;
-    }
-  });
-});
-</script>
 
 <footer>
   © 2025 Shrinxa. All rights reserved.
 </footer>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("login-form");
+  if (!form) return;
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const email = document.querySelector('input[type="email"]').value.trim();
+    const password = document.querySelector('input[type="password"]').value.trim();
+
+    try {
+      await ShrinxaAuth.signIn(email, password);
+      window.location.href = "index.html";
+    } catch (err) {
+      alert(err.message || "Invalid email or password");
+    }
+  });
+});
+</script>
 
 </body>
 </html>
