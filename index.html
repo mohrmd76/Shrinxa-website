@@ -1372,7 +1372,7 @@
   <section style="max-width:1200px; margin: 30px auto 60px; padding: 0 16px;">
     <h2 style="margin: 0 0 14px; font-size: 22px; color: var(--text);">My Account</h2>
 
-    <div style="display:grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px;">
+    <div id="profilePanel" style="display:grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px;">
       <!-- Profile -->
       <div style="border-radius: 18px; border: 1px solid rgba(65,98,160,0.35); background: rgba(5,9,20,0.55); padding: 18px;">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
@@ -1518,6 +1518,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const homeMain = document.getElementById("homeMain");
   const accountMain = document.getElementById("accountMain");
   const historyPanel = document.getElementById("historyPanel");
+  const profilePanel = document.getElementById("profilePanel");
   const backBtn = document.getElementById("backToHomeBtn");
 
   function showHome() {
@@ -1531,6 +1532,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function showAccount(which) {
     if (homeMain) homeMain.style.display = "none";
     if (accountMain) accountMain.style.display = "";
+    if (profilePanel) profilePanel.style.display = (which === "history") ? "none" : "";
     if (historyPanel) historyPanel.style.display = (which === "history") ? "" : "none";
     try { history.replaceState(null, "", location.pathname + location.search + (which ? ("#" + which) : "")); } catch(e){}
     window.scrollTo(0, 0);
@@ -1576,7 +1578,6 @@ document.addEventListener("DOMContentLoaded", () => {
       e.preventDefault();
       closeMenu();
       showAccount("history");
-      await loadProfileAndRender();
       await loadInvoicesAndRender();
     });
 
@@ -1668,16 +1669,44 @@ document.addEventListener("DOMContentLoaded", () => {
     if (profileForm?.elements?.email) profileForm.elements.email.value = user.email || "";
 
     try {
-      const { data, error } = await sb.from("profiles").select("*").eq("id", user.id).single();
+      let data = null;
+      // Try common primary key patterns: id = user.id, or user_id = user.id
+      let error = null;
+      try {
+        const r1 = await sb.from("profiles").select("*").eq("id", user.id).maybeSingle();
+        data = r1.data;
+        error = r1.error;
+      } catch (e) { error = e; }
+
+      // If no row found, try user_id (if column exists)
+      if (!data && (!error || error.code === "PGRST116")) {
+        try {
+          const r2 = await sb.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
+          if (r2.data) data = r2.data;
+          if (r2.error) error = r2.error;
+        } catch (e) {
+          // ignore (column may not exist)
+        }
+      }
+
       if (error && error.code !== "PGRST116") throw error; // PGRST116 = no rows
 
       const row = data || {};
-      if (profileForm?.elements?.full_name) profileForm.elements.full_name.value = row.full_name || "";
-      if (profileForm?.elements?.company_name) profileForm.elements.company_name.value = row.company_name || "";
-      if (profileForm?.elements?.phone) profileForm.elements.phone.value = row.phone || "";
-      if (profileForm?.elements?.address) profileForm.elements.address.value = row.address || "";
-      if (profileForm?.elements?.city) profileForm.elements.city.value = row.city || "";
-      if (profileForm?.elements?.province) profileForm.elements.province.value = row.province || "";
+      const meta = (user.user_metadata || {});
+      const pick = (...keys) => {
+        for (const k of keys) {
+          const v = row[k] ?? meta[k];
+          if (v !== undefined && v !== null && String(v).trim() !== "") return v;
+        }
+        return "";
+      };
+
+      if (profileForm?.elements?.full_name) profileForm.elements.full_name.value = pick("full_name","fullname","name","fullName");
+      if (profileForm?.elements?.company_name) profileForm.elements.company_name.value = pick("company_name","company","companyName","business_name");
+      if (profileForm?.elements?.phone) profileForm.elements.phone.value = pick("phone","phone_number","mobile","tel");
+      if (profileForm?.elements?.address) profileForm.elements.address.value = pick("address","street","street_address","address1");
+      if (profileForm?.elements?.city) profileForm.elements.city.value = pick("city","town");
+      if (profileForm?.elements?.province) profileForm.elements.province.value = pick("province","state","region");
 
       setProfileStatus("");
     } catch (e) {
@@ -1707,8 +1736,17 @@ document.addEventListener("DOMContentLoaded", () => {
       };
 
       try {
-        const { error } = await sb.from("profiles").upsert(payload);
-        if (error) throw error;
+        // First try: profiles.id = auth user id (common pattern)
+        let r = await sb.from("profiles").upsert(payload);
+        if (r.error) {
+          // Fallback: profiles.user_id = auth user id (if your table uses user_id)
+          const payload2 = { ...payload };
+          delete payload2.id;
+          payload2.user_id = user.id;
+          r = await sb.from("profiles").upsert(payload2);
+        }
+        if (r.error) throw r.error;
+
         setProfileStatus("Saved.");
         setTimeout(() => setProfileStatus(""), 1800);
       } catch (err) {
@@ -1803,11 +1841,29 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!user) { setHistoryStatus("Please sign in."); return; }
 
     try {
-      const { data, error } = await sb
-        .from("invoices")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+      let data = null;
+      let error = null;
+
+      // Try common invoice ownership columns
+      const tries = [
+        () => sb.from("invoices").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+        () => sb.from("invoices").select("*").eq("customer_id", user.id).order("created_at", { ascending: false }),
+        () => sb.from("invoices").select("*").eq("profile_id", user.id).order("created_at", { ascending: false }),
+        () => sb.from("invoices").select("*").eq("email", user.email).order("created_at", { ascending: false }),
+        () => sb.from("invoices").select("*").eq("customer_email", user.email).order("created_at", { ascending: false })
+      ];
+
+      for (const run of tries) {
+        try {
+          const r = await run();
+          if (r.error) { error = r.error; continue; }
+          data = r.data;
+          error = null;
+          break;
+        } catch (e) {
+          // ignore and try next
+        }
+      }
 
       if (error) throw error;
 
@@ -1819,7 +1875,8 @@ document.addEventListener("DOMContentLoaded", () => {
       setHistoryStatus("");
       data.forEach(inv => historyList && historyList.appendChild(renderInvoiceCard(inv)));
     } catch (e) {
-      setHistoryStatus("Could not load invoices from server.");
+      setHistoryStatus("No invoices yet.");
+      console.error("Invoice load error:", e);
     }
   }
 
