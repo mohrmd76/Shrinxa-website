@@ -1384,5 +1384,62 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const toggle = document.getElementById("userMenuToggle");
+  const dropdown = document.getElementById("userMenuDropdown");
+  if (!toggle || !dropdown) return;
+
+  // Ensure hidden by default
+  dropdown.style.display = "none";
+
+  const close = () => { dropdown.style.display = "none"; };
+  const isOpen = () => dropdown.style.display === "block";
+
+  toggle.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropdown.style.display = isOpen() ? "none" : "block";
+  });
+
+  dropdown.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    const btn = e.target.closest("[data-action]");
+    if (!btn) return;
+
+    const action = btn.getAttribute("data-action");
+
+    if (action === "profile") {
+      alert("Profile page is not created yet.");
+      close();
+      return;
+    }
+
+    if (action === "history") {
+      alert("Purchase History page is not created yet.");
+      close();
+      return;
+    }
+
+    if (action === "signout") {
+      close();
+      try {
+        if (window.Auth?.logout) {
+          await window.Auth.logout("index.html");
+        } else if (window.Auth?.signOut) {
+          await window.Auth.signOut();
+          window.location.href = "index.html";
+        } else {
+          window.location.href = "index.html";
+        }
+      } catch (err) {
+        window.location.href = "index.html";
+      }
+    }
+  });
+
+  document.addEventListener("click", () => close());
+});
+</script>
 </body>
 </html>
