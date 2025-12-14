@@ -1322,7 +1322,7 @@
       🧺 Cart <span class="badge" id="cartCount">0</span>
 </button></div></div>
 </header>
-<main>
+<main id="homeMain">
 <section class="hero page-section" data-page="home" id="top">
 <div>
 <div class="hero-kicker">Industrial-grade stretch wrap &amp; tape</div>
@@ -1368,6 +1368,106 @@
 </div>
 </section>
 </main>
+<main id="accountMain" style="display:none;">
+  <section style="max-width:1200px; margin: 30px auto 60px; padding: 0 16px;">
+    <h2 style="margin: 0 0 14px; font-size: 22px; color: var(--text);">My Account</h2>
+
+    <div style="display:grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px;">
+      <!-- Profile -->
+      <div style="border-radius: 18px; border: 1px solid rgba(65,98,160,0.35); background: rgba(5,9,20,0.55); padding: 18px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+          <h3 style="margin:0; font-size: 20px; color: var(--text);">Profile</h3>
+          <div id="profileStatus" style="font-size: 13px; color: var(--text-muted);"></div>
+        </div>
+
+        <form id="profileForm" style="margin-top: 14px; display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <label style="display:flex; flex-direction:column; gap:6px; font-size:13px; color: var(--text-muted);">
+            Full Name
+            <input name="full_name" type="text" style="height: 38px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: var(--text); padding: 0 10px;">
+          </label>
+
+          <label style="display:flex; flex-direction:column; gap:6px; font-size:13px; color: var(--text-muted);">
+            Company Name
+            <input name="company_name" type="text" style="height: 38px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: var(--text); padding: 0 10px;">
+          </label>
+
+          <label style="display:flex; flex-direction:column; gap:6px; font-size:13px; color: var(--text-muted);">
+            Phone
+            <input name="phone" type="tel" style="height: 38px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: var(--text); padding: 0 10px;">
+          </label>
+
+          <label style="display:flex; flex-direction:column; gap:6px; font-size:13px; color: var(--text-muted);">
+            Email (cannot be changed)
+            <input name="email" type="email" disabled style="height: 38px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.6); padding: 0 10px;">
+          </label>
+
+          <label style="grid-column: 1 / -1; display:flex; flex-direction:column; gap:6px; font-size:13px; color: var(--text-muted);">
+            Address
+            <input name="address" type="text" style="height: 38px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: var(--text); padding: 0 10px;">
+          </label>
+
+          <label style="display:flex; flex-direction:column; gap:6px; font-size:13px; color: var(--text-muted);">
+            City
+            <input name="city" type="text" style="height: 38px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: var(--text); padding: 0 10px;">
+          </label>
+
+          <label style="display:flex; flex-direction:column; gap:6px; font-size:13px; color: var(--text-muted);">
+            Province
+            <input name="province" type="text" style="height: 38px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: var(--text); padding: 0 10px;">
+          </label>
+
+          <div style="grid-column: 1 / -1; display:flex; gap:10px; align-items:center; margin-top: 6px;">
+            <button id="saveProfileBtn" type="submit" style="height: 40px; padding: 0 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.18); background: rgba(39, 78, 162, 0.55); color: #fff; cursor:pointer;">
+              Save Profile
+            </button>
+            <button id="backToHomeBtn" type="button" style="height: 40px; padding: 0 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); color: var(--text); cursor:pointer;">
+              Back to Home
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Change Password -->
+      <div style="border-radius: 18px; border: 1px solid rgba(65,98,160,0.35); background: rgba(5,9,20,0.55); padding: 18px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+          <h3 style="margin:0; font-size: 20px; color: var(--text);">Change Password</h3>
+          <div id="passwordStatus" style="font-size: 13px; color: var(--text-muted);"></div>
+        </div>
+
+        <form id="passwordForm" style="margin-top: 14px; display:flex; flex-direction:column; gap: 10px;">
+          <label style="display:flex; flex-direction:column; gap:6px; font-size:13px; color: var(--text-muted);">
+            Current Password
+            <input name="current_password" type="password" autocomplete="current-password" style="height: 38px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: var(--text); padding: 0 10px;">
+          </label>
+
+          <label style="display:flex; flex-direction:column; gap:6px; font-size:13px; color: var(--text-muted);">
+            New Password
+            <input name="new_password" type="password" autocomplete="new-password" style="height: 38px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: var(--text); padding: 0 10px;">
+          </label>
+
+          <label style="display:flex; flex-direction:column; gap:6px; font-size:13px; color: var(--text-muted);">
+            Confirm New Password
+            <input name="confirm_new_password" type="password" autocomplete="new-password" style="height: 38px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: var(--text); padding: 0 10px;">
+          </label>
+
+          <button type="submit" style="height: 40px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.18); background: rgba(39, 78, 162, 0.55); color: #fff; cursor:pointer;">
+            Update Password
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Purchase History -->
+    <div id="historyPanel" style="margin-top: 18px; border-radius: 18px; border: 1px solid rgba(65,98,160,0.35); background: rgba(5,9,20,0.55); padding: 18px; display:none;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+        <h3 style="margin:0; font-size: 20px; color: var(--text);">Purchase History</h3>
+        <div id="historyStatus" style="font-size: 13px; color: var(--text-muted);"></div>
+      </div>
+      <div id="historyList" style="margin-top: 14px; display:flex; flex-direction:column; gap: 10px;"></div>
+    </div>
+  </section>
+</main>
+
 <footer>
   © <span id="year"></span> Shrinxa. All rights reserved.
 </footer>
@@ -1410,34 +1510,328 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  const toggle = document.getElementById("userMenuToggle");
-  const menu = document.getElementById("userMenuDropdown");
-  if (!toggle || !menu) return;
+(function () {
+  // ----- View switching (home vs account) -----
+  const homeMain = document.getElementById("homeMain");
+  const accountMain = document.getElementById("accountMain");
+  const historyPanel = document.getElementById("historyPanel");
+  const backBtn = document.getElementById("backToHomeBtn");
 
-  const closeMenu = () => menu.classList.remove("open");
+  function showHome() {
+    if (accountMain) accountMain.style.display = "none";
+    if (homeMain) homeMain.style.display = "";
+    if (historyPanel) historyPanel.style.display = "none";
+    try { history.replaceState(null, "", location.pathname + location.search); } catch(e){}
+    window.scrollTo(0, 0);
+  }
 
-  toggle.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    menu.classList.toggle("open");
-  });
+  function showAccount(which) {
+    if (homeMain) homeMain.style.display = "none";
+    if (accountMain) accountMain.style.display = "";
+    if (historyPanel) historyPanel.style.display = (which === "history") ? "" : "none";
+    try { history.replaceState(null, "", location.pathname + location.search + (which ? ("#" + which) : "")); } catch(e){}
+    window.scrollTo(0, 0);
+  }
 
-  document.addEventListener("click", (e) => {
-    if (!menu.contains(e.target) && !toggle.contains(e.target)) {
+  if (backBtn) backBtn.addEventListener("click", showHome);
+
+  // ----- Dropdown open/close + actions -----
+  document.addEventListener("DOMContentLoaded", () => {
+    const toggle = document.getElementById("userMenuToggle");
+    const menu = document.getElementById("userMenuDropdown");
+    if (!toggle || !menu) return;
+
+    const closeMenu = () => menu.classList.remove("open");
+
+    toggle.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      menu.classList.toggle("open");
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!menu.contains(e.target) && !toggle.contains(e.target)) closeMenu();
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeMenu();
+    });
+
+    // Menu actions
+    const profileBtn = menu.querySelector('[data-action="profile"]');
+    const historyBtn  = menu.querySelector('[data-action="history"]');
+    const signOutBtn  = menu.querySelector('[data-action="signout"]');
+
+    profileBtn && profileBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
       closeMenu();
+      showAccount("profile");
+      await loadProfileAndRender();
+    });
+
+    historyBtn && historyBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      closeMenu();
+      showAccount("history");
+      await loadProfileAndRender();
+      await loadInvoicesAndRender();
+    });
+
+    signOutBtn && signOutBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      closeMenu();
+      await doSignOut();
+      // user asked: take you to index.html
+      window.location.href = "index.html";
+    });
+
+    // If user loads with #profile or #history
+    const hash = (location.hash || "").replace("#", "").toLowerCase();
+    if (hash === "profile") {
+      showAccount("profile");
+      loadProfileAndRender();
+    } else if (hash === "history") {
+      showAccount("history");
+      loadProfileAndRender();
+      loadInvoicesAndRender();
     }
   });
 
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeMenu();
-  });
-});
+  // ----- Supabase client getter (NO auth.js edits) -----
+  async function getSupabaseClient() {
+    // 1) If auth.js exposed a client on window, use it
+    if (window.supabaseClient?.auth) return window.supabaseClient;
+    if (window._supabase?.auth) return window._supabase;
+    if (window.supabase?.auth && !window.supabase.createClient) return window.supabase; // already a client
+
+    // 2) If library is present, try to extract URL/Key from auth.js text
+    if (!window.supabase || typeof window.supabase.createClient !== "function") return null;
+
+    try {
+      const res = await fetch("auth.js", { cache: "no-cache" });
+      const txt = await res.text();
+
+      // Try common patterns:
+      // - const supabaseUrl = '...'; const supabaseKey = '...'
+      // - const SUPABASE_URL = '...'; const SUPABASE_ANON_KEY = '...'
+      const url =
+        (txt.match(/supabaseUrl\s*=\s*['"]([^'"]+)['"]/i)?.[1]) ||
+        (txt.match(/SUPABASE[_\s]?URL\s*=\s*['"]([^'"]+)['"]/i)?.[1]) ||
+        (txt.match(/createClient\(\s*['"]([^'"]*supabase\.co[^'"]*)['"]/i)?.[1]);
+
+      // Supabase anon keys typically look like JWTs starting with eyJ...
+      const key =
+        (txt.match(/supabaseKey\s*=\s*['"]([^'"]+)['"]/i)?.[1]) ||
+        (txt.match(/SUPABASE[_\s]?(ANON[_\s]?KEY|KEY)\s*=\s*['"]([^'"]+)['"]/i)?.[2]) ||
+        (txt.match(/createClient\(\s*['"][^'"]+['"]\s*,\s*['"]([^'"]+)['"]\s*\)/i)?.[1]) ||
+        (txt.match(/['"](eyJ[A-Za-z0-9_\-\.]+)['"]/i)?.[1]);
+
+      if (url && key) {
+        window._supabase = window.supabase.createClient(url, key);
+        return window._supabase;
+      }
+    } catch (e) {
+      // ignore
+    }
+    return null;
+  }
+
+  async function getCurrentUser(sb) {
+    try {
+      const { data } = await sb.auth.getUser();
+      return data?.user || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // ----- Profile load/save -----
+  const profileForm = document.getElementById("profileForm");
+  const profileStatus = document.getElementById("profileStatus");
+
+  function setProfileStatus(msg) {
+    if (profileStatus) profileStatus.textContent = msg || "";
+  }
+
+  async function loadProfileAndRender() {
+    setProfileStatus("Loading...");
+    const sb = await getSupabaseClient();
+    if (!sb) { setProfileStatus("Server not available."); return; }
+
+    const user = await getCurrentUser(sb);
+    if (!user) { setProfileStatus("Please sign in."); return; }
+
+    // Fill email from auth user (locked)
+    if (profileForm?.elements?.email) profileForm.elements.email.value = user.email || "";
+
+    try {
+      const { data, error } = await sb.from("profiles").select("*").eq("id", user.id).single();
+      if (error && error.code !== "PGRST116") throw error; // PGRST116 = no rows
+
+      const row = data || {};
+      if (profileForm?.elements?.full_name) profileForm.elements.full_name.value = row.full_name || "";
+      if (profileForm?.elements?.company_name) profileForm.elements.company_name.value = row.company_name || "";
+      if (profileForm?.elements?.phone) profileForm.elements.phone.value = row.phone || "";
+      if (profileForm?.elements?.address) profileForm.elements.address.value = row.address || "";
+      if (profileForm?.elements?.city) profileForm.elements.city.value = row.city || "";
+      if (profileForm?.elements?.province) profileForm.elements.province.value = row.province || "";
+
+      setProfileStatus("");
+    } catch (e) {
+      setProfileStatus("Could not load profile.");
+    }
+  }
+
+  if (profileForm) {
+    profileForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      setProfileStatus("Saving...");
+      const sb = await getSupabaseClient();
+      if (!sb) { setProfileStatus("Server not available."); return; }
+
+      const user = await getCurrentUser(sb);
+      if (!user) { setProfileStatus("Please sign in."); return; }
+
+      const payload = {
+        id: user.id,
+        full_name: profileForm.elements.full_name?.value?.trim() || null,
+        company_name: profileForm.elements.company_name?.value?.trim() || null,
+        phone: profileForm.elements.phone?.value?.trim() || null,
+        address: profileForm.elements.address?.value?.trim() || null,
+        city: profileForm.elements.city?.value?.trim() || null,
+        province: profileForm.elements.province?.value?.trim() || null,
+        updated_at: new Date().toISOString()
+      };
+
+      try {
+        const { error } = await sb.from("profiles").upsert(payload);
+        if (error) throw error;
+        setProfileStatus("Saved.");
+        setTimeout(() => setProfileStatus(""), 1800);
+      } catch (err) {
+        setProfileStatus("Could not save profile.");
+      }
+    });
+  }
+
+  // ----- Change Password -----
+  const passwordForm = document.getElementById("passwordForm");
+  const passwordStatus = document.getElementById("passwordStatus");
+
+  function setPasswordStatus(msg) {
+    if (passwordStatus) passwordStatus.textContent = msg || "";
+  }
+
+  if (passwordForm) {
+    passwordForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      setPasswordStatus("Updating...");
+      const sb = await getSupabaseClient();
+      if (!sb) { setPasswordStatus("Server not available."); return; }
+
+      const user = await getCurrentUser(sb);
+      if (!user) { setPasswordStatus("Please sign in."); return; }
+
+      const current = passwordForm.elements.current_password?.value || "";
+      const next = passwordForm.elements.new_password?.value || "";
+      const confirm = passwordForm.elements.confirm_new_password?.value || "";
+
+      if (!current || !next || !confirm) { setPasswordStatus("Fill all fields."); return; }
+      if (next !== confirm) { setPasswordStatus("Passwords do not match."); return; }
+      if (next.length < 6) { setPasswordStatus("New password too short."); return; }
+
+      try {
+        // Re-auth by signing in again with email + current password, then update password
+        const email = user.email;
+        const { error: signInErr } = await sb.auth.signInWithPassword({ email, password: current });
+        if (signInErr) { setPasswordStatus("Current password is wrong."); return; }
+
+        const { error: updErr } = await sb.auth.updateUser({ password: next });
+        if (updErr) throw updErr;
+
+        setPasswordStatus("Password updated.");
+        passwordForm.reset();
+        setTimeout(() => setPasswordStatus(""), 2000);
+      } catch (err) {
+        setPasswordStatus("Could not update password.");
+      }
+    });
+  }
+
+  // ----- Purchase History -----
+  const historyStatus = document.getElementById("historyStatus");
+  const historyList = document.getElementById("historyList");
+
+  function setHistoryStatus(msg) {
+    if (historyStatus) historyStatus.textContent = msg || "";
+  }
+
+  function renderInvoiceCard(inv) {
+    const wrap = document.createElement("div");
+    wrap.style.padding = "12px 14px";
+    wrap.style.borderRadius = "14px";
+    wrap.style.border = "1px solid rgba(65,98,160,0.35)";
+    wrap.style.background = "rgba(255,255,255,0.04)";
+
+    const created = inv.created_at ? new Date(inv.created_at).toLocaleString() : "";
+    const number = inv.invoice_no || inv.invoice_number || inv.number || inv.id || "Invoice";
+    const total = inv.total || inv.total_amount || inv.amount || inv.grand_total || "";
+
+    wrap.innerHTML = `
+      <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
+        <div>
+          <div style="font-weight:700; color: var(--text);">${number}</div>
+          <div style="font-size:12px; color: var(--text-muted); margin-top:2px;">${created}</div>
+        </div>
+        <div style="font-weight:700; color: var(--text); white-space:nowrap;">${total !== "" ? ("$" + total) : ""}</div>
+      </div>
+    `;
+    return wrap;
+  }
+
+  async function loadInvoicesAndRender() {
+    const sb = await getSupabaseClient();
+    if (!sb) { setHistoryStatus("Server not available."); return; }
+
+    setHistoryStatus("Loading invoices...");
+    if (historyList) historyList.innerHTML = "";
+
+    const user = await getCurrentUser(sb);
+    if (!user) { setHistoryStatus("Please sign in."); return; }
+
+    try {
+      const { data, error } = await sb
+        .from("invoices")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        setHistoryStatus("No invoices yet.");
+        return;
+      }
+
+      setHistoryStatus("");
+      data.forEach(inv => historyList && historyList.appendChild(renderInvoiceCard(inv)));
+    } catch (e) {
+      setHistoryStatus("Could not load invoices from server.");
+    }
+  }
+
+  // ----- Sign Out -----
+  async function doSignOut() {
+    try {
+      const sb = await getSupabaseClient();
+      if (sb?.auth?.signOut) await sb.auth.signOut();
+    } catch (e) {}
+  }
+})();
 </script>
 
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="auth.js"></script>
 </body>
 </html>
