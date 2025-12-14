@@ -1416,13 +1416,26 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
+
+<!-- Supabase + auth -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+  // 1) Update navbar based on auth state (if your frozen auth.js provides it)
+  try {
+    if (window.ShrinxaAuth && typeof window.ShrinxaAuth.initNavAuthUI === "function") {
+      window.ShrinxaAuth.initNavAuthUI();
+    } else if (window.Auth && typeof window.Auth.initNavAuthUI === "function") {
+      window.Auth.initNavAuthUI();
+    }
+  } catch (e) {}
+
+  // 2) User menu dropdown open/close
   const toggle = document.getElementById("userMenuToggle");
   const dropdown = document.getElementById("userMenuDropdown");
   if (!toggle || !dropdown) return;
 
-  // Ensure hidden by default
   dropdown.style.display = "none";
 
   const close = () => { dropdown.style.display = "none"; };
@@ -1434,31 +1447,35 @@ document.addEventListener("DOMContentLoaded", () => {
     dropdown.style.display = isOpen() ? "none" : "block";
   });
 
+  // 3) Dropdown actions
   dropdown.addEventListener("click", async (e) => {
     e.stopPropagation();
-    const btn = e.target.closest("[data-action]");
-    if (!btn) return;
+    const item = e.target.closest("[data-action]");
+    if (!item) return;
 
-    const action = btn.getAttribute("data-action");
+    const action = item.getAttribute("data-action");
 
     if (action === "profile") {
-      alert("Profile page is not created yet.");
-      close();
+      window.location.href = "profile.html";
       return;
     }
 
     if (action === "history") {
-      alert("Purchase History page is not created yet.");
-      close();
+      window.location.href = "purchase-history.html";
       return;
     }
 
     if (action === "signout") {
       close();
       try {
-        if (window.Auth?.logout) {
+        if (window.ShrinxaAuth && typeof window.ShrinxaAuth.logout === "function") {
+          await window.ShrinxaAuth.logout("index.html");
+        } else if (window.Auth && typeof window.Auth.logout === "function") {
           await window.Auth.logout("index.html");
-        } else if (window.Auth?.signOut) {
+        } else if (window.ShrinxaAuth && typeof window.ShrinxaAuth.signOut === "function") {
+          await window.ShrinxaAuth.signOut();
+          window.location.href = "index.html";
+        } else if (window.Auth && typeof window.Auth.signOut === "function") {
           await window.Auth.signOut();
           window.location.href = "index.html";
         } else {
@@ -1470,8 +1487,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // 4) Close when clicking outside
   document.addEventListener("click", () => close());
 });
 </script>
+
 </body>
 </html>
