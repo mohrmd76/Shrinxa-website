@@ -5,8 +5,6 @@
 <title>Shrinxa – Premium Packaging Solutions</title>
 <meta content="width=device-width, initial-scale=1" name="viewport"/><meta content="Shrinxa is a GTA-based supplier of stretch wrap, pre-stretch film, and packaging tape with free delivery over $300 and wholesale pricing for warehouses and 3PLs." name="description"/>
 <style>
-#historySection{display:none;}
-
     :root {
       --bg: #050914;
       --bg-alt: #0b1224;
@@ -1288,15 +1286,6 @@
   }
 }
     .dropdown-menu.open{display:block;}
-
-    /* Force Profile Panel to display side-by-side */
-    #profilePanel {
-      display: grid !important;
-      grid-template-columns: 1fr 1fr !important;
-      gap: 18px !important;
-      align-items: start !important;
-      width: 100% !important;
-    }
 </style>
 </head>
 <body>
@@ -1578,15 +1567,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const historyBtn  = menu.querySelector('[data-action="history"]');
     const signOutBtn  = menu.querySelector('[data-action="signout"]');
 
-    profileBtn && profileBtn.addEventListener("click", (e) => { e.preventDefault(); window.location.hash = "profile"; });
-
+    profileBtn && profileBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
       closeMenu();
       showAccount("profile");
       await loadProfileAndRender();
     });
 
-    historyBtn && historyBtn.addEventListener("click", (e) => { e.preventDefault(); window.location.hash = "history"; });
-
+    historyBtn && historyBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
       closeMenu();
       showAccount("history");
       await loadInvoicesAndRender();
@@ -1899,36 +1888,6 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (e) {}
   }
 })();
-</script>
-
-
-<script>
-function showSection(section) {
-  const profile = document.getElementById("profileSection");
-  const history = document.getElementById("historySection");
-  if (!profile || !history) return;
-
-  profile.style.display = "none";
-  history.style.display = "none";
-
-  if (section === "history") {
-    history.style.display = "block";
-  } else {
-    profile.style.display = "block";
-  }
-}
-
-function handleRoute() {
-  const hash = window.location.hash.replace("#", "");
-  if (hash === "history") {
-    showSection("history");
-  } else {
-    showSection("profile");
-  }
-}
-
-window.addEventListener("hashchange", handleRoute);
-document.addEventListener("DOMContentLoaded", handleRoute);
 </script>
 
 </body>
