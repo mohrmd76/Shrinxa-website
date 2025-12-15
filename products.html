@@ -1818,6 +1818,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+// Capture the SAME Supabase client created inside auth.js (without editing auth.js)
+// auth.js runs AFTER this script tag, so we wrap createClient *immediately*.
+(() => {
+  if (!window.supabase || typeof window.supabase.createClient !== "function") return;
+  if (window.__shrinxaCreateClientWrapped) return;
+  window.__shrinxaCreateClientWrapped = true;
+  const _orig = window.supabase.createClient.bind(window.supabase);
+  window.supabase.createClient = (...args) => {
+    const client = _orig(...args);
+    window.supabaseClient = client;
+    return client;
+  };
+})();
+
 /* User dropdown + actions (about/contact/delivery/products) */
 document.addEventListener("DOMContentLoaded", () => {
   const toggle = document.getElementById("userMenuToggle");
