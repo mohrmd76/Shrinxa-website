@@ -1426,7 +1426,7 @@
         <a href="#" id="forgotPasswordLink">Forgot your password?</a>
       </div>
 
-<div class="login-foot">
+      <div class="login-foot">
  	 Don’t have an account?
 	  <a href="signup.html">Create one</a>
  	 <br>
@@ -1548,6 +1548,39 @@ document.addEventListener("DOMContentLoaded", () => {
   const forgotLink = document.getElementById("forgotPasswordLink");
   if (!forgotLink) return;
 
+  async function getSupabaseClient() {
+    // If a client is already exposed by your setup, use it
+    if (window.supabaseClient && window.supabaseClient.auth) return window.supabaseClient;
+    if (window._supabase && window._supabase.auth) return window._supabase;
+    if (window.supabase && window.supabase.auth && !window.supabase.createClient) return window.supabase; // client object
+
+    // If only the library is present (window.supabase.createClient), create a client from auth.js values
+    if (!window.supabase || typeof window.supabase.createClient !== "function") return null;
+
+    try {
+      const res = await fetch("auth.js", { cache: "no-cache" });
+      const txt = await res.text();
+
+      const url =
+        (txt.match(/supabaseUrl\s*=\s*['"]([^'"]+)['"]/i) || [])[1] ||
+        (txt.match(/SUPABASE[_\s]?URL\s*=\s*['"]([^'"]+)['"]/i) || [])[1] ||
+        (txt.match(/createClient\(\s*['"]([^'"]*supabase\.co[^'"]*)['"]/i) || [])[1];
+
+      const key =
+        (txt.match(/supabaseKey\s*=\s*['"]([^'"]+)['"]/i) || [])[1] ||
+        ((txt.match(/SUPABASE[_\s]?(ANON[_\s]?KEY|KEY)\s*=\s*['"]([^'"]+)['"]/i) || [])[2]) ||
+        (txt.match(/createClient\(\s*['"][^'"]+['"]\s*,\s*['"]([^'"]+)['"]\s*\)/i) || [])[1] ||
+        (txt.match(/['"](eyJ[A-Za-z0-9_\-\.]+)['"]/i) || [])[1];
+
+      if (url && key) {
+        window._supabase = window.supabase.createClient(url, key);
+        return window._supabase;
+      }
+    } catch (e) {}
+
+    return null;
+  }
+
   forgotLink.addEventListener("click", async (e) => {
     e.preventDefault();
 
@@ -1563,16 +1596,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      const sb =
-        window.supabaseClient ||
-        window._supabase ||
-        window.supabase;
+      const sb = await getSupabaseClient();
+      if (!sb || !sb.auth) throw new Error("Supabase client not initialized.");
 
-      await sb.auth.resetPasswordForEmail(email, {
+      const { error } = await sb.auth.resetPasswordForEmail(email, {
         redirectTo: window.location.origin + "/login.html"
       });
+      if (error) throw error;
 
-      msg.textContent = "Password reset email sent. Check your inbox.";
+      msg.textContent = "Password reset email sent. Check your inbox (and spam).";
       msg.classList.remove("err");
       msg.style.display = "block";
     } catch (err) {
