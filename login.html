@@ -1706,7 +1706,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (url && key) window._supabase = window.supabase.createClient(url, key);
       }
 
-      const sb = window._supabase || window.supabaseClient;
+      const sb = (window.Auth && window.Auth.supabaseClient) || (window.ShrinxaAuth && window.ShrinxaAuth.supabaseClient) || window._supabase || window.supabaseClient;
       if (!sb) throw new Error("Supabase not ready");
 
       await ensureRecoverySession(sb);
