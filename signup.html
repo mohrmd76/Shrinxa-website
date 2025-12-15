@@ -1,310 +1,275 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Shrinxa — Sign up</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Account | Shrinxa</title>
+
   <style>
-:root{
-  --bg0:#061427;
-  --bg1:#0b2550;
-  --card:#081b3a;
-  --card2:#071733;
-  --line:rgba(255,255,255,.14);
-  --line2:rgba(255,255,255,.22);
-  --text:#eaf2ff;
-  --muted:rgba(234,242,255,.72);
-  --brand:#30a7ff;
-  --brand2:#1f7dd8;
-  --danger:#ff5b6e;
-  --ok:#34d399;
-  --shadow: 0 18px 60px rgba(0,0,0,.45);
-  --radius:22px;
-  --radius2:16px;
-  --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-}
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;
-  font-family:var(--font);
-  color:var(--text);
-  background:
-    radial-gradient(1200px 700px at 20% 10%, rgba(48,167,255,.18), transparent 55%),
-    radial-gradient(900px 600px at 75% 25%, rgba(82,75,255,.16), transparent 60%),
-    linear-gradient(180deg, var(--bg1), var(--bg0));
-}
-a{color:var(--brand); text-decoration:none}
-a:hover{text-decoration:underline}
-.topbar{
-  position:sticky; top:0; z-index:10;
-  background: rgba(3,10,22,.65);
-  backdrop-filter: blur(10px);
-  border-bottom:1px solid rgba(255,255,255,.08);
-}
-.topbar-inner{
-  max-width:1100px; margin:0 auto; padding:14px 18px;
-  display:flex; align-items:center; justify-content:space-between; gap:16px;
-}
-.brand{
-  display:flex; align-items:center; gap:10px;
-  font-weight:800; letter-spacing:.08em;
-}
-.brand img{width:38px; height:38px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.35)}
-.brand small{display:block; font-weight:500; letter-spacing:0; color:var(--muted); margin-top:2px; font-size:12px}
-.navlinks{display:flex; align-items:center; gap:18px; color:var(--muted); font-weight:600; font-size:14px}
-.navlinks a{color:var(--muted)}
-.navlinks a:hover{color:var(--text); text-decoration:none}
-.container{max-width:1100px; margin:0 auto; padding:28px 18px 46px}
-.shell{
-  display:grid; grid-template-columns: 1fr 1fr; gap:22px;
-  align-items:start;
-}
-@media (max-width: 980px){
-  .shell{grid-template-columns:1fr}
-}
-.card{
-  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
-  border: 1px solid rgba(255,255,255,.12);
-  box-shadow: var(--shadow);
-  border-radius: var(--radius);
-  padding:28px;
-}
-.card h1{font-size:22px; margin:0 0 8px}
-.card p{margin:0 0 18px; color:var(--muted); line-height:1.4}
-.field{margin:12px 0}
-.label{
-  display:block; font-size:13px; font-weight:700;
-  color:rgba(234,242,255,.85);
-  margin:0 0 8px;
-}
-.input, select, textarea{
-  width:100%;
-  border-radius: 12px;
-  border:1px solid rgba(255,255,255,.16);
-  background: rgba(3,10,22,.28);
-  color:var(--text);
-  padding:12px 12px;
-  outline:none;
-}
-.input:focus, select:focus, textarea:focus{
-  border-color: rgba(48,167,255,.75);
-  box-shadow: 0 0 0 3px rgba(48,167,255,.18);
-}
-.grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px}
-@media (max-width: 600px){.grid2{grid-template-columns:1fr}}
-.btn{
-  display:inline-flex; align-items:center; justify-content:center;
-  gap:10px;
-  padding:12px 16px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.14);
-  background: linear-gradient(180deg, var(--brand), var(--brand2));
-  color:#001221;
-  font-weight:800;
-  cursor:pointer;
-}
-.btn:hover{filter:brightness(1.05)}
-.btn:disabled{opacity:.55; cursor:not-allowed; filter:none}
-.hint{font-size:12.5px; color:var(--muted); margin-top:10px}
-.inline{
-  display:flex; gap:10px; align-items:center; flex-wrap:wrap;
-}
-.msg{
-  display:none;
-  margin-top:14px;
-  padding:12px 12px;
-  border-radius: 12px;
-  border:1px solid rgba(255,255,255,.14);
-  background: rgba(3,10,22,.32);
-  color: var(--muted);
-}
-.msg.ok{border-color: rgba(52,211,153,.35); color: rgba(210,255,239,.92)}
-.msg.err{border-color: rgba(255,91,110,.35); color: rgba(255,220,225,.92)}
-.footer-note{
-  margin-top:18px;
-  color:rgba(234,242,255,.65);
-  font-size:13px;
-  line-height:1.45;
-}
-</style>
-</head>
-<body>
-  <header class="topbar">
-    <div class="topbar-inner">
-      <div class="brand">
-        <img src="shrinxa_transparent_4000px.png" alt="Shrinxa logo" onerror="this.style.display='none'"/>
-        <div>
-          <div>SHRINXA</div>
-          <small>Premium Packaging Solutions</small>
-        </div>
-      </div>
-      <nav class="navlinks">
-        <a href="index.html#home">Home</a>
-        <a href="index.html#products">Products</a>
-        <a href="index.html#about">About</a>
-        <a href="index.html#delivery">Delivery</a>
-        <a href="index.html#contact">Contact us</a>
-        <a href="login.html">Sign in</a>
-      </nav>
-    </div>
-  </header>
-
-  <main class="container">
-    <div class="shell">
-      <section class="card">
-        <h1>Create a new account</h1>
-        <p>All fields are required. This information helps us prepare quotes and delivery faster.</p>
-
-        <form id="signupForm">
-          <div class="grid2">
-            <div class="field">
-              <label class="label" for="full_name">Full Name</label>
-              <input class="input" id="full_name" name="full_name" placeholder="John Doe" required />
-            </div>
-            <div class="field">
-              <label class="label" for="company">Company Name</label>
-              <input class="input" id="company" name="company" placeholder="Warehouse / 3PL / Business" required />
-            </div>
-          </div>
-
-          <div class="grid2">
-            <div class="field">
-              <label class="label" for="email">Email</label>
-              <input class="input" id="email" name="email" type="email" placeholder="you@example.com" required />
-            </div>
-            <div class="field">
-              <label class="label" for="phone">Phone Number</label>
-              <input class="input" id="phone" name="phone" type="tel" placeholder="+1 (___) ___-____" required />
-            </div>
-          </div>
-
-          <div class="field">
-            <label class="label" for="address">Address</label>
-            <input class="input" id="address" name="address" placeholder="Street address, unit, etc." required />
-          </div>
-
-          <div class="grid2">
-            <div class="field">
-              <label class="label" for="city">City</label>
-              <input class="input" id="city" name="city" placeholder="Toronto" required />
-            </div>
-            <div class="field">
-              <label class="label" for="province">Province</label>
-              <select id="province" name="province" required>
-                <option value="" disabled selected>Select province</option>
-                <option value="Alberta">Alberta</option>
-<option value="British Columbia">British Columbia</option>
-<option value="Manitoba">Manitoba</option>
-<option value="New Brunswick">New Brunswick</option>
-<option value="Newfoundland and Labrador">Newfoundland and Labrador</option>
-<option value="Northwest Territories">Northwest Territories</option>
-<option value="Nova Scotia">Nova Scotia</option>
-<option value="Nunavut">Nunavut</option>
-<option value="Ontario">Ontario</option>
-<option value="Prince Edward Island">Prince Edward Island</option>
-<option value="Quebec">Quebec</option>
-<option value="Saskatchewan">Saskatchewan</option>
-<option value="Yukon">Yukon</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="grid2">
-            <div class="field">
-              <label class="label" for="password">Password</label>
-              <input class="input" id="password" name="password" type="password" placeholder="Create a password" minlength="8" required />
-            </div>
-            <div class="field">
-              <label class="label" for="password2">Confirm password</label>
-              <input class="input" id="password2" name="password2" type="password" placeholder="Repeat password" minlength="8" required />
-            </div>
-          </div>
-
-          <div class="field" style="display:flex; gap:10px; align-items:flex-start; margin-top:10px">
-            <input id="consent" type="checkbox" required style="margin-top:3px" />
-            <label for="consent" class="hint" style="margin:0">
-              I agree that Shrinxa may contact me with quotes and product recommendations.
-            </label>
-          </div>
-
-          <div class="inline" style="margin-top:14px">
-            <button class="btn" id="btnSignup" type="submit">Create account</button>
-            <span class="hint">Already have an account? <a href="login.html">Sign in</a></span>
-          </div>
-
-          <div id="msg" class="msg"></div>
-
-          <div class="footer-note">
-            After sign up, you may need to confirm your email (check your inbox/spam).  
-            Purchases are available only for signed-in users.
-          </div>
-        </form>
-      </section>
-
-      <section class="card">
-        <h1>Why we ask this info</h1>
-        <p>
-          We use your company and delivery details to speed up quotes, recommend the right film gauges,
-          and confirm delivery terms in the GTA and across Canada.
-        </p>
-        <div class="footer-note">
-          Your data is stored securely in Supabase (Auth + Postgres) with Row Level Security policies.
-        </div>
-      </section>
-    </div>
-  </main>
-
-  <!-- Supabase JS (browser) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="auth.js"></script>
-  <script>
-    const form = document.getElementById("signupForm");
-    const msg = document.getElementById("msg");
-    const btn = document.getElementById("btnSignup");
-
-    function showMsg(text, type) {
-      msg.style.display = "block";
-      msg.className = "msg " + (type || "");
-      msg.textContent = text;
+    /* RESET */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      msg.style.display = "none";
+    html, body {
+      width: 100%;
+      overflow-x: hidden;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(1200px 600px at 20% 0%, #173a6b 0%, #070b16 60%, #040814 100%);
+      color: #fff;
+    }
 
-      const password = document.getElementById("password").value;
-      const password2 = document.getElementById("password2").value;
+    /* HEADER */
+    header {
+      width: 100%;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: linear-gradient(180deg, #0b1a33 0%, #070e1f 100%);
+    }
 
-      if (password !== password2) {
-        showMsg("Passwords do not match.", "err");
-        return;
+    .nav {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+    }
+
+    .nav-center a {
+      color: #cfd7ff;
+      text-decoration: none;
+      margin-left: 20px;
+      font-size: 14px;
+    }
+
+    .nav-right a:hover {
+      color: #fff;
+    }
+
+    /* MAIN */
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 60px 24px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 520px;
+      background: linear-gradient(180deg, #0e1f3c 0%, #0a1329 100%);
+      border-radius: 18px;
+      padding: 32px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.55);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .card h1 {
+      font-size: 24px;
+      margin-bottom: 6px;
+    }
+
+    .card p {
+      font-size: 14px;
+      color: #cbd6ff;
+      margin-bottom: 24px;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px 16px;
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 12px;
+      color: #cfd7ff;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+      font-size: 14px;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #3ea6ff;
+    }
+
+    .checkbox {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: #cbd6ff;
+      margin-top: 8px;
+    }
+
+    .actions {
+      grid-column: 1 / -1;
+      margin-top: 10px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(180deg, #3ea6ff 0%, #1b6fd6 100%);
+      color: #041022;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      filter: brightness(1.05);
+    }
+
+    .bottom-text {
+      margin-top: 18px;
+      font-size: 13px;
+      color: #cbd6ff;
+      text-align: center;
+    }
+
+    .bottom-text a {
+      color: #3ea6ff;
+      text-decoration: none;
+    }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding: 24px;
+      text-align: center;
+      font-size: 13px;
+      color: #9fb2ff;
+    }
+
+    @media (max-width: 600px) {
+      form {
+        grid-template-columns: 1fr;
       }
+    }
+  </style>
+</head>
+<body>
 
-      btn.disabled = true;
+<header>
+  <div class="nav">
+    <div class="nav-left">
+      <strong>SHRINXA</strong>
+      <span style="opacity:.7;font-size:12px;">Premium Packaging Solutions</span>
+    </div>
+    <div class="nav-center" style="display:flex; gap:24px; justify-content:center;">
+      <a href="index.html">Home</a>
+      <a href="products.html">Products</a>
+      <a href="about.html">About</a>
+      <a href="delivery.html">Delivery</a>
+      <a href="contactus.html">Contact</a>
+      <a href="login.html">Sign in</a>
+    </div>
+  </div>
+</header>
 
-      const payload = {
-        full_name: document.getElementById("full_name").value.trim(),
-        company: document.getElementById("company").value.trim(),
-        email: document.getElementById("email").value.trim(),
-        phone: document.getElementById("phone").value.trim(),
-        address: document.getElementById("address").value.trim(),
-        city: document.getElementById("city").value.trim(),
-        province: document.getElementById("province").value,
-        password
-      };
+<main>
+  <div class="card">
+    <h1>Create a new account</h1>
+    <p>All fields are required. This helps us prepare quotes and delivery faster.</p>
 
-      try {
-        await signUpWithProfile(payload);
-        showMsg("Account created. Please check your email to confirm, then sign in.", "ok");
-        setTimeout(() => window.location.href = "login.html", 1200);
-      } catch (err) {
-        console.error(err);
-        showMsg(err?.message || "Sign up failed. Please try again.", "err");
-      } finally {
-        btn.disabled = false;
-      }
-    });
-  </script>
+    <form>
+      <div>
+        <label>Full Name</label>
+        <input type="text" required>
+      </div>
+      <div>
+        <label>Company Name</label>
+        <input type="text" required>
+      </div>
+
+      <div>
+        <label>Email</label>
+        <input type="email" required>
+      </div>
+      <div>
+        <label>Phone Number</label>
+        <input type="tel" required>
+      </div>
+
+      <div class="full">
+        <label>Address</label>
+        <input type="text" required>
+      </div>
+
+      <div>
+        <label>City</label>
+        <input type="text" required>
+      </div>
+      <div>
+        <label>Province</label>
+        <select required>
+          <option value="">Select Province</option>
+          <option>Ontario</option>
+          <option>Quebec</option>
+          <option>British Columbia</option>
+          <option>Alberta</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Password</label>
+        <input type="password" required>
+      </div>
+      <div>
+        <label>Confirm Password</label>
+        <input type="password" required>
+      </div>
+
+      <div class="checkbox">
+        <input type="checkbox" required>
+        <span>I agree that Shrinxa may contact me with quotes and recommendations.</span>
+      </div>
+
+      <div class="actions">
+        <button type="submit">Create account</button>
+      </div>
+    </form>
+
+    <div class="bottom-text">
+      Already have an account? <a href="login.html">Sign in</a>
+    </div>
+  </div>
+</main>
+
+<footer>
+  © 2025 Shrinxa. All rights reserved.
+</footer>
+
 </body>
 </html>
