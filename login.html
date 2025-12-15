@@ -1616,5 +1616,95 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const params = new URLSearchParams(window.location.search);
+  const hash = new URLSearchParams(window.location.hash.replace("#","?"));
+  const type = params.get("type") || hash.get("type");
+
+  if (type !== "recovery") return;
+
+  const form = document.getElementById("login-form");
+  const msg = document.getElementById("msg");
+  const emailField = document.getElementById("email");
+  const passField = document.getElementById("password");
+
+  emailField.parentElement.style.display = "none";
+  passField.parentElement.style.display = "none";
+
+  const newPassWrap = document.createElement("div");
+  newPassWrap.className = "login-field";
+  newPassWrap.innerHTML = `
+    <label for="new-password">New Password</label>
+    <input id="new-password" type="password" required />
+  `;
+
+  const confirmWrap = document.createElement("div");
+  confirmWrap.className = "login-field";
+  confirmWrap.innerHTML = `
+    <label for="confirm-password">Confirm Password</label>
+    <input id="confirm-password" type="password" required />
+  `;
+
+  form.insertBefore(newPassWrap, form.querySelector(".login-actions"));
+  form.insertBefore(confirmWrap, form.querySelector(".login-actions"));
+
+  const btn = document.getElementById("btnLogin");
+  btn.textContent = "Update password";
+
+  msg.textContent = "Enter a new password to complete reset.";
+  msg.style.display = "block";
+
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+
+    const p1 = document.getElementById("new-password").value.trim();
+    const p2 = document.getElementById("confirm-password").value.trim();
+
+    if (!p1 || p1.length < 6) {
+      msg.textContent = "Password must be at least 6 characters.";
+      msg.classList.add("err");
+      msg.style.display = "block";
+      return;
+    }
+    if (p1 !== p2) {
+      msg.textContent = "Passwords do not match.";
+      msg.classList.add("err");
+      msg.style.display = "block";
+      return;
+    }
+
+    try {
+      if (!window._supabase && window.supabase?.createClient) {
+        const res = await fetch("auth.js", { cache: "no-cache" });
+        const txt = await res.text();
+        const url = (txt.match(/supabaseUrl\s*=\s*['"]([^'"]+)['"]/i)||[])[1];
+        const key = (txt.match(/supabaseKey\s*=\s*['"]([^'"]+)['"]/i)||[])[1];
+        if (url && key) window._supabase = window.supabase.createClient(url, key);
+      }
+
+      const sb = window._supabase || window.supabaseClient;
+      if (!sb) throw new Error("Supabase not ready");
+
+      const { error } = await sb.auth.updateUser({ password: p1 });
+      if (error) throw error;
+
+      msg.textContent = "Password updated. Redirecting to sign in...";
+      msg.classList.remove("err");
+      msg.style.display = "block";
+
+      setTimeout(() => {
+        window.location.href = "login.html";
+      }, 1500);
+    } catch (err) {
+      msg.textContent = err.message || "Unable to update password.";
+      msg.classList.add("err");
+      msg.style.display = "block";
+    }
+  };
+});
+</script>
+
 </body>
 </html>
