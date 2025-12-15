@@ -177,6 +177,37 @@
         grid-template-columns: 1fr;
       }
     }
+  
+    /* FIX 1: Dropdown (select/option) white background in some browsers */
+    select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-color: rgba(255,255,255,0.06);
+      color: #fff;
+    }
+    select option {
+      background-color: #0a1329;
+      color: #fff;
+    }
+
+    /* FIX 2: Browser autofill turning inputs white (Chrome/Edge) */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    textarea:-webkit-autofill,
+    textarea:-webkit-autofill:hover,
+    textarea:-webkit-autofill:focus,
+    select:-webkit-autofill,
+    select:-webkit-autofill:hover,
+    select:-webkit-autofill:focus {
+      -webkit-text-fill-color: #fff !important;
+      transition: background-color 9999s ease-in-out 0s;
+      box-shadow: 0 0 0px 1000px rgba(255,255,255,0.06) inset !important;
+      border: 1px solid rgba(255,255,255,0.12) !important;
+      caret-color: #fff !important;
+    }
+
   </style>
 </head>
 <body>
