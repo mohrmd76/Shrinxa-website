@@ -362,13 +362,25 @@
           province
         });
 
-        // Supabase may require email confirmation; session can be null in that case
-        if (!session) {
-          setStatus("Account created. Please check your email to confirm, then sign in.", false);
-        } else {
-          setStatus("Account created successfully. Redirecting to sign in...", false);
+        // Supabase behavior:
+        // - New signup with email confirmation ON: session can be null (user exists, identities usually has 1)
+        // - Email already registered: session is null and user.identities is usually empty
+        const identities = (user && Array.isArray(user.identities)) ? user.identities : [];
+
+        // Email already exists → show error and stay on signup page (NO redirect)
+        if (!session && identities.length === 0) {
+          setStatus("This email is already registered. Please sign in instead.", true);
+          return;
         }
 
+        // New signup but needs email confirmation → stay on signup page (NO redirect)
+        if (!session) {
+          setStatus("Account created. Please check your email to confirm, then sign in.", false);
+          return;
+        }
+
+        // New signup with session created → redirect
+        setStatus("Account created successfully. Redirecting to sign in...", false);
         setTimeout(() => {
           window.location.href = "login.html";
         }, 1200);
