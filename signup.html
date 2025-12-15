@@ -105,7 +105,7 @@
       display: block;
     }
 
-    input, select {
+    input:not([type="checkbox"]), select {
       width: 100%;
       padding: 12px 14px;
       border-radius: 12px;
@@ -115,7 +115,7 @@
       font-size: 14px;
     }
 
-    input:focus, select:focus {
+    input:not([type="checkbox"]):focus, select:focus {
       outline: none;
       border-color: #3ea6ff;
     }
