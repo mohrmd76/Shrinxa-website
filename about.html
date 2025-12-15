@@ -1418,41 +1418,93 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="auth.js"></script>
-
 <script>
+/* User dropdown + actions (about/contact/delivery/products) */
 document.addEventListener("DOMContentLoaded", () => {
   const toggle = document.getElementById("userMenuToggle");
-  const dropdown = document.getElementById("userMenuDropdown");
+  const menu = document.getElementById("userMenuDropdown");
+  if (!toggle || !menu) return;
 
-  if (!toggle || !dropdown) return;
+  const closeMenu = () => menu.classList.remove("open");
 
   toggle.addEventListener("click", (e) => {
+    e.preventDefault();
     e.stopPropagation();
-    dropdown.classList.toggle("open");
+    menu.classList.toggle("open");
   });
 
-  document.addEventListener("click", () => {
-    dropdown.classList.remove("open");
+  document.addEventListener("click", (e) => {
+    if (!menu.contains(e.target) && !toggle.contains(e.target)) closeMenu();
   });
 
-  dropdown.querySelectorAll("[data-action]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const action = btn.dataset.action;
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeMenu();
+  });
 
-      if (action === "profile") {
-        window.location.href = "index.html#profile";
-      }
-      if (action === "history") {
-        window.location.href = "index.html#purchase-history";
-      }
-      if (action === "signout") {
-        window.location.href = "index.html";
-      }
-    });
+  const profileBtn = menu.querySelector('[data-action="profile"]');
+  const historyBtn = menu.querySelector('[data-action="history"]');
+  const signOutBtn = menu.querySelector('[data-action="signout"]');
+
+  profileBtn && profileBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    closeMenu();
+    window.location.href = "index.html#profile";
+  });
+
+  historyBtn && historyBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    closeMenu();
+    window.location.href = "index.html#history";
+  });
+
+  signOutBtn && signOutBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    closeMenu();
+    await doSignOut();
+    window.location.href = "index.html";
   });
 });
+
+// --- Supabase sign out helper (NO auth.js edits) ---
+async function getSupabaseClient() {
+  if (window.supabaseClient?.auth) return window.supabaseClient;
+  if (window._supabase?.auth) return window._supabase;
+  if (window.supabase?.auth && !window.supabase.createClient) return window.supabase;
+
+  if (!window.supabase || typeof window.supabase.createClient !== "function") return null;
+
+  try {
+    const res = await fetch("auth.js", { cache: "no-cache" });
+    const txt = await res.text();
+
+    const url =
+      (txt.match(/supabaseUrl\s*=\s*['"]([^'"]+)['"]/i)?.[1]) ||
+      (txt.match(/SUPABASE[_\s]?URL\s*=\s*['"]([^'"]+)['"]/i)?.[1]) ||
+      (txt.match(/createClient\(\s*['"]([^'"]*supabase\.co[^'"]*)['"]/i)?.[1]);
+
+    const key =
+      (txt.match(/supabaseKey\s*=\s*['"]([^'"]+)['"]/i)?.[1]) ||
+      (txt.match(/SUPABASE[_\s]?(ANON|PUBLIC)[_\s]?KEY\s*=\s*['"]([^'"]+)['"]/i)?.[2]) ||
+      (txt.match(/createClient\([^,]+,\s*['"]([^'"]+)['"]/i)?.[1]);
+
+    if (!url || !key) return null;
+
+    const sb = window.supabase.createClient(url, key);
+    window.supabaseClient = sb;
+    return sb;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function doSignOut() {
+  try {
+    const sb = await getSupabaseClient();
+    if (sb?.auth?.signOut) await sb.auth.signOut();
+  } catch (e) {}
+}
 </script>
 
+<script src="auth.js"></script>
 </body>
 </html>
