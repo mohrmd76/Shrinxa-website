@@ -1421,7 +1421,12 @@
 
       <div id="msg" class="login-msg"></div>
 
+      
       <div class="login-foot">
+        <a href="#" id="forgotPasswordLink">Forgot your password?</a>
+      </div>
+
+<div class="login-foot">
  	 Don’t have an account?
 	  <a href="signup.html">Create one</a>
  	 <br>
@@ -1537,5 +1542,47 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("click", () => close());
 });
 </script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const forgotLink = document.getElementById("forgotPasswordLink");
+  if (!forgotLink) return;
+
+  forgotLink.addEventListener("click", async (e) => {
+    e.preventDefault();
+
+    const emailEl = document.getElementById("email");
+    const msg = document.getElementById("msg");
+    const email = (emailEl?.value || "").trim();
+
+    if (!email) {
+      msg.textContent = "Please enter your email first.";
+      msg.classList.add("err");
+      msg.style.display = "block";
+      return;
+    }
+
+    try {
+      const sb =
+        window.supabaseClient ||
+        window._supabase ||
+        window.supabase;
+
+      await sb.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + "/login.html"
+      });
+
+      msg.textContent = "Password reset email sent. Check your inbox.";
+      msg.classList.remove("err");
+      msg.style.display = "block";
+    } catch (err) {
+      msg.textContent = err.message || "Unable to send reset email.";
+      msg.classList.add("err");
+      msg.style.display = "block";
+    }
+  });
+});
+</script>
+
 </body>
 </html>
