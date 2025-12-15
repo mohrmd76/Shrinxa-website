@@ -1818,5 +1818,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="auth.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const toggle = document.getElementById("userMenuToggle");
+  const dropdown = document.getElementById("userMenuDropdown");
+
+  if (!toggle || !dropdown) return;
+
+  toggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    dropdown.classList.toggle("open");
+  });
+
+  document.addEventListener("click", () => {
+    dropdown.classList.remove("open");
+  });
+
+  dropdown.querySelectorAll("[data-action]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const action = btn.dataset.action;
+
+      if (action === "profile") {
+        window.location.href = "index.html#profile";
+      }
+      if (action === "history") {
+        window.location.href = "index.html#purchase-history";
+      }
+      if (action === "signout") {
+        window.location.href = "index.html";
+      }
+    });
+  });
+});
+</script>
+
 </body>
 </html>
