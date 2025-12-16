@@ -1542,8 +1542,7 @@ async function getSupabaseClient() {
     if (!url || !key) return null;
 
     const sb = window.supabase.createClient(url, key);
-        sb.__supabaseKey = key;
-window.supabaseClient = sb;
+    window.supabaseClient = sb;
     return sb;
   } catch (e) {
     return null;
@@ -1604,26 +1603,39 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!sb) throw new Error("Supabase client not ready.");
 
-      // Call Edge Function directly (works with browser CORS)
-      const endpoint = "https://fgrjojxwevllnjdixiyd.functions.supabase.co/quote-request";
+      const supabaseUrl =
+        sb?.supabaseUrl ||
+        sb?.url ||
+        sb?.rest?.url ||
+        (typeof window.SUPABASE_URL === "string" ? window.SUPABASE_URL : "");
+
+      const anonKey =
+        sb?.supabaseKey ||
+        sb?.key ||
+        sb?.anonKey ||
+        sb?.options?.global?.headers?.apikey ||
+        (typeof window.SUPABASE_ANON_KEY === "string" ? window.SUPABASE_ANON_KEY : "");
+
+      if (!supabaseUrl || !anonKey) {
+        throw new Error("Supabase configuration missing (URL or anon key).");
+      }
+
+      const endpoint = `${supabaseUrl.replace(/\/$/, "")}/functions/v1/quote-request`;
+
       const res = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "apikey": sb?.supabaseKey || sb?.__supabaseKey || "", // fallback
-          "Authorization": `Bearer ${(sb?.supabaseKey || sb?.__supabaseKey || "")}`,
+          "apikey": anonKey,
+          "Authorization": `Bearer ${anonKey}`
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload)
       });
 
-      let data = null;
-      try { data = await res.json(); } catch (e) {}
-      if (!res.ok) {
-        const msg = data?.error || data?.message || data?.statusMessage || "Failed to send request to the Edge Function";
-        throw new Error(msg);
-      }
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(out?.error || out?.message || "Failed to submit request.");
 
-      setStatus(`Request sent. Quotation No: ${data?.quote_no || "N/A"}`);
+      setStatus(`Request sent. Quotation No: ${out?.quote_no || "N/A"}`);
       form.reset();
     } catch (err) {
       setStatus(err.message || "Failed to submit request.", true);
