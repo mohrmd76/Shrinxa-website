@@ -1353,7 +1353,7 @@
 <p>
           Tell us what you use today, and we’ll help you find the best Shrinxa option—often at a better price.
         </p>
-<form class="quote-form">
+<form class="quote-form" id="quoteForm">
 <div>
 <label class="quote-label" for="q-name">Full Name</label>
 <input class="quote-input" id="q-name" name="full_name" placeholder="John Doe" type="text"/>
@@ -1404,11 +1404,10 @@
 <textarea class="quote-textarea" id="q-message" name="message" placeholder="Tell us about your current film or tape, pallet types, and any issues you’d like to solve (breakage, shifting, too much film, etc.)."></textarea>
 </div>
 <div class="full">
-<button class="quote-submit" onclick="alert('This is a demo form. Connect it to your email or CRM when you go live.')" type="button">
-              Submit quote request
-            </button>
+<button class="quote-submit" id="quoteSubmitBtn" type="submit">Submit quote request</button>
 </div>
 </form>
+<div class="quote-helper" id="quoteStatus" style="margin-top:0.7rem; display:none;"></div>
 <div class="quote-helper">Prefer to talk directly? For quotes email sales@shrinxa.com. For general questions email info@shrinxa.com.</div>
 </div>
 </div>
@@ -1559,5 +1558,62 @@ async function doSignOut() {
 </script>
 
 <script src="auth.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("quoteForm");
+  const statusEl = document.getElementById("quoteStatus");
+  if (!form) return;
+
+  const setStatus = (text, isErr=false) => {
+    if (!statusEl) return;
+    statusEl.textContent = text;
+    statusEl.style.display = "block";
+    statusEl.style.color = isErr ? "var(--danger)" : "var(--success)";
+  };
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (statusEl) statusEl.style.display = "none";
+
+    const payload = {
+      full_name: document.getElementById("q-name")?.value?.trim() || "",
+      company_name: document.getElementById("q-company")?.value?.trim() || "",
+      email: document.getElementById("q-email")?.value?.trim() || "",
+      phone: document.getElementById("q-phone")?.value?.trim() || "",
+      address: document.getElementById("q-address")?.value?.trim() || "",
+      postal: document.getElementById("q-postal")?.value?.trim() || "",
+      products: document.getElementById("q-products")?.value || "",
+      usage: document.getElementById("q-usage")?.value || "",
+      message: document.getElementById("q-message")?.value?.trim() || "",
+      page: "contactus.html"
+    };
+
+    if (!payload.full_name || !payload.company_name || !payload.email || !payload.address || !payload.message) {
+      setStatus("Please fill: Full Name, Company Name, Email, Address, Message.", true);
+      return;
+    }
+
+    try {
+      const sb =
+        window.Auth?.supabaseClient ||
+        window.ShrinxaAuth?.supabaseClient ||
+        window.supabaseClient ||
+        (typeof getSupabaseClient === "function" ? await getSupabaseClient() : null);
+
+      if (!sb) throw new Error("Supabase client not ready.");
+
+      const { data, error } = await sb.functions.invoke("quote-request", { body: payload });
+      if (error) throw error;
+
+      setStatus(`Request sent. Quotation No: ${data?.quote_no || "N/A"}`);
+      form.reset();
+    } catch (err) {
+      setStatus(err.message || "Failed to submit request.", true);
+    }
+  });
+});
+</script>
+
 </body>
 </html>
