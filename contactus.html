@@ -1620,6 +1620,9 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error("Supabase configuration missing (URL or anon key).");
       }
 
+      const { data: { session } } = await sb.auth.getSession();
+      const accessToken = session?.access_token || "";
+
       const endpoint = `${supabaseUrl.replace(/\/$/, "")}/functions/v1/quote-request`;
 
       const res = await fetch(endpoint, {
@@ -1627,7 +1630,7 @@ document.addEventListener("DOMContentLoaded", () => {
         headers: {
           "Content-Type": "application/json",
           "apikey": anonKey,
-          "Authorization": `Bearer ${anonKey}`
+          ...(accessToken ? {"Authorization": `Bearer ${accessToken}`} : {})
         },
         body: JSON.stringify(payload)
       });
