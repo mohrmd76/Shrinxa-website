@@ -1543,257 +1543,125 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const forgotLink = document.getElementById("forgotPasswordLink");
-  if (!forgotLink) return;
-
-  async function getSupabaseClient() {
-    // If a client is already exposed by your setup, use it
-    if (window.supabaseClient && window.supabaseClient.auth) return window.supabaseClient;
-    if (window._supabase && window._supabase.auth) return window._supabase;
-    if (window.supabase && window.supabase.auth && !window.supabase.createClient) return window.supabase; // client object
-
-    // If only the library is present (window.supabase.createClient), create a client from auth.js values
-    if (!window.supabase || typeof window.supabase.createClient !== "function") return null;
-
-    try {
-      const res = await fetch("auth.js", { cache: "no-cache" });
-      const txt = await res.text();
-
-      const url =
-        (txt.match(/supabaseUrl\s*=\s*['"]([^'"]+)['"]/i) || [])[1] ||
-        (txt.match(/SUPABASE[_\s]?URL\s*=\s*['"]([^'"]+)['"]/i) || [])[1] ||
-        (txt.match(/createClient\(\s*['"]([^'"]*supabase\.co[^'"]*)['"]/i) || [])[1];
-
-      const key =
-        (txt.match(/supabaseKey\s*=\s*['"]([^'"]+)['"]/i) || [])[1] ||
-        ((txt.match(/SUPABASE[_\s]?(ANON[_\s]?KEY|KEY)\s*=\s*['"]([^'"]+)['"]/i) || [])[2]) ||
-        (txt.match(/createClient\(\s*['"][^'"]+['"]\s*,\s*['"]([^'"]+)['"]\s*\)/i) || [])[1] ||
-        (txt.match(/['"](eyJ[A-Za-z0-9_\-\.]+)['"]/i) || [])[1];
-
-      if (url && key) {
-        window._supabase = window.supabase.createClient(url, key);
-        return window._supabase;
-      }
-    } catch (e) {}
-
-    return null;
-  }
-
-  forgotLink.addEventListener("click", async (e) => {
-    e.preventDefault();
-
-    const emailEl = document.getElementById("email");
-    const msg = document.getElementById("msg");
-    const email = (emailEl?.value || "").trim();
-
-    if (!email) {
-      msg.textContent = "Please enter your email first.";
-      msg.classList.add("err");
-      msg.style.display = "block";
-      return;
-    }
-
-    try {
-      const sb = await getSupabaseClient();
-      if (!sb || !sb.auth) throw new Error("Supabase client not initialized.");
-
-      const { error } = await sb.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + "/login.html"
-      });
-      if (error) throw error;
-
-      msg.textContent = "Password reset email sent. Check your inbox (and spam).";
-      msg.classList.remove("err");
-      msg.style.display = "block";
-    } catch (err) {
-      msg.textContent = err.message || "Unable to send reset email.";
-      msg.classList.add("err");
-      msg.style.display = "block";
-    }
-  });
-});
-</script>
-
 
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
-  const params = new URLSearchParams(window.location.search);
-  const hash = new URLSearchParams(window.location.hash.replace("#","?"));
+  const msg = document.getElementById("msg");
+  const form = document.getElementById("login-form");
+
+  const show = (text, isErr=false) => {
+    if (!msg) return;
+    msg.textContent = text;
+    msg.classList.toggle("err", !!isErr);
+    msg.style.display = "block";
+  };
+
+  // Use the ONE Supabase client from auth.js
+  const sb = (window.Auth && window.Auth.supabaseClient) || (window.ShrinxaAuth && window.ShrinxaAuth.supabaseClient);
+  if (!sb) return;
+
+  // -------- Password Recovery Mode (from email link) --------
+  const params = new URLSearchParams(location.search);
+  const hash = new URLSearchParams(location.hash.replace("#","?"));
   const type = params.get("type") || hash.get("type");
 
-  if (type !== "recovery") return;
-  // Ensure we have a valid recovery session from the URL so updateUser works
-  async function ensureRecoverySession(sb) {
-    // 1) PKCE flow: ?code=...
-    const code = params.get("code");
-    if (code && sb.auth.exchangeCodeForSession) {
-      const { error } = await sb.auth.exchangeCodeForSession(code);
-      if (error) throw error;
-      return;
-    }
-
-    // 2) Implicit flow: #access_token=...&refresh_token=...
-    const at = hash.get("access_token");
-    const rt = hash.get("refresh_token");
-    if (at && rt && sb.auth.setSession) {
-      const { error } = await sb.auth.setSession({ access_token: at, refresh_token: rt });
-      if (error) throw error;
-      return;
-    }
-
-    // 3) Otherwise rely on existing session (some setups auto-detect)
-  }
-
-
-  const form = document.getElementById("login-form");
-  const msg = document.getElementById("msg");
-  const emailField = document.getElementById("email");
-  const passField = document.getElementById("password");
-
-  emailField.parentElement.style.display = "none";
-  passField.parentElement.style.display = "none";
-
-  const newPassWrap = document.createElement("div");
-  newPassWrap.className = "login-field";
-  newPassWrap.innerHTML = `
-    <label for="new-password">New Password</label>
-    <input id="new-password" type="password" required />
-  `;
-
-  const confirmWrap = document.createElement("div");
-  confirmWrap.className = "login-field";
-  confirmWrap.innerHTML = `
-    <label for="confirm-password">Confirm Password</label>
-    <input id="confirm-password" type="password" required />
-  `;
-
-  form.insertBefore(newPassWrap, form.querySelector(".login-actions"));
-  form.insertBefore(confirmWrap, form.querySelector(".login-actions"));
-
-  const btn = document.getElementById("btnLogin");
-  btn.textContent = "Update password";
-
-  msg.textContent = "Enter a new password to complete reset.";
-  msg.style.display = "block";
-
-  form.onsubmit = async (e) => {
-    e.preventDefault();
-
-    const p1 = document.getElementById("new-password").value.trim();
-    const p2 = document.getElementById("confirm-password").value.trim();
-
-    if (!p1 || p1.length < 6) {
-      msg.textContent = "Password must be at least 6 characters.";
-      msg.classList.add("err");
-      msg.style.display = "block";
-      return;
-    }
-    if (p1 !== p2) {
-      msg.textContent = "Passwords do not match.";
-      msg.classList.add("err");
-      msg.style.display = "block";
-      return;
-    }
-
+  if (type === "recovery") {
+    // Ensure session is established from URL (PKCE or implicit)
     try {
-      if (!window._supabase && window.supabase?.createClient) {
-        const res = await fetch("auth.js", { cache: "no-cache" });
-        const txt = await res.text();
-        const url = (txt.match(/supabaseUrl\s*=\s*['"]([^'"]+)['"]/i)||[])[1];
-        const key = (txt.match(/supabaseKey\s*=\s*['"]([^'"]+)['"]/i)||[])[1];
-        if (url && key) window._supabase = window.supabase.createClient(url, key);
+      const code = params.get("code");
+      if (code && sb.auth.exchangeCodeForSession) {
+        const { error } = await sb.auth.exchangeCodeForSession(code);
+        if (error) throw error;
+      } else {
+        const at = hash.get("access_token");
+        const rt = hash.get("refresh_token");
+        if (at && rt && sb.auth.setSession) {
+          const { error } = await sb.auth.setSession({ access_token: at, refresh_token: rt });
+          if (error) throw error;
+        }
       }
-
-      const sb = (window.Auth && window.Auth.supabaseClient) || (window.ShrinxaAuth && window.ShrinxaAuth.supabaseClient) || window._supabase || window.supabaseClient;
-      if (!sb) throw new Error("Supabase not ready");
-
-      await ensureRecoverySession(sb);
-
-      const { error } = await sb.auth.updateUser({ password: p1 });
-      if (error) throw error;
-
-      msg.textContent = "Password updated. Redirecting to sign in...";
-      msg.classList.remove("err");
-      msg.style.display = "block";
-
-      setTimeout(() => {
-        window.location.href = "login.html";
-      }, 1500);
-    } catch (err) {
-      msg.textContent = err.message || "Unable to update password.";
-      msg.classList.add("err");
-      msg.style.display = "block";
+    } catch (e) {
+      show(e?.message || "Recovery link expired. Please request a new reset email.", true);
+      return;
     }
-  };
-});
-</script>
 
+    // Swap UI (no CSS changes; uses existing classes)
+    const emailField = document.getElementById("email");
+    const passField = document.getElementById("password");
+    if (emailField?.parentElement) emailField.parentElement.style.display = "none";
+    if (passField?.parentElement) passField.parentElement.style.display = "none";
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-const supabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+    // Remove any previous inserted reset fields (in case of reload)
+    form.querySelectorAll("[data-reset-field]").forEach(n => n.remove());
 
-supabase.auth.onAuthStateChange(async (event, session) => {
-  if (event === "PASSWORD_RECOVERY") {
-    const form = document.getElementById("login-form");
-    const msg = document.getElementById("msg");
-
-    form.innerHTML = `
-      <div class="login-field">
-        <label>New Password</label>
-        <input id="newPass" type="password" required />
-      </div>
-      <div class="login-field">
-        <label>Confirm Password</label>
-        <input id="confirmPass" type="password" required />
-      </div>
-      <div class="login-actions">
-        <button id="updateBtn" class="btn btn-primary">Update Password</button>
-      </div>
+    const newWrap = document.createElement("div");
+    newWrap.className = "login-field";
+    newWrap.setAttribute("data-reset-field","1");
+    newWrap.innerHTML = `
+      <label for="new-password">New Password</label>
+      <input id="new-password" type="password" autocomplete="new-password" required />
     `;
 
-    document.getElementById("updateBtn").onclick = async () => {
-      const p1 = document.getElementById("newPass").value;
-      const p2 = document.getElementById("confirmPass").value;
+    const confirmWrap = document.createElement("div");
+    confirmWrap.className = "login-field";
+    confirmWrap.setAttribute("data-reset-field","1");
+    confirmWrap.innerHTML = `
+      <label for="confirm-password">Confirm Password</label>
+      <input id="confirm-password" type="password" autocomplete="new-password" required />
+    `;
 
-      if (!p1 || p1 !== p2) {
-        msg.textContent = "Passwords do not match";
-        msg.style.display = "block";
-        return;
+    const actions = form.querySelector(".login-actions");
+    form.insertBefore(newWrap, actions);
+    form.insertBefore(confirmWrap, actions);
+
+    const btn = document.getElementById("btnLogin");
+    if (btn) btn.textContent = "Update password";
+
+    show("Enter a new password to complete reset.");
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const p1 = (document.getElementById("new-password")?.value || "").trim();
+      const p2 = (document.getElementById("confirm-password")?.value || "").trim();
+
+      if (p1.length < 6) return show("Password must be at least 6 characters.", true);
+      if (p1 !== p2) return show("Passwords do not match.", true);
+
+      try {
+        const { error } = await sb.auth.updateUser({ password: p1 });
+        if (error) throw error;
+
+        await sb.auth.signOut();
+        show("Password updated. Please sign in.");
+        setTimeout(() => location.href = "login.html", 1200);
+      } catch (err) {
+        show(err?.message || "Unable to update password.", true);
       }
-
-      const { error } = await supabase.auth.updateUser({ password: p1 });
-      if (error) {
-        msg.textContent = error.message;
-        msg.style.display = "block";
-        return;
-      }
-
-      await supabase.auth.signOut();
-      msg.textContent = "Password updated. Please sign in.";
-      msg.style.display = "block";
-
-      setTimeout(() => window.location.href = "login.html", 1500);
     };
+
+    return; // stop normal login handler binding below (your existing submit handler stays, but we override onsubmit)
+  }
+
+  // -------- Forgot Password Link --------
+  const forgotLink = document.getElementById("forgotPasswordLink");
+  if (forgotLink) {
+    forgotLink.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const email = (document.getElementById("email")?.value || "").trim();
+      if (!email) return show("Please enter your email first.", true);
+
+      try {
+        const { error } = await sb.auth.resetPasswordForEmail(email, {
+          redirectTo: location.origin + "/login.html"
+        });
+        if (error) throw error;
+        show("Password reset email sent. Check your inbox (and spam).");
+      } catch (err) {
+        show(err?.message || "Unable to send reset email.", true);
+      }
+    });
   }
 });
-
-async function forgotPassword() {
-  const email = document.getElementById("email").value;
-  if (!email) return alert("Enter your email");
-
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.origin + "/login.html"
-  });
-
-  if (error) alert(error.message);
-  else alert("Reset email sent");
-}
 </script>
 
 </body>
