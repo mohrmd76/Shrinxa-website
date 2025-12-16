@@ -1285,7 +1285,7 @@
     margin: 12mm;
   }
 }
-    .dropdown-menu.open{display:block;}
+    
 </style>
 </head>
 <body>
@@ -1721,7 +1721,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // dropdown toggle (mobile friendly)
   document.addEventListener("click", (e) => {
     const btn = e.target.closest(".nav-dropdown > button");
-    const menu = document.querySelector(".nav-dropdown .dropdown-menu");
+    const menu = document.querySelector(".nav-dropdown .nav-dropdown-menu");
     if (!btn && menu && !menu.contains(e.target)) {
       menu.classList.remove("open");
       return;
@@ -1916,6 +1916,53 @@ async function doSignOut() {
     if (sb?.auth?.signOut) await sb.auth.signOut();
   } catch (e) {}
 }
+
+async function initAuthUI() {
+  try {
+    const sb = await getSupabaseClient();
+    if (!sb?.auth) return;
+
+    const userMenu = document.getElementById("user-menu");
+    const greeting = document.getElementById("user-greeting");
+    const signInLink = document.querySelector(".nav-signin");
+
+    const apply = (email) => {
+      if (email) {
+        if (userMenu) userMenu.style.display = "flex";
+        if (greeting) greeting.textContent = `Hi ${email}`;
+        if (signInLink) signInLink.style.display = "none";
+      } else {
+        if (userMenu) userMenu.style.display = "none";
+        if (signInLink) signInLink.style.display = "";
+      }
+    };
+
+    // Initial state
+    if (sb.auth.getSession) {
+      const { data } = await sb.auth.getSession();
+      apply(data?.session?.user?.email || null);
+    } else if (sb.auth.getUser) {
+      const { data } = await sb.auth.getUser();
+      apply(data?.user?.email || null);
+    } else {
+      apply(null);
+    }
+
+    // Live updates
+    if (sb.auth.onAuthStateChange) {
+      sb.auth.onAuthStateChange((_event, session) => {
+        apply(session?.user?.email || null);
+      });
+    }
+  } catch (e) {
+    // ignore
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  initAuthUI();
+});
+
 </script>
 
 <script src="auth.js"></script>
