@@ -1730,5 +1730,71 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 </script>
 
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+
+supabase.auth.onAuthStateChange(async (event, session) => {
+  if (event === "PASSWORD_RECOVERY") {
+    const form = document.getElementById("login-form");
+    const msg = document.getElementById("msg");
+
+    form.innerHTML = `
+      <div class="login-field">
+        <label>New Password</label>
+        <input id="newPass" type="password" required />
+      </div>
+      <div class="login-field">
+        <label>Confirm Password</label>
+        <input id="confirmPass" type="password" required />
+      </div>
+      <div class="login-actions">
+        <button id="updateBtn" class="btn btn-primary">Update Password</button>
+      </div>
+    `;
+
+    document.getElementById("updateBtn").onclick = async () => {
+      const p1 = document.getElementById("newPass").value;
+      const p2 = document.getElementById("confirmPass").value;
+
+      if (!p1 || p1 !== p2) {
+        msg.textContent = "Passwords do not match";
+        msg.style.display = "block";
+        return;
+      }
+
+      const { error } = await supabase.auth.updateUser({ password: p1 });
+      if (error) {
+        msg.textContent = error.message;
+        msg.style.display = "block";
+        return;
+      }
+
+      await supabase.auth.signOut();
+      msg.textContent = "Password updated. Please sign in.";
+      msg.style.display = "block";
+
+      setTimeout(() => window.location.href = "login.html", 1500);
+    };
+  }
+});
+
+async function forgotPassword() {
+  const email = document.getElementById("email").value;
+  if (!email) return alert("Enter your email");
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + "/login.html"
+  });
+
+  if (error) alert(error.message);
+  else alert("Reset email sent");
+}
+</script>
+
 </body>
 </html>
