@@ -1286,232 +1286,201 @@
   }
 }
     .dropdown-menu.open{display:block;}
+
+  /* Hide email greeting if any script injects it */
+  .user-greeting, #userGreeting, #userEmailGreeting { display:none !important; }
+
 </style>
 </head>
 <body>
-<header>
-<div class="nav-inner">
-<div class="nav-left">
-<div class="nav-logo">
-<img alt="Shrinxa logo" src="shrinxa_transparent_4000px.png"/>
-</div>
-<div class="nav-brand-text">
-<strong>SHRINXA</strong>
-<span>Premium Packaging Solutions</span>
-</div>
-</div>
 <nav class="nav-links">
 <a class="nav-anchor nav-home" data-nav="home" href="index.html">Home</a>
 <div class="nav-dropdown">
-<button aria-expanded="false" aria-haspopup="true" class="nav-dropdown-toggle" type="button">
+  <button class="nav-dropdown-toggle" type="button" aria-haspopup="true" aria-expanded="false">
     Products <span aria-hidden="true">▾</span>
-</button>
-<div class="nav-dropdown-menu" role="menu">
-<a class="nav-dropdown-item" href="products.html?cat=all" role="menuitem">All Products</a>
-<a class="nav-dropdown-item" href="products.html?cat=stretch" role="menuitem">Stretch Wrap</a>
-<a class="nav-dropdown-item" href="products.html?cat=prestretch" role="menuitem">Pre-Stretch Wrap</a>
-<a class="nav-dropdown-item" href="products.html?cat=tape" role="menuitem">Tape Rolls</a>
-</div>
+  </button>
+  <div class="nav-dropdown-menu" role="menu">
+    <a class="nav-dropdown-item" role="menuitem" href="products.html?cat=all">All Products</a>
+    <a class="nav-dropdown-item" role="menuitem" href="products.html?cat=stretch">Stretch Wrap</a>
+    <a class="nav-dropdown-item" role="menuitem" href="products.html?cat=prestretch">Pre-Stretch Wrap</a>
+    <a class="nav-dropdown-item" role="menuitem" href="products.html?cat=tape">Tape Rolls</a>
+  </div>
 </div>
 <a class="nav-anchor nav-about" data-nav="about" href="about.html">About</a>
 <a class="nav-anchor nav-delivery" data-nav="delivery" href="delivery.html">Delivery</a>
 <a class="nav-anchor nav-contact" data-nav="contact" href="contactus.html">Contact us</a>
+
 <a class="nav-anchor nav-signin" data-nav="signin" href="login.html">Sign in</a></nav>
-<div class="nav-right"><div class="user-menu" id="user-menu" style="display:none; position:relative;"><button class="user-menu-toggle" id="userMenuToggle" type="button"><span id="userMenuName">Profile</span> ▾</button><div class="user-menu-dropdown" id="userMenuDropdown"><button class="user-menu-item" data-action="profile" type="button">Profile</button><button class="user-menu-item" data-action="history" type="button">Purchase History</button><button class="user-menu-item" data-action="signout" type="button">Sign out</button></div></div><button class="cart-chip" id="openCartBtn">
-      🧺 Cart <span class="badge" id="cartCount">0</span>
-</button></div></div>
-</header>
 
-<main class="page">
-  <section class="hero">
-    <h1>Your Cart</h1>
-    <p class="subtle">Review your items. Prices shown are based on your current tier.</p>
-  </section>
+<main class="container" style="max-width: 1200px; padding: 40px 20px;">
+  <h1 class="page-title" style="margin-bottom: 10px;">Cart</h1>
+  <p class="page-subtitle" style="margin-top: 0;">Your saved items (synced with your account).</p>
 
-  <section class="content">
-    <div class="card" style="padding:16px;">
-      <div id="cartStatus" class="subtle">Loading…</div>
-      <div id="cartTableWrap" style="overflow:auto; margin-top:12px;"></div>
+  <div class="card" style="margin-top: 20px;">
+    <div class="card-header" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+      <h2 style="margin:0;">Items</h2>
+      <a class="btn" href="products.html">Continue shopping</a>
+    </div>
 
-      <div style="display:flex; gap:12px; justify-content:flex-end; align-items:center; margin-top:16px; flex-wrap:wrap;">
-        <div class="subtle" id="cartTotals"></div>
-        <button id="checkoutBtn" class="btn primary" type="button">Checkout</button>
+    <div class="card-body">
+      <div id="cartStatus" style="color:#9fb4d6; margin-bottom:12px;">Loading…</div>
+
+      <div style="overflow:auto;">
+        <table style="width:100%; border-collapse:collapse; min-width:520px;">
+          <thead>
+            <tr>
+              <th style="text-align:left; padding:10px; border-bottom:1px solid rgba(255,255,255,.10);">Product</th>
+              <th style="text-align:right; padding:10px; border-bottom:1px solid rgba(255,255,255,.10);">Qty</th>
+              <th style="text-align:right; padding:10px; border-bottom:1px solid rgba(255,255,255,.10);">Price</th>
+              <th style="text-align:right; padding:10px; border-bottom:1px solid rgba(255,255,255,.10);">Line total</th>
+            </tr>
+          </thead>
+          <tbody id="cartRows"></tbody>
+        </table>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; margin-top:14px;">
+        <div style="min-width:280px; border-top:1px solid rgba(255,255,255,.10); padding-top:12px;">
+          <div style="display:flex; justify-content:space-between; margin:6px 0;">
+            <span>Subtotal</span><strong id="subtotal">$0.00</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin:6px 0;">
+            <span>HST (13%)</span><strong id="hst">$0.00</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin:10px 0; font-size:1.1em;">
+            <span>Total</span><strong id="total">$0.00</strong>
+          </div>
+          <div style="margin-top:10px; color:#9fb4d6; font-size:.95em;">
+            Checkout flow will be added next (payment / invoice).
+          </div>
+        </div>
       </div>
     </div>
-  </section>
+  </div>
 </main>
 
 <footer>
   © <span id="year"></span> Shrinxa. All rights reserved.
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
 <script>
-(function(){
-  function setCartCount(n) {
-    const el = document.getElementById('cartCount');
-    const val = Math.max(0, parseInt(n || 0, 10) || 0);
-    if (el) el.textContent = String(val);
-    try { localStorage.setItem('shrinxa_cart_count', String(val)); } catch(e) {}
+  // Keep only ONE user greeting (hide any extra email greeting if injected)
+  const style = document.createElement("style");
+  style.textContent = ".user-greeting, #userGreeting, #userEmailGreeting { display:none !important; }";
+  document.head.appendChild(style);
+
+  function setCartCount(count) {
+    const el = document.getElementById("cartCount");
+    if (el) el.textContent = String(count || 0);
+    try { localStorage.setItem("shrinxa_cart_count", String(count || 0)); } catch (e) {}
   }
-  (function initCartCount(){
-    let saved = 0;
-    try { saved = parseInt(localStorage.getItem('shrinxa_cart_count') || '0', 10) || 0; } catch(e) {}
-    setCartCount(saved);
-  })();
 
-  const openCartBtn = document.getElementById('openCartBtn');
-  if (openCartBtn) openCartBtn.addEventListener('click', () => { window.location.href = 'cart.html'; });
-
-  let _sb = null;
   async function getSupabaseClient() {
-    if (_sb) return _sb;
-    const res = await fetch('auth.js', { cache: 'no-cache' });
+    if (window._supabase) return window._supabase;
+    if (window.supabaseClient) return window.supabaseClient;
+
+    const res = await fetch("auth.js", { cache: "no-cache" });
     const txt = await res.text();
 
     const url =
-      (txt.match(/supabaseUrl\s*=\s*['"]([^'"]+)['"]/i)?.[1]) ||
-      (txt.match(/SUPABASE[_\s]?URL\s*=\s*['"]([^'"]+)['"]/i)?.[1]) ||
-      (txt.match(/createClient\(\s*['"]([^'"]*supabase\.co[^'"]*)['"]/i)?.[1]);
+      (txt.match(/supabaseUrl\s*=\s*["']([^"']+)["']/i)?.[1]) ||
+      (txt.match(/SUPABASE[_\s]?URL\s*=\s*["']([^"']+)["']/i)?.[1]) ||
+      (txt.match(/createClient\(\s*["']([^"']*supabase\.co[^"']*)["']/i)?.[1]);
 
     const key =
-      (txt.match(/supabaseAnonKey\s*=\s*['"]([^'"]+)['"]/i)?.[1]) ||
-      (txt.match(/SUPABASE[_\s]?(ANON[_\s]?KEY|KEY)\s*=\s*['"]([^'"]+)['"]/i)?.[2]) ||
-      (txt.match(/createClient\(\s*['"][^'"]+['"]\s*,\s*['"]([^'"]+)['"]/i)?.[1]);
+      (txt.match(/supabaseAnonKey\s*=\s*["']([^"']+)["']/i)?.[1]) ||
+      (txt.match(/SUPABASE[_\s]?ANON[_\s]?KEY\s*=\s*["']([^"']+)["']/i)?.[1]) ||
+      (txt.match(/createClient\(\s*["'][^"']+["']\s*,\s*["']([^"']+)["']/i)?.[1]);
 
-    if (!url || !key) throw new Error('Supabase URL/Key not found in auth.js');
-    _sb = supabase.createClient(url, key);
-    return _sb;
+    if (!url || !key || !window.supabase?.createClient) throw new Error("Supabase client not available");
+    window._supabase = window.supabase.createClient(url, key);
+    return window._supabase;
   }
 
-  async function applyUserToHeader(sb) {
-    const signInLink = document.getElementById('signInLink');
-    const userMenu = document.getElementById('userMenu');
-    const userMenuName = document.getElementById('userMenuName');
-    const userMenuEmail = document.getElementById('userMenuEmail');
-
-    const { data: { user } } = await sb.auth.getUser();
-
-    if (!user) {
-      if (signInLink) signInLink.style.display = '';
-      if (userMenu) userMenu.style.display = 'none';
-      if (userMenuEmail) userMenuEmail.textContent = '';
-      return;
-    }
-
-    if (signInLink) signInLink.style.display = 'none';
-    if (userMenu) userMenu.style.display = '';
-
-    let displayName = user.email || 'Account';
-    try {
-      const prof = await sb.from('profiles').select('full_name').eq('id', user.id).maybeSingle();
-      if (prof?.data?.full_name) displayName = prof.data.full_name;
-    } catch(e) {}
-
-    if (userMenuName) userMenuName.textContent = 'Hi ' + displayName;
-    if (userMenuEmail) userMenuEmail.textContent = user.email || '';
+  function money(n) {
+    const x = Number(n) || 0;
+    return x.toLocaleString(undefined, { style: "currency", currency: "CAD" });
   }
 
   async function loadCart() {
-    const statusEl = document.getElementById('cartStatus');
-    const tableWrap = document.getElementById('cartTableWrap');
-    const totalsEl = document.getElementById('cartTotals');
+    try {
+      const saved = parseInt(localStorage.getItem("shrinxa_cart_count") || "0", 10);
+      if (!Number.isNaN(saved)) setCartCount(saved);
+    } catch (e) {}
+
+    const statusEl = document.getElementById("cartStatus");
+    const rowsEl = document.getElementById("cartRows");
 
     try {
       const sb = await getSupabaseClient();
-      await applyUserToHeader(sb);
-
-      const { data: { user } } = await sb.auth.getUser();
-      if (!user) {
-        if (statusEl) statusEl.textContent = 'Please sign in to view your cart.';
+      const { data: sessData } = await sb.auth.getSession();
+      const session = sessData?.session;
+      if (!session) {
+        statusEl.textContent = "Please sign in to view your server cart.";
         return;
       }
 
-      const candidates = ['cart_items', 'cart', 'carts', 'shopping_cart_items'];
-      let rows = null;
-      let usedTable = null;
+      const tables = ["cart_items", "cart", "cart_item"];
+      let data = null;
 
-      for (const t of candidates) {
-        try {
-          const r = await sb.from(t)
-            .select('id, product_id, product_name, name, qty, quantity, unit_price, price, created_at')
-            .order('created_at', { ascending: false });
-          if (!r.error) {
-            rows = r.data || [];
-            usedTable = t;
-            break;
-          }
-        } catch(e) {}
+      for (const t of tables) {
+        const resp = await sb.from(t).select("*");
+        if (!resp.error && Array.isArray(resp.data)) {
+          data = resp.data;
+          break;
+        }
       }
 
-      if (!usedTable) {
-        if (statusEl) statusEl.textContent = 'Cart table not found on server yet.';
+      if (!data) {
+        statusEl.textContent = "Cart table not found or no permission.";
         return;
       }
 
-      const items = (rows || []).map(r => {
-        const qty = parseInt(r.qty ?? r.quantity ?? 0, 10) || 0;
-        const name = r.product_name || r.name || (r.product_id ? String(r.product_id) : 'Item');
-        const unit = parseFloat(r.unit_price ?? r.price ?? 0) || 0;
-        return { name, qty, unit };
-      }).filter(x => x.qty > 0);
-
-      const count = items.reduce((a, x) => a + x.qty, 0);
+      const count = data.reduce((sum, r) => sum + (Number(r.qty) || 0), 0);
       setCartCount(count);
 
-      if (items.length === 0) {
-        if (statusEl) statusEl.textContent = 'Your cart is empty.';
-        if (tableWrap) tableWrap.innerHTML = '';
-        if (totalsEl) totalsEl.textContent = '';
-        return;
+      rowsEl.innerHTML = "";
+      let subtotal = 0;
+
+      if (data.length === 0) {
+        statusEl.textContent = "Your cart is empty.";
+      } else {
+        statusEl.textContent = "";
       }
 
-      if (statusEl) statusEl.textContent = '';
+      for (const row of data) {
+        const name = row.product_name || row.name || row.title || row.sku || row.product_id || "Item";
+        const qty = Number(row.qty) || 0;
+        const price = Number(row.price ?? row.unit_price ?? row.retail_price ?? 0) || 0;
+        const line = qty * price;
+        subtotal += line;
 
-      const subtotal = items.reduce((a, x) => a + (x.qty * x.unit), 0);
+        const tr = document.createElement("tr");
+        tr.innerHTML =
+          '<td style="padding:10px; border-bottom:1px solid rgba(255,255,255,.08);">' + String(name) + '</td>' +
+          '<td style="padding:10px; border-bottom:1px solid rgba(255,255,255,.08); text-align:right;">' + qty + '</td>' +
+          '<td style="padding:10px; border-bottom:1px solid rgba(255,255,255,.08); text-align:right;">' + money(price) + '</td>' +
+          '<td style="padding:10px; border-bottom:1px solid rgba(255,255,255,.08); text-align:right;">' + money(line) + '</td>';
+        rowsEl.appendChild(tr);
+      }
+
       const hst = subtotal * 0.13;
       const total = subtotal + hst;
+      document.getElementById("subtotal").textContent = money(subtotal);
+      document.getElementById("hst").textContent = money(hst);
+      document.getElementById("total").textContent = money(total);
 
-      const esc = (s) => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
-
-      const table = `
-        <table style="width:100%; border-collapse:collapse;">
-          <thead>
-            <tr>
-              <th style="text-align:left; padding:10px; border-bottom:1px solid rgba(255,255,255,.15);">Item</th>
-              <th style="text-align:right; padding:10px; border-bottom:1px solid rgba(255,255,255,.15);">Qty</th>
-              <th style="text-align:right; padding:10px; border-bottom:1px solid rgba(255,255,255,.15);">Unit</th>
-              <th style="text-align:right; padding:10px; border-bottom:1px solid rgba(255,255,255,.15);">Line</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${items.map(it => `
-              <tr>
-                <td style="padding:10px; border-bottom:1px solid rgba(255,255,255,.08);">${esc(it.name)}</td>
-                <td style="padding:10px; text-align:right; border-bottom:1px solid rgba(255,255,255,.08);">${it.qty}</td>
-                <td style="padding:10px; text-align:right; border-bottom:1px solid rgba(255,255,255,.08);">$${it.unit.toFixed(2)}</td>
-                <td style="padding:10px; text-align:right; border-bottom:1px solid rgba(255,255,255,.08);">$${(it.qty*it.unit).toFixed(2)}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      `;
-
-      if (tableWrap) tableWrap.innerHTML = table;
-      if (totalsEl) totalsEl.textContent = `Subtotal $${subtotal.toFixed(2)} · HST $${hst.toFixed(2)} · Total $${total.toFixed(2)}`;
     } catch (e) {
-      if (statusEl) statusEl.textContent = String(e?.message || e);
+      statusEl.textContent = "Failed to load cart.";
     }
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener("DOMContentLoaded", () => {
+    const y = document.getElementById("year");
+    if (y) y.textContent = String(new Date().getFullYear());
     loadCart();
-    const checkoutBtn = document.getElementById('checkoutBtn');
-    if (checkoutBtn) checkoutBtn.addEventListener('click', () => {
-      alert('Checkout will be connected next.');
-    });
   });
-})();
 </script>
 </body>
 </html>
