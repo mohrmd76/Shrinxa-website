@@ -1542,7 +1542,8 @@ async function getSupabaseClient() {
     if (!url || !key) return null;
 
     const sb = window.supabase.createClient(url, key);
-    window.supabaseClient = sb;
+        sb.__supabaseKey = key;
+window.supabaseClient = sb;
     return sb;
   } catch (e) {
     return null;
@@ -1603,8 +1604,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!sb) throw new Error("Supabase client not ready.");
 
-      const { data, error } = await sb.functions.invoke("quote-request", { body: payload });
-      if (error) throw error;
+      // Call Edge Function directly (works with browser CORS)
+      const endpoint = "https://fgrjojxwevllnjdixiyd.functions.supabase.co/quote-request";
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": sb?.supabaseKey || sb?.__supabaseKey || "", // fallback
+          "Authorization": `Bearer ${(sb?.supabaseKey || sb?.__supabaseKey || "")}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      let data = null;
+      try { data = await res.json(); } catch (e) {}
+      if (!res.ok) {
+        const msg = data?.error || data?.message || data?.statusMessage || "Failed to send request to the Edge Function";
+        throw new Error(msg);
+      }
 
       setStatus(`Request sent. Quotation No: ${data?.quote_no || "N/A"}`);
       form.reset();
