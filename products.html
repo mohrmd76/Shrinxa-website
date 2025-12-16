@@ -1709,115 +1709,6 @@
 </footer>
 
 <script>
-
-
-  // -------------------------------
-  // SERVER CART (Supabase Edge Function)
-  // -------------------------------
-  async function addItemToServerCart({ productId, name, unitPrice, qty }) {
-    const sb = await getSupabaseClient();
-    const { data: sessionData } = await sb.auth.getSession();
-    const accessToken = sessionData?.session?.access_token;
-
-    if (!accessToken) {
-      // not signed in
-      window.location.href = "login.html";
-      return { ok: false, error: "Not signed in" };
-    }
-
-    // We stored these inside getSupabaseClient
-    const supabaseUrl = window.__SUPABASE_URL;
-    const anonKey = window.__SUPABASE_ANON_KEY;
-
-    const url = `${supabaseUrl}/functions/v1/cart-add`;
-
-    const resp = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${accessToken}`,
-        "apikey": anonKey,
-      },
-      body: JSON.stringify({
-        product_id: productId,
-        quantity: qty,
-        name,
-        unit_price: unitPrice,
-      }),
-    });
-
-    const outText = await resp.text();
-    let outJson = null;
-    try { outJson = outText ? JSON.parse(outText) : null; } catch {}
-
-    if (!resp.ok) {
-      const msg = outJson?.error || outJson?.message || outText || "Cart error";
-      throw new Error(msg);
-    }
-    return outJson || { ok: true };
-  }
-
-  function getQtyFromCard(card) {
-    const input = card.querySelector(".qty-input");
-    const v = parseInt((input?.value || "1"), 10);
-    return Number.isFinite(v) && v > 0 ? v : 1;
-  }
-
-  function bumpCartBadge(by) {
-    const el = document.getElementById("cartCount");
-    if (!el) return;
-    const cur = parseInt(el.textContent || "0", 10) || 0;
-    el.textContent = String(cur + (by || 0));
-  }
-
-  function showCartError(msg) {
-    alert(msg);
-  }
-
-  async function wireCartButtons() {
-    const buttons = document.querySelectorAll(".btn-add");
-    buttons.forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        try {
-          const card = btn.closest(".product-card");
-          if (!card) return;
-
-          const productId = card.getAttribute("data-id");
-          const name = card.getAttribute("data-name") || "";
-          const priceAttr = card.getAttribute("data-price") || "0";
-          const unitPrice = parseFloat(priceAttr) || 0;
-          const qty = getQtyFromCard(card);
-
-          if (!productId) {
-            showCartError("Missing product id");
-            return;
-          }
-
-          btn.disabled = true;
-          btn.textContent = "Adding...";
-
-          const res = await addItemToServerCart({ productId, name, unitPrice, qty });
-
-          // If server returns a count, use it. Otherwise just increment locally.
-          const serverCount = res?.cart_count ?? res?.count ?? null;
-          if (serverCount !== null && serverCount !== undefined) {
-            const el = document.getElementById("cartCount");
-            if (el) el.textContent = String(serverCount);
-          } else {
-            bumpCartBadge(qty);
-          }
-
-          btn.textContent = "Added ✓";
-          setTimeout(() => { btn.textContent = "Add to cart"; btn.disabled = false; }, 800);
-        } catch (e) {
-          btn.disabled = false;
-          btn.textContent = "Add to cart";
-          showCartError(String(e?.message || e));
-        }
-      });
-    });
-  }
-
 document.addEventListener("DOMContentLoaded", () => {
   const y = document.getElementById("year");
   if (y) y.textContent = new Date().getFullYear();
@@ -2013,8 +1904,6 @@ async function getSupabaseClient() {
 
     const sb = window.supabase.createClient(url, key);
     window.supabaseClient = sb;
-    window.__SUPABASE_URL = url;
-    window.__SUPABASE_ANON_KEY = key;
     return sb;
   } catch (e) {
     return null;
@@ -2072,10 +1961,111 @@ async function initAuthUI() {
 
 document.addEventListener("DOMContentLoaded", () => {
   initAuthUI();
-  wireCartButtons();
 });
+
 </script>
 
 <script src="auth.js"></script>
+
+<script>
+(() => {
+  const SUPABASE_URL = "https://fgrjojxwevllnjdixiyd.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_k5D9JKO5lMCHlju-WhlSAQ_XEiEruT_";
+  const CART_ADD_URL = `${SUPABASE_URL}/functions/v1/cart-add`;
+
+  const cartCountEl = document.getElementById("cartCount");
+
+  function setCartCount(n) {
+    if (cartCountEl) cartCountEl.textContent = String(Number(n) || 0);
+  }
+
+  async function getAccessToken() {
+    const sb = window._supabase || window.supabaseClient || window.SupabaseClient || window.supabase;
+    if (!sb || !sb.auth || !sb.auth.getSession) return null;
+    const { data, error } = await sb.auth.getSession();
+    if (error) return null;
+    return data?.session?.access_token || null;
+  }
+
+  function showCartError(msg) {
+    // Try to reuse an existing message area if present; otherwise alert
+    const el = document.getElementById("cartError") || document.querySelector(".cart-error");
+    if (el) {
+      el.textContent = msg;
+      el.style.display = "block";
+    } else {
+      alert(msg);
+    }
+  }
+
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".btn-add");
+    if (!btn) return;
+
+    e.preventDefault();
+
+    const card = btn.closest(".product-card");
+    if (!card) return;
+
+    const qtyInput = card.querySelector(".qty-input");
+    const qty = Math.max(1, parseInt(qtyInput?.value || "1", 10) || 1);
+
+    const productId = card.dataset.id || card.getAttribute("data-id") || "";
+    const productName = card.dataset.name || card.getAttribute("data-name") || "";
+    const productType = card.dataset.type || card.getAttribute("data-type") || "";
+
+    const token = await getAccessToken();
+    if (!token) {
+      showCartError("Please sign in to add items to cart.");
+      window.location.href = "login.html";
+      return;
+    }
+
+    const oldText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Adding...";
+
+    try {
+      const resp = await fetch(CART_ADD_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          product_id: productId,
+          product_name: productName,
+          product_type: productType,
+          qty,
+        }),
+      });
+
+      const text = await resp.text();
+      let data = null;
+      try { data = JSON.parse(text); } catch (_) { data = { raw: text }; }
+
+      if (!resp.ok || data?.ok === false) {
+        const msg = data?.error || data?.message || text || "Failed to add to cart";
+        showCartError(msg);
+        return;
+      }
+
+      // Update cart count if server returns it
+      const count = data?.cart_count ?? data?.count ?? null;
+      if (count !== null) setCartCount(count);
+    } catch (err) {
+      showCartError(String(err?.message || err));
+    } finally {
+      btn.disabled = false;
+      btn.textContent = oldText;
+    }
+  });
+
+  // Keep existing count if already set; otherwise show 0
+  if (cartCountEl && !cartCountEl.textContent.trim()) setCartCount(0);
+})();
+</script>
+
 </body>
 </html>
