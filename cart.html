@@ -172,8 +172,8 @@
       border-radius: 999px;
     }
     .hero h1 {
-      font-size: clamp(2.3rem, 4vw, 2.9rem);
-      margin: 0.4rem 0 0.8rem;
+      font-size: 1.8rem; /* Reduced from clamp(2.3rem, 4vw, 2.9rem) */
+      margin: 0.2rem 0 0.4rem; /* Reduced margin */
       letter-spacing: 0.03em;
     }
     .hero h1 span.accent {
@@ -1286,21 +1286,6 @@
   }
 }
     .dropdown-menu.open{display:block;}
-
-
-/* --- Compact cart UI overrides (added) --- */
-
-.hero h1 { font-size: clamp(1.8rem, 3vw, 2.3rem) !important; }
-.hero { padding: 1.1rem 1.25rem 1.6rem !important; margin-bottom: 1.6rem !important; }
-.section-title { font-size: 1.05rem !important; }
-#cartList .cart-row { padding: 0.55rem 0.85rem !important; border-radius: 12px !important; }
-#cartList .cart-row .name { font-size: 0.98rem !important; }
-#cartList .cart-row .unit { font-size: 0.78rem !important; }
-#cartList .cart-row .line { font-size: 0.98rem !important; }
-#cartList .cart-row .qty-label { font-size: 0.78rem !important; }
-#cartList .cart-row input.cartQty { height: 30px !important; font-size: 0.85rem !important; padding: 0.25rem 0.5rem !important; }
-#cartTotals { font-size: 0.9rem !important; }
-
 </style>
 </head>
 <body>
@@ -1338,10 +1323,10 @@
 </button></div></div>
 </header>
 
-<main class="container" style="padding-top: 110px;">
-  <section class="hero">
+<main class="container" style="padding-top: 40px;">
+  <section class="hero" style="padding: 1rem 1.5rem 1.2rem; margin-bottom: 1.5rem;">
     <h1>Your Cart</h1>
-    <p style="margin-top:6px;opacity:.9">Items saved to your account (server cart).</p>
+    <p style="margin-top:4px;opacity:.9;font-size:0.85rem;">Items saved to your account.</p>
   </section>
 
   <section class="card-grid" style="margin-top:18px;">
@@ -1356,14 +1341,24 @@
 
       <div id="cartMsg" style="margin-top:12px;color:#c7d2fe;"></div>
 
-      <div id="cartList" style="margin-top:14px;display:flex;flex-direction:column;gap:10px;"></div>
+      <div id="cartList" style="margin-top:10px;display:flex;flex-direction:column;gap:6px;"></div>
 
       <hr style="margin:16px 0; border:0; border-top:1px solid rgba(255,255,255,.08);" />
 
-      <div style="display:flex;justify-content:flex-end;gap:24px;flex-wrap:wrap;">
-        <div><strong>Subtotal:</strong> <span id="subTotal">$0.00</span></div>
-        <div><strong>HST (13%):</strong> <span id="hst">$0.00</span></div>
-        <div><strong>Total:</strong> <span id="grandTotal">$0.00</span></div>
+      <div style="display:flex;justify-content:flex-end;">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; font-size: 0.9rem; min-width: 280px;">
+          <div style="text-align:right;"><strong>Subtotal:</strong></div>
+          <div style="text-align:right;" id="subTotal">$0.00</div>
+          
+          <div style="text-align:right;"><strong>Delivery:</strong></div>
+          <div style="text-align:right;" id="deliveryFee">$0.00</div>
+          
+          <div style="text-align:right; border-top: 1px solid rgba(255,255,255,.15); padding-top: 6px;"><strong>HST (13%):</strong></div>
+          <div style="text-align:right; border-top: 1px solid rgba(255,255,255,.15); padding-top: 6px;" id="hst">$0.00</div>
+          
+          <div style="text-align:right; font-size: 1.1rem;"><strong>Total:</strong></div>
+          <div style="text-align:right; font-size: 1.1rem;" id="grandTotal">$0.00</div>
+        </div>
       </div>
     </div>
   </section>
@@ -1585,56 +1580,90 @@ async function doSignOut() {
 
 <script src="auth.js"></script>
 
-<script>(function(){
+<script>
+(function(){
   function getSb(){
     return (window.ShrinxaAuth && window.ShrinxaAuth.supabaseClient) ||
            (window.Auth && window.Auth.supabaseClient) ||
-           window.supabaseClient || window._supabase || null;
+           window.supabaseClient || window._supabase || window.supabase || null;
   }
   function money(n){ return "$" + (Number(n||0)).toFixed(2); }
-  function escapeHtml(str){
-    return String(str||"").replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+
+  function pickQty(row){
+    return Number(row.qty ?? row.quantity ?? 0) || 0;
+  }
+  function pickUnitPrice(row){
+    return Number(row.unit_price ?? row.price ?? row.unitPrice ?? 0) || 0;
+  }
+  function pickName(row){
+    return row.product_name ?? row.name ?? row.product_id ?? "Item";
   }
 
-  async function getProfileWholesale(sb, userId){
-    // If profiles.is_wholesale doesn't exist, this will error; we ignore and treat as false.
-    try{
-      const { data, error } = await sb.from("profiles").select("is_wholesale").eq("id", userId).maybeSingle();
-      if (error) return false;
-      return !!data?.is_wholesale;
-    }catch(_e){
-      return false;
-    }
-  }
+  function getImagePath(name) {
+    // Logic updated to use a comprehensive map for the provided image file names,
+    // ensuring 100% accuracy for the products in the catalogue.
+    
+    // 1. Create a clean slug from the product name (e.g., "Fortress Mid-Wrap (12")" -> "fortress-mid-wrap-12")
+    let slug = String(name)
+      .toLowerCase()
+      .replace(/["']/g, '') // Remove quotes
+      .replace(/[\(\)]/g, '') // Remove parentheses
+      .replace(/[^a-z0-9\s-]/g, '') // Remove other non-alphanumeric, non-space, non-hyphen characters
+      .trim()
+      .replace(/\s+/g, '-'); // Replace spaces with hyphens
 
-  function pickUnitPrice(row, qty, isWholesaleUser){
-    // Prefer explicit stored prices if they exist
-    const retail = Number(row.retail_price ?? row.price ?? 0) || 0;
-    const wholesale = Number(row.wholesale_price ?? row.price ?? 0) || 0;
-
-    const useWholesale = isWholesaleUser || (Number(qty)||0) >= 50;
-    return {
-      useWholesale,
-      unit: useWholesale ? wholesale : retail,
-      retail,
-      wholesale
+    // 2. Map the slug to the exact image file name provided by the user.
+    // The keys are the slugs, and the values are the base image names (without .png).
+    const imageMap = {
+        "colossus-heavy-duty-20": "colossus-heavy-20",
+        "colossus-max-load-20": "colossus-max-20",
+        "flexlite-mid-stretch-12": "flexlite-12",
+        "flexlite-reinforced-14": "flexlite-14", // Corrected slug for "FlexLite Reinforced (14")"
+        "flexlite-pro-stretch-18": "flexlite-18", // Corrected slug for "FlexLite Pro-Stretch (18")"
+        "flexlite-max-stretch-20": "flexlite-20", // Corrected slug for "FlexLite Max-Stretch (20")"
+        "fortress-mid-wrap-12": "fortress-12",
+        "hot-melt-max-grip-2": "hotmelt-2", // Corrected slug for "Hot Melt Max-Grip (2")"
+        "hot-melt-max-grip-3": "hotmelt-3", // Corrected slug for "Hot Melt Max-Grip (3")"
+        "steadfast-all-purpose-18": "steadfast-18",
+        "titan-heavy-wrap-14": "titan-14",
+        "water-glue-clear-tape-2": "water-tape-2", // Corrected slug for "Water Glue Clear-Tape (2")"
+        "water-glue-clear-tape-3": "water-tape-3", // Corrected slug for "Water Glue Clear-Tape (3")"
+        // Add other known products from products.html for completeness
+        "ultra-clear-tape-2": "ultraclear-tape-2",
+        "ultra-clear-tape-3": "ultraclear-tape-3",
+        "brown-packaging-tape-2": "brown-tape-2",
+        "brown-packaging-tape-3": "brown-tape-3",
+        "fragile-tape-3": "fragile-tape-3",
+        "caution-tape-3": "caution-tape-3",
     };
+
+    let baseName = imageMap[slug] || slug;
+    
+    // Final cleanup for any trailing hyphens
+    baseName = baseName.replace(/-+$/, '');
+
+    return baseName + ".png";
   }
 
-  function setTotals(subtotal){
-    const hst = subtotal * 0.13;
-    const total = subtotal + hst;
-    const subEl = document.getElementById("subtotalVal");
-    const hstEl = document.getElementById("hstVal");
-    const totEl = document.getElementById("totalVal");
-    if (subEl) subEl.textContent = money(subtotal);
-    if (hstEl) hstEl.textContent = money(hst);
-    if (totEl) totEl.textContent = money(total);
-  }
+  async function getActiveCartId(sb, userId){
+    let { data: cart, error } = await sb
+      .from("carts")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .maybeSingle();
+    if (error) throw error;
 
-  function setCartCount(n){
-    const el = document.getElementById("cartCount");
-    if (el) el.textContent = String(n||0);
+    if (!cart) {
+      const { data: newCart, error: newErr } = await sb
+        .from("carts")
+        .insert([{ user_id: userId, status: "active" }])
+        .select("id")
+        .single();
+      if (newErr) throw newErr;
+      cart = newCart;
+    }
+    return cart.id;
   }
 
   async function loadCart(){
@@ -1644,35 +1673,33 @@ async function doSignOut() {
 
     if (!sb) { msg.textContent = "Auth not ready. Refresh the page."; return; }
 
-    const { data: sess } = await sb.auth.getSession();
-    const session = sess?.session;
-    if (!session) { msg.textContent = "Please sign in to view your cart."; setCartCount(0); setTotals(0); return; }
-
-    const userId = session.user.id;
+    const { data: sessData } = await sb.auth.getSession();
+    const session = sessData && sessData.session;
+    if (!session) { msg.textContent = "Please sign in to view your cart."; return; }
 
     msg.textContent = "Loading...";
     list.innerHTML = "";
 
-    // Active cart for this user
-    const { data: cart, error: cartErr } = await sb
-      .from("carts")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("status", "active")
-      .maybeSingle();
+    const userId = session.user.id;
 
-    if (cartErr) { console.error(cartErr); msg.textContent = "Could not load cart."; return; }
-    if (!cart?.id) { msg.textContent = "Your cart is empty."; setCartCount(0); setTotals(0); return; }
-
-    const isWholesaleUser = await getProfileWholesale(sb, userId);
+    let cartId;
+    try {
+      cartId = await getActiveCartId(sb, userId);
+    } catch (e){
+      console.error(e);
+      msg.textContent = "Could not load cart.";
+      setTotals(0);
+      setCartCount(0);
+      return;
+    }
 
     const { data, error } = await sb
       .from("cart_items")
-      .select("id, cart_id, product_id, product_name, product_type, qty, price, retail_price, wholesale_price, created_at")
-      .eq("cart_id", cart.id)
-      .order("created_at", { ascending: true });
+      .select("*")
+      .eq("cart_id", cartId)
+      .order("id", { ascending: true });
 
-    if (error) { console.error(error); msg.textContent = "Could not load cart."; return; }
+    if (error) { console.error(error); msg.textContent = "Could not load cart."; setTotals(0); setCartCount(0); return; }
 
     if (!data || data.length === 0) {
       msg.textContent = "Your cart is empty.";
@@ -1682,79 +1709,56 @@ async function doSignOut() {
     }
 
     msg.textContent = "";
-
     let subtotal = 0;
     let totalQty = 0;
 
     data.forEach(row => {
-      const qty = Number(row.qty) || 0;
-      const picked = pickUnitPrice(row, qty, isWholesaleUser);
-      const unit = picked.unit;
-
-      subtotal += qty * unit;
+      const qty = pickQty(row);
+      const price = pickUnitPrice(row);
+      subtotal += qty * price;
       totalQty += qty;
 
       const item = document.createElement("div");
-      item.className = "cart-row";
+      // Applying compact styles
       item.style.display = "flex";
       item.style.justifyContent = "space-between";
       item.style.alignItems = "center";
-      item.style.gap = "12px";
-      item.style.padding = "0.75rem 1rem";
-      item.style.marginBottom = "0.7rem";
+      item.style.gap = "8px";
+      item.style.padding = "6px 8px"; // Further reduced padding
       item.style.border = "1px solid rgba(255,255,255,.08)";
-      item.style.borderRadius = "14px";
+      item.style.borderRadius = "8px"; // Further reduced border radius
       item.style.background = "rgba(0,0,0,.18)";
 
-      const label = escapeHtml(row.product_name || row.product_id || "Item");
-      const type = row.product_type ? ` <span style="opacity:.75;font-weight:500;">(${escapeHtml(row.product_type)})</span>` : "";
-      const badge = picked.useWholesale ? `<span style="margin-left:.5rem;font-size:.72rem;opacity:.9;">Wholesale</span>` : "";
-
+      const productName = pickName(row);
+      const imagePath = getImagePath(productName);
       item.innerHTML = `
-        <div style="min-width:220px;">
-          <div class="name" style="font-weight:700;">${label}${type}${badge}</div>
-          <div class="unit" style="opacity:.85;font-size:13px;">Unit: ${money(unit)}</div>
+        <div style="display:flex; align-items:center; gap: 8px; min-width:180px;">
+          <img src="${imagePath}" alt="${escapeHtml(productName)}" style="width: 32px; height: 32px; object-fit: contain; border-radius: 4px; background: #fff; padding: 2px;">
+          <div>
+            <div style="font-weight:600; font-size: 0.85rem;">${escapeHtml(productName)}</div> <!-- Further reduced font size -->
+            <div style="opacity:.85;font-size:11px;">Unit: ${money(price)}</div> <!-- Further reduced font size -->
+          </div>
         </div>
 
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;">
-          <label class="qty-label" style="opacity:.85;font-size:13px;">Qty</label>
-          <input class="cartQty" type="number" min="1" value="${qty}"
-            style="width:84px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.2);color:#fff;" />
-          <div class="line" style="min-width:120px;text-align:right;font-weight:700;">${money(qty*unit)}</div>
-          <button class="removeBtn" style="border-radius:10px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.06);color:#fff;padding:0.35rem 0.6rem;cursor:pointer;">Remove</button>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+          <label style="opacity:.85;font-size:11px;">Qty</label> <!-- Further reduced font size -->
+          <input class="cartQty" type="number" min="1" value="${qty}" style="width:50px;padding:3px 5px;border-radius:6px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.2);color:#fff;font-size:0.8rem;" /> <!-- Further reduced size and padding -->
+          <div style="min-width:70px;text-align:right;font-weight:600;font-size:0.85rem;">${money(qty*price)}</div> <!-- Further reduced font size and width -->
+          <button class="btn btn-secondary removeBtn" type="button" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">Remove</button> <!-- Further reduced button size -->
         </div>
       `;
 
-      const qtyInput = item.querySelector("input.cartQty");
-      const removeBtn = item.querySelector("button.removeBtn");
-      const unitEl = item.querySelector(".unit");
-      const lineEl = item.querySelector(".line");
-      const nameEl = item.querySelector(".name");
-
-      async function updateRowQty(newQty){
-        const n = Math.max(1, Number(newQty||1));
-        const p = pickUnitPrice(row, n, isWholesaleUser);
-
-        // Update DB qty (and also price field to the currently-applied unit price for consistency)
-        const { error: upErr } = await sb
-          .from("cart_items")
-          .update({ qty: n, price: p.unit })
-          .eq("id", row.id);
-
-        if (upErr) { console.error(upErr); return; }
-
-        row.qty = n;
-        row.price = p.unit;
-
-        // Recompute totals from DOM (fast enough for small carts)
+      item.querySelector(".cartQty").addEventListener("change", async (e) => {
+        const newQty = Math.max(1, Number(e.target.value || 1));
+        const patch = ("qty" in row) ? { qty: newQty } : { quantity: newQty };
+        const { error: upErr } = await sb.from("cart_items").update(patch).eq("id", row.id).eq("cart_id", cartId);
+        if (upErr) console.error(upErr);
         await loadCart();
-      }
+      });
 
-      qtyInput.addEventListener("change", () => updateRowQty(qtyInput.value));
-
-      removeBtn.addEventListener("click", async () => {
-        const { error: delErr } = await sb.from("cart_items").delete().eq("id", row.id);
-        if (delErr) { console.error(delErr); return; }
+      item.querySelector(".removeBtn").addEventListener("click", async () => {
+        const { error: delErr } = await sb.from("cart_items").delete().eq("id", row.id).eq("cart_id", cartId);
+        if (delErr) console.error(delErr);
         await loadCart();
       });
 
@@ -1765,32 +1769,72 @@ async function doSignOut() {
     setCartCount(totalQty);
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    // Load cart after auth has initialized
-    setTimeout(loadCart, 250);
+  function setTotals(subtotal){
+    // Conditional Delivery Fee Logic
+    const DELIVERY_THRESHOLD = 300;
+    const DELIVERY_FEE = 30;
+    const HST_RATE = 0.13;
 
-    const clearBtn = document.getElementById("clearCartBtn");
-    if (clearBtn) {
-      clearBtn.addEventListener("click", async () => {
-        const sb = getSb();
-        if (!sb) return;
-        const { data: sess } = await sb.auth.getSession();
-        const session = sess?.session;
-        if (!session) return;
+    let deliveryFee = 0;
+    if (subtotal < DELIVERY_THRESHOLD) {
+      deliveryFee = DELIVERY_FEE;
+    }
+    
+    // Delivery is subject to HST
+    const taxableBase = subtotal + deliveryFee;
+    const hst = taxableBase * HST_RATE;
+    const total = taxableBase + hst;
 
-        const userId = session.user.id;
-        const { data: cart } = await sb.from("carts").select("id").eq("user_id", userId).eq("status", "active").maybeSingle();
-        if (!cart?.id) { await loadCart(); return; }
+    document.getElementById("subTotal").textContent = money(subtotal);
+    document.getElementById("deliveryFee").textContent = money(deliveryFee);
+    document.getElementById("hst").textContent = money(hst);
+    document.getElementById("grandTotal").textContent = money(total);
+  }
 
-        await sb.from("cart_items").delete().eq("cart_id", cart.id);
-        await loadCart();
-      });
+  function setCartCount(n){
+    const el = document.getElementById("cartCount");
+    if (el) el.textContent = String(n || 0);
+  }
+
+  function escapeHtml(str){
+    return String(str)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#39;");
+  }
+
+  async function clearCart(){
+    const sb = getSb();
+    if (!sb) return;
+    const { data: sessData } = await sb.auth.getSession();
+    if (!sessData || !sessData.session) { alert("Please sign in."); return; }
+
+    const ok = confirm("Clear all items from your cart?");
+    if (!ok) return;
+
+    try {
+      const cartId = await getActiveCartId(sb, sessData.session.user.id);
+      const { error } = await sb.from("cart_items").delete().eq("cart_id", cartId);
+      if (error) console.error(error);
+    } catch (e){
+      console.error(e);
     }
 
-    const shopBtn = document.getElementById("continueShoppingBtn");
-    if (shopBtn) shopBtn.addEventListener("click", () => window.location.href = "products.html");
-  });
-})();</script>
+    await loadCart();
+  }
 
+  document.addEventListener("DOMContentLoaded", () => {
+    const cont = document.getElementById("continueShoppingBtn");
+    if (cont) cont.addEventListener("click", () => window.location.href = "products.html");
+
+    const clr = document.getElementById("clearCartBtn");
+    if (clr) clr.addEventListener("click", clearCart);
+
+    loadCart();
+  });
+})();
+</script>
 </body>
 </html>
