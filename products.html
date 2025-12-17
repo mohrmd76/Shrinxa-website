@@ -1929,7 +1929,7 @@ async function initAuthUI() {
     const apply = (email) => {
       if (email) {
         if (userMenu) userMenu.style.display = "flex";
-        if (greeting) greeting.textContent = `Hi ${email}`;
+        if (greeting) greeting.textContent = "";
         if (signInLink) signInLink.style.display = "none";
       } else {
         if (userMenu) userMenu.style.display = "none";
@@ -1973,8 +1973,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const SUPABASE_ANON_KEY = "sb_publishable_k5D9JKO5lMCHlju-WhlSAQ_XEiEruT_";
   const CART_ADD_URL = `${SUPABASE_URL}/functions/v1/cart-add`;
 
-    const CART_COUNT_URL = `${SUPABASE_URL}/functions/v1/cart-count`;
-const cartCountEl = document.getElementById("cartCount");
+  const cartCountEl = document.getElementById("cartCount");
 
   function setCartCount(n) {
     if (cartCountEl) cartCountEl.textContent = String(Number(n) || 0);
@@ -1987,28 +1986,6 @@ const cartCountEl = document.getElementById("cartCount");
     if (error) return null;
     return data?.session?.access_token || null;
   }
-
-  // Read cart count from server on page load (uses cart-count Edge Function)
-  async function refreshCartCountFromServer() {
-    try {
-      const token = await getAccessToken();
-      // if (!token) return; // Removing early return to allow fetch to proceed even without a token
-
-      const r = await fetch(CART_COUNT_URL, {
-        method: "GET",
-        headers: {
-          "apikey": SUPABASE_ANON_KEY,
-          ...(token ? { "Authorization": `Bearer ${token}` } : {}),
-        },
-      });
-      if (!r.ok) return;
-
-      const data = await r.json();
-      const count = data?.cart_count ?? data?.count ?? 0;
-      setCartCount(count);
-    } catch (_) {}
-  }
-
 
   function showCartError(msg) {
     // Try to reuse an existing message area if present; otherwise alert
@@ -2085,19 +2062,22 @@ const cartCountEl = document.getElementById("cartCount");
     }
   });
 
-  
-  // Load cart count when page opens and when returning via back button
-  const runCartRefresh = () => refreshCartCountFromServer();
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", runCartRefresh);
-  } else {
-    runCartRefresh();
-  }
-  window.addEventListener("pageshow", runCartRefresh);
-
-// The cart count is now refreshed from the server on page load, so this line is no longer needed.
+  // Keep existing count if already set; otherwise show 0
+  if (cartCountEl && !cartCountEl.textContent.trim()) setCartCount(0);
 })();
 </script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const cartBtn = document.getElementById("openCartBtn");
+  if (!cartBtn) return;
+
+  cartBtn.addEventListener("click", () => {
+    window.location.href = "Cart.html";
+  });
+});
+</script>
+
 
 </body>
 </html>
