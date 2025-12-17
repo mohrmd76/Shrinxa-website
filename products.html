@@ -1973,8 +1973,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const SUPABASE_ANON_KEY = "sb_publishable_k5D9JKO5lMCHlju-WhlSAQ_XEiEruT_";
   const CART_ADD_URL = `${SUPABASE_URL}/functions/v1/cart-add`;
 
+    const CART_GET_URL = `${SUPABASE_URL}/functions/v1/cart-get`;
   const CART_COUNT_URL = `${SUPABASE_URL}/functions/v1/cart-count`;
-  const cartCountEl = document.getElementById("cartCount");
+
+const cartCountEl = document.getElementById("cartCount");
 
   function setCartCount(n) {
     if (cartCountEl) cartCountEl.textContent = String(Number(n) || 0);
@@ -1988,35 +1990,56 @@ document.addEventListener("DOMContentLoaded", () => {
     return data?.session?.access_token || null;
   }
 
-  // Read cart count from server when the page opens (uses cart-count Edge Function)
+  // NEW: Read cart count from server when the page opens (no change to add-to-cart logic)
   async function refreshCartCountFromServer() {
     try {
       const token = await getAccessToken();
-      if (!token) return;
+      if (!token) { setCartCount(0); return; }
 
-      const r = await fetch(CART_COUNT_URL, {
-        method: "GET",
-        headers: {
-          "apikey": SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${token}`,
-        },
-      });
-      if (!r.ok) return;
+      // Try cart-get (preferred) -> expects items array or count
+      try {
+        const r = await fetch(CART_GET_URL, {
+          method: "GET",
+          headers: {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+        if (r.ok) {
+          const t = await r.text();
+          let data = null;
+          try { data = JSON.parse(t); } catch (_) { data = null; }
 
-      const data = await r.json();
-      const count = data?.cart_count ?? data?.count ?? 0;
-      setCartCount(count);
+          const items = data?.items || data?.cart || data?.data;
+          if (Array.isArray(items)) {
+            const sum = items.reduce((acc, it) => acc + (Number(it?.qty) || Number(it?.quantity) || 0), 0);
+            setCartCount(sum);
+            return;
+          }
+          const c = data?.cart_count ?? data?.count ?? (typeof data === "number" ? data : null);
+          if (c !== null && c !== undefined) { setCartCount(c); return; }
+        }
+      } catch (_) {}
+
+      // Try cart-count (fallback) -> expects {count} or {cart_count}
+      try {
+        const r = await fetch(CART_COUNT_URL, {
+          method: "GET",
+          headers: {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+        if (r.ok) {
+          const t = await r.text();
+          let data = null;
+          try { data = JSON.parse(t); } catch (_) { data = null; }
+          const c = data?.cart_count ?? data?.count ?? (typeof data === "number" ? data : null);
+          if (c !== null && c !== undefined) { setCartCount(c); return; }
+        }
+      } catch (_) {}
     } catch (_) {}
   }
-
-  // Load count on page open + when returning via back button
-  const runCartRefresh = () => refreshCartCountFromServer();
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", runCartRefresh);
-  } else {
-    runCartRefresh();
-  }
-  window.addEventListener("pageshow", runCartRefresh);
 
 
   function showCartError(msg) {
@@ -2045,6 +2068,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const productId = card.dataset.id || card.getAttribute("data-id") || "";
     const productName = card.dataset.name || card.getAttribute("data-name") || "";
     const productType = card.dataset.type || card.getAttribute("data-type") || "";
+const price = Number(card.dataset.retail || card.getAttribute("data-retail") || 0);
 
     const token = await getAccessToken();
     if (!token) {
@@ -2070,7 +2094,7 @@ document.addEventListener("DOMContentLoaded", () => {
           product_name: productName,
           product_type: productType,
           qty,
-	  price: Number(card.dataset.price)
+          price,
         }),
       });
 
@@ -2095,6 +2119,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // NEW: load cart count from server on page open
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => refreshCartCountFromServer());
+  } else {
+    refreshCartCountFromServer();
+  }
+
   // Keep existing count if already set; otherwise show 0
   if (cartCountEl && !cartCountEl.textContent.trim()) setCartCount(0);
 })();
@@ -2106,7 +2137,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!cartBtn) return;
 
   cartBtn.addEventListener("click", () => {
-    window.location.href = "cart.html";
+    window.location.href = "Cart.html";
   });
 });
 </script>
