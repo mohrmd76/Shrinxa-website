@@ -1929,7 +1929,7 @@ async function initAuthUI() {
     const apply = (email) => {
       if (email) {
         if (userMenu) userMenu.style.display = "flex";
-        if (greeting) greeting.textContent = "";
+        if (greeting) greeting.textContent = `Hi ${email}`;
         if (signInLink) signInLink.style.display = "none";
       } else {
         if (userMenu) userMenu.style.display = "none";
@@ -1973,9 +1973,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const SUPABASE_ANON_KEY = "sb_publishable_k5D9JKO5lMCHlju-WhlSAQ_XEiEruT_";
   const CART_ADD_URL = `${SUPABASE_URL}/functions/v1/cart-add`;
 
-    const CART_GET_URL = `${SUPABASE_URL}/functions/v1/cart-get`;
-  const CART_COUNT_URL = `${SUPABASE_URL}/functions/v1/cart-count`;
-
+    const CART_COUNT_URL = `${SUPABASE_URL}/functions/v1/cart-count`;
 const cartCountEl = document.getElementById("cartCount");
 
   function setCartCount(n) {
@@ -1990,169 +1988,24 @@ const cartCountEl = document.getElementById("cartCount");
     return data?.session?.access_token || null;
   }
 
-  // Read cart count from server reliably (waits for Supabase session + supports Edge Functions OR PostgREST table)
-  async function waitForAccessToken(maxMs = 3000) {
-    const start = Date.now();
-    while (Date.now() - start < maxMs) {
-      const t = await getAccessToken();
-      if (t) return t;
-      await new Promise(r => setTimeout(r, 200));
-    }
-    return null;
-  }
-
-  async function getUserId(maxMs = 3000) {
-    const start = Date.now();
-    while (Date.now() - start < maxMs) {
-      try {
-        const sb = window._supabase || window.supabaseClient || window.SupabaseClient || window.supabase;
-        if (sb?.auth?.getUser) {
-          const { data } = await sb.auth.getUser();
-          if (data?.user?.id) return data.user.id;
-        }
-        if (sb?.auth?.getSession) {
-          const { data } = await sb.auth.getSession();
-          if (data?.session?.user?.id) return data.session.user.id;
-        }
-      } catch (_) {}
-      await new Promise(r => setTimeout(r, 200));
-    }
-    return null;
-  }
-
-  async function refreshCartCountFromServer() {
-    try {
-      // IMPORTANT: don't force 0 just because token isn't ready yet
-      const token = await waitForAccessToken(4000);
-      if (!token) return;
-
-      // 1) Try Edge Function: cart-get (if exists)
-      try {
-        const r = await fetch(`${SUPABASE_URL}/functions/v1/cart-get`, {
-          method: "GET",
-          headers: {
-            "apikey": SUPABASE_ANON_KEY,
-            "Authorization": `Bearer ${token}`,
-          },
-        });
-        if (r.ok) {
-          const t = await r.text();
-          let data = null;
-          try { data = JSON.parse(t); } catch (_) { data = null; }
-          const items = data?.items || data?.cart || data?.data || (Array.isArray(data) ? data : null);
-          if (Array.isArray(items)) {
-            const sum = items.reduce((acc, it) => acc + (Number(it?.qty) || Number(it?.quantity) || 0), 0);
-            setCartCount(sum);
-            return;
-          }
-          const c = data?.cart_count ?? data?.count ?? (typeof data === "number" ? data : null);
-          if (c !== null && c !== undefined) { setCartCount(c); return; }
-        }
-      } catch (_) {}
-
-      // 2) Try Edge Function: cart-count (if exists)
-      try {
-        const r = await fetch(`${SUPABASE_URL}/functions/v1/cart-count`, {
-          method: "GET",
-          headers: {
-            "apikey": SUPABASE_ANON_KEY,
-            "Authorization": `Bearer ${token}`,
-          },
-        });
-        if (r.ok) {
-          const t = await r.text();
-          let data = null;
-          try { data = JSON.parse(t); } catch (_) { data = null; }
-          const c = data?.cart_count ?? data?.count ?? (typeof data === "number" ? data : null);
-          if (c !== null && c !== undefined) { setCartCount(c); return; }
-        }
-      } catch (_) {}
-
-      // 3) Fallback: query PostgREST tables (works even if no Edge Function for reading)
-      const uid = await getUserId(4000);
-      if (!uid) return;
-
-      const tableCandidates = ["cart_items", "cartitems", "cart_item", "cart"];
-      const userColCandidates = ["user_id", "owner_id", "customer_id", "uid"];
-      const qtyCols = ["qty", "quantity"];
-
-      for (const table of tableCandidates) {
-        for (const userCol of userColCandidates) {
-          // request rows and sum qty
-          const url = `${SUPABASE_URL}/rest/v1/${table}?select=${qtyCols.join(",")}&${userCol}=eq.${uid}`;
-          try {
-            const r = await fetch(url, {
-              method: "GET",
-              headers: {
-                "apikey": SUPABASE_ANON_KEY,
-                "Authorization": `Bearer ${token}`,
-                "Accept": "application/json",
-              },
-            });
-            if (!r.ok) continue;
-            const rows = await r.json();
-            if (!Array.isArray(rows)) continue;
-            const sum = rows.reduce((acc, row) => {
-              const q = Number(row?.qty ?? row?.quantity ?? 0) || 0;
-              return acc + q;
-            }, 0);
-            // Only now we can confidently set 0 if empty
-            setCartCount(sum);
-            return;
-          } catch (_) {}
-        }
-      }
-    } catch (_) {}
-  }
-
-  // NEW: Read cart count from server when the page opens (no change to add-to-cart logic)
+  // Read cart count from server on page load (uses cart-count Edge Function)
   async function refreshCartCountFromServer() {
     try {
       const token = await getAccessToken();
-      if (!token) { setCartCount(0); return; }
+      // if (!token) return; // Removing early return to allow fetch to proceed even without a token
 
-      // Try cart-get (preferred) -> expects items array or count
-      try {
-        const r = await fetch(CART_GET_URL, {
-          method: "GET",
-          headers: {
-            "apikey": SUPABASE_ANON_KEY,
-            "Authorization": `Bearer ${token}`,
-          },
-        });
-        if (r.ok) {
-          const t = await r.text();
-          let data = null;
-          try { data = JSON.parse(t); } catch (_) { data = null; }
+      const r = await fetch(CART_COUNT_URL, {
+        method: "GET",
+        headers: {
+          "apikey": SUPABASE_ANON_KEY,
+          ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+        },
+      });
+      if (!r.ok) return;
 
-          const items = data?.items || data?.cart || data?.data;
-          if (Array.isArray(items)) {
-            const sum = items.reduce((acc, it) => acc + (Number(it?.qty) || Number(it?.quantity) || 0), 0);
-            setCartCount(sum);
-            return;
-          }
-          const c = data?.cart_count ?? data?.count ?? (typeof data === "number" ? data : null);
-          if (c !== null && c !== undefined) { setCartCount(c); return; }
-        }
-      } catch (_) {}
-
-      // Try cart-count (fallback) -> expects {count} or {cart_count}
-      try {
-        const r = await fetch(CART_COUNT_URL, {
-          method: "GET",
-          headers: {
-            "apikey": SUPABASE_ANON_KEY,
-            "Authorization": `Bearer ${token}`,
-          },
-        });
-        if (r.ok) {
-          const t = await r.text();
-          let data = null;
-          try { data = JSON.parse(t); } catch (_) { data = null; }
-          const c = data?.cart_count ?? data?.count ?? (typeof data === "number" ? data : null);
-          if (c !== null && c !== undefined) { setCartCount(c); return; }
-        }
-      } catch (_) {}
+      const data = await r.json();
+      const count = data?.cart_count ?? data?.count ?? 0;
+      setCartCount(count);
     } catch (_) {}
   }
 
@@ -2232,39 +2085,19 @@ const cartCountEl = document.getElementById("cartCount");
     }
   });
 
-  // NEW: load cart count from server on page open
+  
+  // Load cart count when page opens and when returning via back button
+  const runCartRefresh = () => refreshCartCountFromServer();
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => refreshCartCountFromServer());
+    document.addEventListener("DOMContentLoaded", runCartRefresh);
   } else {
-    refreshCartCountFromServer();
+    runCartRefresh();
   }
+  window.addEventListener("pageshow", runCartRefresh);
 
-    // Read cart count from server when page opens / returns from back button
-  const _refreshNow = () => refreshCartCountFromServer();
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", _refreshNow);
-  } else {
-    _refreshNow();
-  }
-  window.addEventListener("pageshow", _refreshNow);
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) _refreshNow(); });
-
-  // Keep existing count if already set; otherwise show 0
-  if (cartCountEl && !cartCountEl.textContent.trim()) setCartCount(0);
+// The cart count is now refreshed from the server on page load, so this line is no longer needed.
 })();
 </script>
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const cartBtn = document.getElementById("openCartBtn");
-  if (!cartBtn) return;
-
-  cartBtn.addEventListener("click", () => {
-    window.location.href = "Cart.html";
-  });
-});
-</script>
-
 
 </body>
 </html>
