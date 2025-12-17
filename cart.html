@@ -1579,6 +1579,37 @@ async function doSignOut() {
   }
   function money(n){ return "$" + (Number(n||0)).toFixed(2); }
 
+  function pickQty(row){
+    return Number(row.qty ?? row.quantity ?? 0) || 0;
+  }
+  function pickUnitPrice(row){
+    return Number(row.unit_price ?? row.price ?? row.unitPrice ?? 0) || 0;
+  }
+  function pickName(row){
+    return row.product_name ?? row.name ?? row.product_id ?? "Item";
+  }
+
+  async function getActiveCartId(sb, userId){
+    let { data: cart, error } = await sb
+      .from("carts")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .maybeSingle();
+    if (error) throw error;
+
+    if (!cart) {
+      const { data: newCart, error: newErr } = await sb
+        .from("carts")
+        .insert([{ user_id: userId, status: "active" }])
+        .select("id")
+        .single();
+      if (newErr) throw newErr;
+      cart = newCart;
+    }
+    return cart.id;
+  }
+
   async function loadCart(){
     const sb = getSb();
     const msg = document.getElementById("cartMsg");
@@ -1593,12 +1624,26 @@ async function doSignOut() {
     msg.textContent = "Loading...";
     list.innerHTML = "";
 
+    const userId = session.user.id;
+
+    let cartId;
+    try {
+      cartId = await getActiveCartId(sb, userId);
+    } catch (e){
+      console.error(e);
+      msg.textContent = "Could not load cart.";
+      setTotals(0);
+      setCartCount(0);
+      return;
+    }
+
     const { data, error } = await sb
       .from("cart_items")
-      .select("id, product_id, product_name, unit_price, quantity")
+      .select("*")
+      .eq("cart_id", cartId)
       .order("id", { ascending: true });
 
-    if (error) { console.error(error); msg.textContent = "Could not load cart."; return; }
+    if (error) { console.error(error); msg.textContent = "Could not load cart."; setTotals(0); setCartCount(0); return; }
 
     if (!data || data.length === 0) {
       msg.textContent = "Your cart is empty.";
@@ -1612,8 +1657,8 @@ async function doSignOut() {
     let totalQty = 0;
 
     data.forEach(row => {
-      const qty = Number(row.quantity) || 0;
-      const price = Number(row.unit_price) || 0;
+      const qty = pickQty(row);
+      const price = pickUnitPrice(row);
       subtotal += qty * price;
       totalQty += qty;
 
@@ -1629,7 +1674,7 @@ async function doSignOut() {
 
       item.innerHTML = `
         <div style="min-width:220px;">
-          <div style="font-weight:700;">${escapeHtml(row.product_name || row.product_id || "Item")}</div>
+          <div style="font-weight:700;">${escapeHtml(pickName(row))}</div>
           <div style="opacity:.85;font-size:13px;">Unit: ${money(price)}</div>
         </div>
 
@@ -1643,12 +1688,15 @@ async function doSignOut() {
 
       item.querySelector(".cartQty").addEventListener("change", async (e) => {
         const newQty = Math.max(1, Number(e.target.value || 1));
-        await sb.from("cart_items").update({ quantity: newQty }).eq("id", row.id);
+        const patch = ("qty" in row) ? { qty: newQty } : { quantity: newQty };
+        const { error: upErr } = await sb.from("cart_items").update(patch).eq("id", row.id).eq("cart_id", cartId);
+        if (upErr) console.error(upErr);
         await loadCart();
       });
 
       item.querySelector(".removeBtn").addEventListener("click", async () => {
-        await sb.from("cart_items").delete().eq("id", row.id);
+        const { error: delErr } = await sb.from("cart_items").delete().eq("id", row.id).eq("cart_id", cartId);
+        if (delErr) console.error(delErr);
         await loadCart();
       });
 
@@ -1690,9 +1738,13 @@ async function doSignOut() {
     const ok = confirm("Clear all items from your cart?");
     if (!ok) return;
 
-    // Delete all rows for this user (RLS must allow delete)
-    const { error } = await sb.from("cart_items").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-    if (error) console.error(error);
+    try {
+      const cartId = await getActiveCartId(sb, sessData.session.user.id);
+      const { error } = await sb.from("cart_items").delete().eq("cart_id", cartId);
+      if (error) console.error(error);
+    } catch (e){
+      console.error(e);
+    }
 
     await loadCart();
   }
@@ -1708,6 +1760,5 @@ async function doSignOut() {
   });
 })();
 </script>
-
 </body>
 </html>
