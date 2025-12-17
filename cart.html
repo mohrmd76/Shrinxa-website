@@ -1350,6 +1350,16 @@
         <div><strong>HST (13%):</strong> <span id="hst">$0.00</span></div>
         <div><strong>Total:</strong> <span id="grandTotal">$0.00</span></div>
       </div>
+      <div style="margin-top:14px;display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;align-items:center;">
+        <label for="paymentMethod" style="opacity:.9;">Payment:</label>
+        <select id="paymentMethod" style="padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.2);color:#fff;">
+          <option value="pay_later">Pay later at delivery</option>
+          <option value="pay_now">Pay now (online)</option>
+        </select>
+        <button id="buyNowBtn" class="btn btn-primary" type="button">Buy now</button>
+      </div>
+      <div id="checkoutMsg" style="margin-top:10px;color:#c7d2fe;text-align:right;"></div>
+
     </div>
   </section>
 </main>
@@ -1366,209 +1376,6 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 
-<script>
-(function(){
-  // dropdown toggle (mobile friendly)
-  document.addEventListener("click", (e) => {
-    const btn = e.target.closest(".nav-dropdown > button");
-    const menu = document.querySelector(".nav-dropdown .dropdown-menu");
-    if (!btn && menu && !menu.contains(e.target)) {
-      menu.classList.remove("open");
-      return;
-    }
-    if (btn && menu) {
-      e.preventDefault();
-      menu.classList.toggle("open");
-    }
-  });
-
-  function setActivePill(target) {
-    document.querySelectorAll(".pill").forEach(p => p.classList.remove("active"));
-    if (target) target.classList.add("active");
-  }
-
-  function applyFilter(filterLabel) {
-    const cards = document.querySelectorAll(".product-card[data-type]");
-    if (!filterLabel || filterLabel === "all") {
-      cards.forEach(c => c.style.display = "");
-      return;
-    }
-    cards.forEach(c => {
-      const t = c.getAttribute("data-type") || "";
-      c.style.display = (t === filterLabel) ? "" : "none";
-    });
-  }
-
-  function catToLabel(cat) {
-    if (!cat) return "all";
-    const c = cat.toLowerCase();
-    if (c === "all") return "all";
-    if (c === "stretch") return "Stretch Wrap";
-    if (c === "prestretch") return "Pre-Stretch Wrap";
-    if (c === "tape") return "Packaging Tape";
-    return "all";
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    const pills = Array.from(document.querySelectorAll(".pill[data-filter]"));
-    pills.forEach(p => {
-      p.addEventListener("click", () => {
-        const f = p.getAttribute("data-filter");
-        setActivePill(p);
-        applyFilter(f === "all" ? "all" : f);
-      });
-    });
-
-    // initial from query param
-    const params = new URLSearchParams(window.location.search);
-    const label = catToLabel(params.get("cat"));
-    if (label === "all") {
-      const allPill = pills.find(p => (p.getAttribute("data-filter") || "").toLowerCase() === "all");
-      setActivePill(allPill);
-      applyFilter("all");
-    } else {
-      const pill = pills.find(p => (p.getAttribute("data-filter") || "") === label);
-      setActivePill(pill);
-      applyFilter(label);
-    }
-  });
-})();
-</script>
-
-
-<script>
-// Products dropdown toggle (site-wide)
-document.addEventListener("DOMContentLoaded", () => {
-  const toggle = document.querySelector(".nav-dropdown-toggle");
-  const menu = document.querySelector(".nav-dropdown-menu");
-  if (!toggle || !menu) return;
-
-  const close = () => {
-    menu.classList.remove("open");
-    toggle.setAttribute("aria-expanded", "false");
-  };
-
-  toggle.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const isOpen = menu.classList.toggle("open");
-    toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
-  });
-
-  document.addEventListener("click", (e) => {
-    if (!menu.contains(e.target) && !toggle.contains(e.target)) close();
-  });
-
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") close();
-  });
-});
-</script>
-
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-// Capture the SAME Supabase client created inside auth.js (without editing auth.js)
-// auth.js runs AFTER this script tag, so we wrap createClient *immediately*.
-(() => {
-  if (!window.supabase || typeof window.supabase.createClient !== "function") return;
-  if (window.__shrinxaCreateClientWrapped) return;
-  window.__shrinxaCreateClientWrapped = true;
-  const _orig = window.supabase.createClient.bind(window.supabase);
-  window.supabase.createClient = (...args) => {
-    const client = _orig(...args);
-    window.supabaseClient = client;
-    return client;
-  };
-})();
-
-/* User dropdown + actions (about/contact/delivery/products) */
-document.addEventListener("DOMContentLoaded", () => {
-  const toggle = document.getElementById("userMenuToggle");
-  const menu = document.getElementById("userMenuDropdown");
-  if (!toggle || !menu) return;
-
-  const closeMenu = () => menu.classList.remove("open");
-
-  toggle.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    menu.classList.toggle("open");
-  });
-
-  document.addEventListener("click", (e) => {
-    if (!menu.contains(e.target) && !toggle.contains(e.target)) closeMenu();
-  });
-
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeMenu();
-  });
-
-  const profileBtn = menu.querySelector('[data-action="profile"]');
-  const historyBtn = menu.querySelector('[data-action="history"]');
-  const signOutBtn = menu.querySelector('[data-action="signout"]');
-
-  profileBtn && profileBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    closeMenu();
-    window.location.href = "index.html#profile";
-  });
-
-  historyBtn && historyBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    closeMenu();
-    window.location.href = "index.html#history";
-  });
-
-  signOutBtn && signOutBtn.addEventListener("click", async (e) => {
-    e.preventDefault();
-    closeMenu();
-    await doSignOut();
-    window.location.href = "index.html";
-  });
-});
-
-// --- Supabase sign out helper (NO auth.js edits) ---
-async function getSupabaseClient() {
-  if (window.supabaseClient?.auth) return window.supabaseClient;
-  if (window._supabase?.auth) return window._supabase;
-  if (window.supabase?.auth && !window.supabase.createClient) return window.supabase;
-
-  if (!window.supabase || typeof window.supabase.createClient !== "function") return null;
-
-  try {
-    const res = await fetch("auth.js", { cache: "no-cache" });
-    const txt = await res.text();
-
-    const url =
-      (txt.match(/supabaseUrl\s*=\s*['"]([^'"]+)['"]/i)?.[1]) ||
-      (txt.match(/SUPABASE[_\s]?URL\s*=\s*['"]([^'"]+)['"]/i)?.[1]) ||
-      (txt.match(/createClient\(\s*['"]([^'"]*supabase\.co[^'"]*)['"]/i)?.[1]);
-
-    const key =
-      (txt.match(/supabaseKey\s*=\s*['"]([^'"]+)['"]/i)?.[1]) ||
-      (txt.match(/SUPABASE[_\s]?(ANON|PUBLIC)[_\s]?KEY\s*=\s*['"]([^'"]+)['"]/i)?.[2]) ||
-      (txt.match(/createClient\([^,]+,\s*['"]([^'"]+)['"]/i)?.[1]);
-
-    if (!url || !key) return null;
-
-    const sb = window.supabase.createClient(url, key);
-    window.supabaseClient = sb;
-    return sb;
-  } catch (e) {
-    return null;
-  }
-}
-
-async function doSignOut() {
-  try {
-    const sb = await getSupabaseClient();
-    if (sb?.auth?.signOut) await sb.auth.signOut();
-  } catch (e) {}
-}
-</script>
-
-<script src="auth.js"></script>
 
 <script>
 (function(){
@@ -1578,6 +1385,37 @@ async function doSignOut() {
            window.supabaseClient || window._supabase || null;
   }
   function money(n){ return "$" + (Number(n||0)).toFixed(2); }
+
+  async function getActiveCartId(sb, userId){
+    let { data: cart, error } = await sb
+      .from("carts")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .maybeSingle();
+    if (error) throw error;
+
+    if (!cart) {
+      const { data: newCart, error: newErr } = await sb
+        .from("carts")
+        .insert([{ user_id: userId, status: "active" }])
+        .select("id")
+        .single();
+      if (newErr) throw newErr;
+      cart = newCart;
+    }
+    return cart.id;
+  }
+
+  function pickQty(row){
+    return Number(row.qty ?? row.quantity ?? 0) || 0;
+  }
+  function pickName(row){
+    return row.product_name ?? row.name ?? row.product_id ?? "Item";
+  }
+  function pickUnitPrice(row){
+    return Number(row.unit_price ?? row.price ?? row.unitPrice ?? 0) || 0;
+  }
 
   async function loadCart(){
     const sb = getSb();
@@ -1593,9 +1431,20 @@ async function doSignOut() {
     msg.textContent = "Loading...";
     list.innerHTML = "";
 
+    const userId = session.user.id;
+    let cartId;
+    try {
+      cartId = await getActiveCartId(sb, userId);
+    } catch (e){
+      console.error(e);
+      msg.textContent = "Could not load cart.";
+      return;
+    }
+
     const { data, error } = await sb
       .from("cart_items")
-      .select("id, product_id, product_name, unit_price, quantity")
+      .select("*")
+      .eq("cart_id", cartId)
       .order("created_at", { ascending: true });
 
     if (error) { console.error(error); msg.textContent = "Could not load cart."; return; }
@@ -1612,8 +1461,8 @@ async function doSignOut() {
     let totalQty = 0;
 
     data.forEach(row => {
-      const qty = Number(row.quantity) || 0;
-      const price = Number(row.unit_price) || 0;
+      const qty = pickQty(row);
+      const price = pickUnitPrice(row);
       subtotal += qty * price;
       totalQty += qty;
 
@@ -1627,9 +1476,10 @@ async function doSignOut() {
       item.style.borderRadius = "14px";
       item.style.background = "rgba(0,0,0,.18)";
 
+      const displayName = escapeHtml(pickName(row));
       item.innerHTML = `
         <div style="min-width:220px;">
-          <div style="font-weight:700;">${escapeHtml(row.product_name || row.product_id || "Item")}</div>
+          <div style="font-weight:700;">${displayName}</div>
           <div style="opacity:.85;font-size:13px;">Unit: ${money(price)}</div>
         </div>
 
@@ -1643,12 +1493,15 @@ async function doSignOut() {
 
       item.querySelector(".cartQty").addEventListener("change", async (e) => {
         const newQty = Math.max(1, Number(e.target.value || 1));
-        await sb.from("cart_items").update({ quantity: newQty }).eq("id", row.id);
+        const patch = ("qty" in row) ? { qty: newQty } : { quantity: newQty };
+        const { error: upErr } = await sb.from("cart_items").update(patch).eq("id", row.id).eq("cart_id", cartId);
+        if (upErr) console.error(upErr);
         await loadCart();
       });
 
       item.querySelector(".removeBtn").addEventListener("click", async () => {
-        await sb.from("cart_items").delete().eq("id", row.id);
+        const { error: delErr } = await sb.from("cart_items").delete().eq("id", row.id).eq("cart_id", cartId);
+        if (delErr) console.error(delErr);
         await loadCart();
       });
 
@@ -1690,11 +1543,66 @@ async function doSignOut() {
     const ok = confirm("Clear all items from your cart?");
     if (!ok) return;
 
-    // Delete all rows for this user (RLS must allow delete)
-    const { error } = await sb.from("cart_items").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    const userId = sessData.session.user.id;
+    const cartId = await getActiveCartId(sb, userId);
+
+    const { error } = await sb.from("cart_items").delete().eq("cart_id", cartId);
     if (error) console.error(error);
 
     await loadCart();
+  }
+
+  async function buyNow(){
+    const sb = getSb();
+    const out = document.getElementById("checkoutMsg");
+    if (!out) return;
+
+    if (!sb) { out.textContent = "Auth not ready. Refresh the page."; return; }
+
+    const { data: sessData } = await sb.auth.getSession();
+    const session = sessData && sessData.session;
+    if (!session) { out.textContent = "Please sign in first."; return; }
+
+    const method = (document.getElementById("paymentMethod")?.value || "pay_later");
+
+    out.textContent = "Starting checkout...";
+
+    // NOTE: real payment + invoice emails must be done server-side (Edge Function).
+    // This expects you to deploy an Edge Function named: checkout
+    try {
+      const token = session.access_token;
+      const r = await fetch(`${sb.supabaseUrl}/functions/v1/checkout`, {
+        method: "POST",
+        headers: {
+          apikey: sb.supabaseKey,
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ payment_method: method })
+      });
+
+      const text = await r.text();
+      let data = null; try { data = JSON.parse(text); } catch(_) {}
+
+      if (!r.ok || !data?.ok) {
+        out.textContent = (data?.error || text || "Checkout failed");
+        return;
+      }
+
+      if (data.redirect_url) {
+        window.location.href = data.redirect_url; // pay_now
+        return;
+      }
+      if (data.invoice_url) {
+        window.location.href = data.invoice_url; // pay_later
+        return;
+      }
+
+      out.textContent = "Checkout created.";
+    } catch (e){
+      out.textContent = "Checkout error.";
+      console.error(e);
+    }
   }
 
   document.addEventListener("DOMContentLoaded", () => {
@@ -1704,10 +1612,14 @@ async function doSignOut() {
     const clr = document.getElementById("clearCartBtn");
     if (clr) clr.addEventListener("click", clearCart);
 
+    const buy = document.getElementById("buyNowBtn");
+    if (buy) buy.addEventListener("click", buyNow);
+
     loadCart();
   });
 })();
 </script>
+
 
 </body>
 </html>
