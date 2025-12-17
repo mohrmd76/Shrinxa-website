@@ -1318,7 +1318,7 @@
 <a class="nav-anchor nav-contact" data-nav="contact" href="contactus.html">Contact us</a>
 
 <a class="nav-anchor nav-signin" data-nav="signin" href="login.html">Sign in</a></nav>
-<div class="nav-right"><div class="user-menu" id="user-menu" style="display:none; position:relative;"><button class="user-menu-toggle" id="userMenuToggle" type="button"><span id="userMenuName">Profile</span> ▾</button><div class="user-menu-dropdown" id="userMenuDropdown"><button class="user-menu-item" type="button" data-action="profile">Profile</button><button class="user-menu-item" type="button" data-action="history">Purchase History</button><button class="user-menu-item" type="button" data-action="signout">Sign out</button></div></div><div class="user-greeting" id="user-greeting"></div><button class="cart-chip" id="openCartBtn">
+<div class="nav-right"><div class="user-menu" id="user-menu" style="display:none; position:relative;"><button class="user-menu-toggle" id="userMenuToggle" type="button"><span id="userMenuName">Profile</span> ▾</button><div class="user-menu-dropdown" id="userMenuDropdown"><button class="user-menu-item" type="button" data-action="profile">Profile</button><button class="user-menu-item" type="button" data-action="history">Purchase History</button><button class="user-menu-item" type="button" data-action="signout">Sign out</button></div></div><div class="user-greeting" id="user-greeting"></div><button class="cart-chip" id="openCartBtn" onclick="window.location.href='cart.html'">
       🧺 Cart <span class="badge" id="cartCount">0</span>
 </button></div></div>
 </header>
@@ -1520,5 +1520,39 @@ async function doSignOut() {
 </script>
 
 <script src="auth.js"></script>
+
+<script>
+(() => {
+  const SUPABASE_URL = "https://fgrjojxwevllnjdixiyd.supabase.co";
+  const CART_COUNT_URL = `${SUPABASE_URL}/functions/v1/cart-count`;
+
+  async function refreshCartCountFromServer() {
+    try {
+      const sb = window.supabaseClient || window._supabase || window.supabase;
+      if (!sb?.auth) return;
+
+      const { data } = await sb.auth.getSession();
+      const token = data?.session?.access_token;
+      if (!token) return;
+
+      const r = await fetch(CART_COUNT_URL, {
+        headers: {
+          apikey: sb.supabaseKey || "",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!r.ok) return;
+
+      const j = await r.json();
+      const badge = document.getElementById("cartCount");
+      if (badge) badge.textContent = j.cart_count ?? 0;
+    } catch (_) {}
+  }
+
+  document.addEventListener("DOMContentLoaded", refreshCartCountFromServer);
+  window.addEventListener("pageshow", refreshCartCountFromServer);
+})();
+</script>
+
 </body>
 </html>

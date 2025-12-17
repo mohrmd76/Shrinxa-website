@@ -1487,6 +1487,52 @@ async function doSignOut() {
 }
 </script>
 
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const cartBtn = document.getElementById("openCartBtn");
+  if (!cartBtn) return;
+  cartBtn.addEventListener("click", () => {
+    window.location.href = "cart.html";
+  });
+});
+</script>
+
+
+<script>
+(() => {
+  const SUPABASE_URL = "https://fgrjojxwevllnjdixiyd.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_k5D9JKO5lMCHlju-WhlSAQ_XEiEruT_";
+
+  async function refreshCartCountFromServer() {
+    try {
+      const sb = (typeof getSupabaseClient === "function") ? await getSupabaseClient() : (window.supabaseClient || window._supabase || window.supabase);
+      if (!sb?.auth?.getSession) return;
+
+      const { data } = await sb.auth.getSession();
+      const token = data?.session?.access_token;
+      if (!token) return;
+
+      const r = await fetch(`${SUPABASE_URL}/functions/v1/cart-count`, {
+        method: "GET",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!r.ok) return;
+
+      const j = await r.json();
+      const badge = document.getElementById("cartCount");
+      if (badge) badge.textContent = String(j?.cart_count ?? j?.count ?? 0);
+    } catch (_) {}
+  }
+
+  document.addEventListener("DOMContentLoaded", refreshCartCountFromServer);
+  window.addEventListener("pageshow", refreshCartCountFromServer);
+})();
+</script>
+
 <script src="auth.js"></script>
 </body>
 </html>
