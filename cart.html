@@ -1287,8 +1287,6 @@
 }
     .dropdown-menu.open{display:block;}
 </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="auth.js"></script>
 </head>
 <body>
 <header>
@@ -1466,6 +1464,9 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 </script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // Capture the SAME Supabase client created inside auth.js (without editing auth.js)
 // auth.js runs AFTER this script tag, so we wrap createClient *immediately*.
@@ -1566,12 +1567,15 @@ async function doSignOut() {
   } catch (e) {}
 }
 </script>
+
+<script src="auth.js"></script>
+
 <script>
 (function(){
   function getSb(){
     return (window.ShrinxaAuth && window.ShrinxaAuth.supabaseClient) ||
            (window.Auth && window.Auth.supabaseClient) ||
-           window.supabaseClient || window._supabase || null;
+           window.supabaseClient || window._supabase || window.supabase || null;
   }
   function money(n){ return "$" + (Number(n||0)).toFixed(2); }
 
@@ -1592,7 +1596,7 @@ async function doSignOut() {
     const { data, error } = await sb
       .from("cart_items")
       .select("id, product_id, product_name, unit_price, quantity")
-      .order("created_at", { ascending: true });
+      .order("id", { ascending: true });
 
     if (error) { console.error(error); msg.textContent = "Could not load cart."; return; }
 
