@@ -1286,6 +1286,21 @@
   }
 }
     .dropdown-menu.open{display:block;}
+
+
+/* --- Compact cart UI overrides (added) --- */
+
+.hero h1 { font-size: clamp(1.8rem, 3vw, 2.3rem) !important; }
+.hero { padding: 1.1rem 1.25rem 1.6rem !important; margin-bottom: 1.6rem !important; }
+.section-title { font-size: 1.05rem !important; }
+#cartList .cart-row { padding: 0.55rem 0.85rem !important; border-radius: 12px !important; }
+#cartList .cart-row .name { font-size: 0.98rem !important; }
+#cartList .cart-row .unit { font-size: 0.78rem !important; }
+#cartList .cart-row .line { font-size: 0.98rem !important; }
+#cartList .cart-row .qty-label { font-size: 0.78rem !important; }
+#cartList .cart-row input.cartQty { height: 30px !important; font-size: 0.85rem !important; padding: 0.25rem 0.5rem !important; }
+#cartTotals { font-size: 0.9rem !important; }
+
 </style>
 </head>
 <body>
@@ -1570,44 +1585,56 @@ async function doSignOut() {
 
 <script src="auth.js"></script>
 
-<script>
-(function(){
+<script>(function(){
   function getSb(){
     return (window.ShrinxaAuth && window.ShrinxaAuth.supabaseClient) ||
            (window.Auth && window.Auth.supabaseClient) ||
-           window.supabaseClient || window._supabase || window.supabase || null;
+           window.supabaseClient || window._supabase || null;
   }
   function money(n){ return "$" + (Number(n||0)).toFixed(2); }
-
-  function pickQty(row){
-    return Number(row.qty ?? row.quantity ?? 0) || 0;
-  }
-  function pickUnitPrice(row){
-    return Number(row.unit_price ?? row.price ?? row.unitPrice ?? 0) || 0;
-  }
-  function pickName(row){
-    return row.product_name ?? row.name ?? row.product_id ?? "Item";
+  function escapeHtml(str){
+    return String(str||"").replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
   }
 
-  async function getActiveCartId(sb, userId){
-    let { data: cart, error } = await sb
-      .from("carts")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("status", "active")
-      .maybeSingle();
-    if (error) throw error;
-
-    if (!cart) {
-      const { data: newCart, error: newErr } = await sb
-        .from("carts")
-        .insert([{ user_id: userId, status: "active" }])
-        .select("id")
-        .single();
-      if (newErr) throw newErr;
-      cart = newCart;
+  async function getProfileWholesale(sb, userId){
+    // If profiles.is_wholesale doesn't exist, this will error; we ignore and treat as false.
+    try{
+      const { data, error } = await sb.from("profiles").select("is_wholesale").eq("id", userId).maybeSingle();
+      if (error) return false;
+      return !!data?.is_wholesale;
+    }catch(_e){
+      return false;
     }
-    return cart.id;
+  }
+
+  function pickUnitPrice(row, qty, isWholesaleUser){
+    // Prefer explicit stored prices if they exist
+    const retail = Number(row.retail_price ?? row.price ?? 0) || 0;
+    const wholesale = Number(row.wholesale_price ?? row.price ?? 0) || 0;
+
+    const useWholesale = isWholesaleUser || (Number(qty)||0) >= 50;
+    return {
+      useWholesale,
+      unit: useWholesale ? wholesale : retail,
+      retail,
+      wholesale
+    };
+  }
+
+  function setTotals(subtotal){
+    const hst = subtotal * 0.13;
+    const total = subtotal + hst;
+    const subEl = document.getElementById("subtotalVal");
+    const hstEl = document.getElementById("hstVal");
+    const totEl = document.getElementById("totalVal");
+    if (subEl) subEl.textContent = money(subtotal);
+    if (hstEl) hstEl.textContent = money(hst);
+    if (totEl) totEl.textContent = money(total);
+  }
+
+  function setCartCount(n){
+    const el = document.getElementById("cartCount");
+    if (el) el.textContent = String(n||0);
   }
 
   async function loadCart(){
@@ -1617,33 +1644,35 @@ async function doSignOut() {
 
     if (!sb) { msg.textContent = "Auth not ready. Refresh the page."; return; }
 
-    const { data: sessData } = await sb.auth.getSession();
-    const session = sessData && sessData.session;
-    if (!session) { msg.textContent = "Please sign in to view your cart."; return; }
+    const { data: sess } = await sb.auth.getSession();
+    const session = sess?.session;
+    if (!session) { msg.textContent = "Please sign in to view your cart."; setCartCount(0); setTotals(0); return; }
+
+    const userId = session.user.id;
 
     msg.textContent = "Loading...";
     list.innerHTML = "";
 
-    const userId = session.user.id;
+    // Active cart for this user
+    const { data: cart, error: cartErr } = await sb
+      .from("carts")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .maybeSingle();
 
-    let cartId;
-    try {
-      cartId = await getActiveCartId(sb, userId);
-    } catch (e){
-      console.error(e);
-      msg.textContent = "Could not load cart.";
-      setTotals(0);
-      setCartCount(0);
-      return;
-    }
+    if (cartErr) { console.error(cartErr); msg.textContent = "Could not load cart."; return; }
+    if (!cart?.id) { msg.textContent = "Your cart is empty."; setCartCount(0); setTotals(0); return; }
+
+    const isWholesaleUser = await getProfileWholesale(sb, userId);
 
     const { data, error } = await sb
       .from("cart_items")
-      .select("*")
-      .eq("cart_id", cartId)
-      .order("id", { ascending: true });
+      .select("id, cart_id, product_id, product_name, product_type, qty, price, retail_price, wholesale_price, created_at")
+      .eq("cart_id", cart.id)
+      .order("created_at", { ascending: true });
 
-    if (error) { console.error(error); msg.textContent = "Could not load cart."; setTotals(0); setCartCount(0); return; }
+    if (error) { console.error(error); msg.textContent = "Could not load cart."; return; }
 
     if (!data || data.length === 0) {
       msg.textContent = "Your cart is empty.";
@@ -1653,50 +1682,79 @@ async function doSignOut() {
     }
 
     msg.textContent = "";
+
     let subtotal = 0;
     let totalQty = 0;
 
     data.forEach(row => {
-      const qty = pickQty(row);
-      const price = pickUnitPrice(row);
-      subtotal += qty * price;
+      const qty = Number(row.qty) || 0;
+      const picked = pickUnitPrice(row, qty, isWholesaleUser);
+      const unit = picked.unit;
+
+      subtotal += qty * unit;
       totalQty += qty;
 
       const item = document.createElement("div");
+      item.className = "cart-row";
       item.style.display = "flex";
       item.style.justifyContent = "space-between";
       item.style.alignItems = "center";
       item.style.gap = "12px";
-      item.style.padding = "12px";
+      item.style.padding = "0.75rem 1rem";
+      item.style.marginBottom = "0.7rem";
       item.style.border = "1px solid rgba(255,255,255,.08)";
       item.style.borderRadius = "14px";
       item.style.background = "rgba(0,0,0,.18)";
 
+      const label = escapeHtml(row.product_name || row.product_id || "Item");
+      const type = row.product_type ? ` <span style="opacity:.75;font-weight:500;">(${escapeHtml(row.product_type)})</span>` : "";
+      const badge = picked.useWholesale ? `<span style="margin-left:.5rem;font-size:.72rem;opacity:.9;">Wholesale</span>` : "";
+
       item.innerHTML = `
         <div style="min-width:220px;">
-          <div style="font-weight:700;">${escapeHtml(pickName(row))}</div>
-          <div style="opacity:.85;font-size:13px;">Unit: ${money(price)}</div>
+          <div class="name" style="font-weight:700;">${label}${type}${badge}</div>
+          <div class="unit" style="opacity:.85;font-size:13px;">Unit: ${money(unit)}</div>
         </div>
 
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;">
-          <label style="opacity:.85;font-size:13px;">Qty</label>
-          <input class="cartQty" type="number" min="1" value="${qty}" style="width:90px;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.2);color:#fff;" />
-          <div style="min-width:120px;text-align:right;font-weight:700;">${money(qty*price)}</div>
-          <button class="btn btn-secondary removeBtn" type="button">Remove</button>
+          <label class="qty-label" style="opacity:.85;font-size:13px;">Qty</label>
+          <input class="cartQty" type="number" min="1" value="${qty}"
+            style="width:84px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.2);color:#fff;" />
+          <div class="line" style="min-width:120px;text-align:right;font-weight:700;">${money(qty*unit)}</div>
+          <button class="removeBtn" style="border-radius:10px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.06);color:#fff;padding:0.35rem 0.6rem;cursor:pointer;">Remove</button>
         </div>
       `;
 
-      item.querySelector(".cartQty").addEventListener("change", async (e) => {
-        const newQty = Math.max(1, Number(e.target.value || 1));
-        const patch = ("qty" in row) ? { qty: newQty } : { quantity: newQty };
-        const { error: upErr } = await sb.from("cart_items").update(patch).eq("id", row.id).eq("cart_id", cartId);
-        if (upErr) console.error(upErr);
-        await loadCart();
-      });
+      const qtyInput = item.querySelector("input.cartQty");
+      const removeBtn = item.querySelector("button.removeBtn");
+      const unitEl = item.querySelector(".unit");
+      const lineEl = item.querySelector(".line");
+      const nameEl = item.querySelector(".name");
 
-      item.querySelector(".removeBtn").addEventListener("click", async () => {
-        const { error: delErr } = await sb.from("cart_items").delete().eq("id", row.id).eq("cart_id", cartId);
-        if (delErr) console.error(delErr);
+      async function updateRowQty(newQty){
+        const n = Math.max(1, Number(newQty||1));
+        const p = pickUnitPrice(row, n, isWholesaleUser);
+
+        // Update DB qty (and also price field to the currently-applied unit price for consistency)
+        const { error: upErr } = await sb
+          .from("cart_items")
+          .update({ qty: n, price: p.unit })
+          .eq("id", row.id);
+
+        if (upErr) { console.error(upErr); return; }
+
+        row.qty = n;
+        row.price = p.unit;
+
+        // Recompute totals from DOM (fast enough for small carts)
+        await loadCart();
+      }
+
+      qtyInput.addEventListener("change", () => updateRowQty(qtyInput.value));
+
+      removeBtn.addEventListener("click", async () => {
+        const { error: delErr } = await sb.from("cart_items").delete().eq("id", row.id);
+        if (delErr) { console.error(delErr); return; }
         await loadCart();
       });
 
@@ -1707,58 +1765,32 @@ async function doSignOut() {
     setCartCount(totalQty);
   }
 
-  function setTotals(subtotal){
-    const hst = subtotal * 0.13;
-    const total = subtotal + hst;
-    document.getElementById("subTotal").textContent = money(subtotal);
-    document.getElementById("hst").textContent = money(hst);
-    document.getElementById("grandTotal").textContent = money(total);
-  }
+  document.addEventListener("DOMContentLoaded", () => {
+    // Load cart after auth has initialized
+    setTimeout(loadCart, 250);
 
-  function setCartCount(n){
-    const el = document.getElementById("cartCount");
-    if (el) el.textContent = String(n || 0);
-  }
+    const clearBtn = document.getElementById("clearCartBtn");
+    if (clearBtn) {
+      clearBtn.addEventListener("click", async () => {
+        const sb = getSb();
+        if (!sb) return;
+        const { data: sess } = await sb.auth.getSession();
+        const session = sess?.session;
+        if (!session) return;
 
-  function escapeHtml(str){
-    return String(str)
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#39;");
-  }
+        const userId = session.user.id;
+        const { data: cart } = await sb.from("carts").select("id").eq("user_id", userId).eq("status", "active").maybeSingle();
+        if (!cart?.id) { await loadCart(); return; }
 
-  async function clearCart(){
-    const sb = getSb();
-    if (!sb) return;
-    const { data: sessData } = await sb.auth.getSession();
-    if (!sessData || !sessData.session) { alert("Please sign in."); return; }
-
-    const ok = confirm("Clear all items from your cart?");
-    if (!ok) return;
-
-    try {
-      const cartId = await getActiveCartId(sb, sessData.session.user.id);
-      const { error } = await sb.from("cart_items").delete().eq("cart_id", cartId);
-      if (error) console.error(error);
-    } catch (e){
-      console.error(e);
+        await sb.from("cart_items").delete().eq("cart_id", cart.id);
+        await loadCart();
+      });
     }
 
-    await loadCart();
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    const cont = document.getElementById("continueShoppingBtn");
-    if (cont) cont.addEventListener("click", () => window.location.href = "products.html");
-
-    const clr = document.getElementById("clearCartBtn");
-    if (clr) clr.addEventListener("click", clearCart);
-
-    loadCart();
+    const shopBtn = document.getElementById("continueShoppingBtn");
+    if (shopBtn) shopBtn.addEventListener("click", () => window.location.href = "products.html");
   });
-})();
-</script>
+})();</script>
+
 </body>
 </html>
