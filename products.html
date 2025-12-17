@@ -1285,7 +1285,7 @@
     margin: 12mm;
   }
 }
-    .dropdown-menu.open{display:block;}
+    
 </style>
 </head>
 <body>
@@ -1721,7 +1721,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // dropdown toggle (mobile friendly)
   document.addEventListener("click", (e) => {
     const btn = e.target.closest(".nav-dropdown > button");
-    const menu = document.querySelector(".nav-dropdown .dropdown-menu");
+    const menu = document.querySelector(".nav-dropdown .nav-dropdown-menu");
     if (!btn && menu && !menu.contains(e.target)) {
       menu.classList.remove("open");
       return;
@@ -1916,135 +1916,272 @@ async function doSignOut() {
     if (sb?.auth?.signOut) await sb.auth.signOut();
   } catch (e) {}
 }
+
+async function initAuthUI() {
+  try {
+    const sb = await getSupabaseClient();
+    if (!sb?.auth) return;
+
+    const userMenu = document.getElementById("user-menu");
+    const greeting = document.getElementById("user-greeting");
+    const signInLink = document.querySelector(".nav-signin");
+
+    const apply = (email) => {
+      if (email) {
+        if (userMenu) userMenu.style.display = "flex";
+        if (greeting) greeting.textContent = "";
+        if (signInLink) signInLink.style.display = "none";
+      } else {
+        if (userMenu) userMenu.style.display = "none";
+        if (signInLink) signInLink.style.display = "";
+      }
+    };
+
+    // Initial state
+    if (sb.auth.getSession) {
+      const { data } = await sb.auth.getSession();
+      apply(data?.session?.user?.email || null);
+    } else if (sb.auth.getUser) {
+      const { data } = await sb.auth.getUser();
+      apply(data?.user?.email || null);
+    } else {
+      apply(null);
+    }
+
+    // Live updates
+    if (sb.auth.onAuthStateChange) {
+      sb.auth.onAuthStateChange((_event, session) => {
+        apply(session?.user?.email || null);
+      });
+    }
+  } catch (e) {
+    // ignore
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  initAuthUI();
+});
+
 </script>
 
 <script src="auth.js"></script>
 
 <script>
-(function(){
-  function getSb(){
-    return (window.ShrinxaAuth && window.ShrinxaAuth.supabaseClient) ||
-           (window.Auth && window.Auth.supabaseClient) ||
-           window.supabaseClient || window._supabase || null;
+(() => {
+  const SUPABASE_URL = "https://fgrjojxwevllnjdixiyd.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_k5D9JKO5lMCHlju-WhlSAQ_XEiEruT_";
+  const CART_ADD_URL = `${SUPABASE_URL}/functions/v1/cart-add`;
+
+  const cartCountEl = document.getElementById("cartCount");
+
+  function setCartCount(n) {
+    if (cartCountEl) cartCountEl.textContent = String(Number(n) || 0);
   }
 
-  function setCartCount(n){
-    const el = document.getElementById("cartCount");
-    if (el) el.textContent = String(n || 0);
+  
+  async function getUser() {
+    const sb = window._supabase || window.supabaseClient || window.SupabaseClient || window.supabase;
+    try {
+      if (sb?.auth?.getUser) {
+        const { data } = await sb.auth.getUser();
+        return data?.user || null;
+      }
+      if (sb?.auth?.getSession) {
+        const { data } = await sb.auth.getSession();
+        return data?.session?.user || null;
+      }
+    } catch (e) {}
+    return null;
   }
 
-  async function loadCartCount(){
-    const sb = getSb();
-    if (!sb) return setCartCount(0);
+  async function refreshCartCountFromServer() {
+    try {
+      const token = await getAccessToken();
+      if (!token) { setCartCount(0); return; }
 
-    const { data: sessData } = await sb.auth.getSession();
-    const session = sessData && sessData.session;
-    if (!session) return setCartCount(0);
+      // 1) Try Edge Function: cart-count
+      try {
+        const r = await fetch(`${SUPABASE_URL}/functions/v1/cart-count`, {
+          method: "GET",
+          headers: {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+        if (r.ok) {
+          const t = await r.text();
+          let j = null;
+          try { j = JSON.parse(t); } catch (_) { j = null; }
+          const c = j?.cart_count ?? j?.count ?? (typeof j === "number" ? j : null);
+          if (c !== null && c !== undefined) { setCartCount(c); return; }
+        }
+      } catch (_) {}
 
-    const { data, error } = await sb
-      .from("cart_items")
-      .select("quantity");
+      // 2) Try Edge Function: cart-get (compute count from items)
+      try {
+        const r = await fetch(`${SUPABASE_URL}/functions/v1/cart-get`, {
+          method: "GET",
+          headers: {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+        if (r.ok) {
+          const t = await r.text();
+          let j = null;
+          try { j = JSON.parse(t); } catch (_) { j = null; }
+          const items = j?.items || j?.cart || j?.data || (Array.isArray(j) ? j : null);
+          if (Array.isArray(items)) {
+            const sum = items.reduce((acc, it) => acc + (Number(it?.qty) || Number(it?.quantity) || 0), 0);
+            setCartCount(sum);
+            return;
+          }
+          const c = j?.cart_count ?? j?.count ?? null;
+          if (c !== null && c !== undefined) { setCartCount(c); return; }
+        }
+      } catch (_) {}
 
-    if (error) { console.warn("cart_items read error", error); return setCartCount(0); }
+      // 3) Fallback: PostgREST table attempts (won't break if table/columns differ)
+      const user = await getUser();
+      const uid = user?.id;
+      if (!uid) return;
 
-    const total = (data || []).reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
-    setCartCount(total);
+      const tableCandidates = ["cart_items", "cart", "carts"];
+      const userColCandidates = ["user_id", "owner_id", "customer_id"];
+      const qtyCols = ["qty", "quantity"];
+
+      for (const table of tableCandidates) {
+        for (const userCol of userColCandidates) {
+          const url = `${SUPABASE_URL}/rest/v1/${table}?select=${qtyCols.join(",")}&${userCol}=eq.${uid}`;
+          try {
+            const r = await fetch(url, {
+              method: "GET",
+              headers: {
+                "apikey": SUPABASE_ANON_KEY,
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            });
+            if (!r.ok) continue;
+            const rows = await r.json();
+            if (!Array.isArray(rows)) continue;
+            const sum = rows.reduce((acc, row) => {
+              let q = 0;
+              for (const qc of qtyCols) q = q || (Number(row?.[qc]) || 0);
+              return acc + q;
+            }, 0);
+            setCartCount(sum);
+            return;
+          } catch (_) {}
+        }
+      }
+    } catch (_) {}
   }
 
-  async function addToCart(btn){
-    const sb = getSb();
-    if (!sb) { alert("Auth not ready. Refresh page."); return; }
+async function getAccessToken() {
+    const sb = window._supabase || window.supabaseClient || window.SupabaseClient || window.supabase;
+    if (!sb || !sb.auth || !sb.auth.getSession) return null;
+    const { data, error } = await sb.auth.getSession();
+    if (error) return null;
+    return data?.session?.access_token || null;
+  }
 
-    const { data: sessData } = await sb.auth.getSession();
-    const session = sessData && sessData.session;
-    if (!session) { alert("Please sign in first."); return; }
+  function showCartError(msg) {
+    // Try to reuse an existing message area if present; otherwise alert
+    const el = document.getElementById("cartError") || document.querySelector(".cart-error");
+    if (el) {
+      el.textContent = msg;
+      el.style.display = "block";
+    } else {
+      alert(msg);
+    }
+  }
+
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".btn-add");
+    if (!btn) return;
+
+    e.preventDefault();
 
     const card = btn.closest(".product-card");
     if (!card) return;
 
-    const productId = card.getAttribute("data-id") || "";
-    const productName = card.getAttribute("data-name") || "Item";
-    const retail = Number(card.getAttribute("data-retail") || 0);
-    const wholesale = Number(card.getAttribute("data-wholesale") || 0);
-
     const qtyInput = card.querySelector(".qty-input");
-    const qty = Math.max(1, Number(qtyInput && qtyInput.value ? qtyInput.value : 1));
+    const qty = Math.max(1, parseInt(qtyInput?.value || "1", 10) || 1);
 
-    // current pricing logic on the page (retail 1-49, wholesale 50+)
-    const unitPrice = (qty >= 50 && wholesale) ? wholesale : retail;
+    const productId = card.dataset.id || card.getAttribute("data-id") || "";
+    const productName = card.dataset.name || card.getAttribute("data-name") || "";
+    const productType = card.dataset.type || card.getAttribute("data-type") || "";
 
+    const token = await getAccessToken();
+    if (!token) {
+      showCartError("Please sign in to add items to cart.");
+      window.location.href = "login.html";
+      return;
+    }
+
+    const oldText = btn.textContent;
     btn.disabled = true;
-    const oldTxt = btn.textContent;
     btn.textContent = "Adding...";
 
     try {
-      // 1) check if item exists
-      const { data: existing, error: selErr } = await sb
-        .from("cart_items")
-        .select("id, quantity")
-        .eq("product_id", productId)
-        .maybeSingle();
+      const resp = await fetch(CART_ADD_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          product_id: productId,
+          product_name: productName,
+          product_type: productType,
+          qty,
+        }),
+      });
 
-      if (selErr && selErr.code !== "PGRST116") throw selErr; // ignore "no rows"
+      const text = await resp.text();
+      let data = null;
+      try { data = JSON.parse(text); } catch (_) { data = { raw: text }; }
 
-      if (existing && existing.id) {
-        const newQty = (Number(existing.quantity) || 0) + qty;
-        const { error: upErr } = await sb
-          .from("cart_items")
-          .update({ quantity: newQty, unit_price: unitPrice, product_name: productName })
-          .eq("id", existing.id);
-        if (upErr) throw upErr;
-      } else {
-        const { error: insErr } = await sb
-          .from("cart_items")
-          .insert([{ product_id: productId, product_name: productName, quantity: qty, unit_price: unitPrice }]);
-        if (insErr) throw insErr;
+      if (!resp.ok || data?.ok === false) {
+        const msg = data?.error || data?.message || text || "Failed to add to cart";
+        showCartError(msg);
+        return;
       }
 
-      await loadCartCount();
-      btn.textContent = "Added ✓";
-      setTimeout(() => { btn.textContent = oldTxt; }, 900);
-    } catch (e) {
-      console.error(e);
-      alert("Could not add to cart. Make sure policies allow insert/update on cart_items.");
-      btn.textContent = oldTxt;
+      // Update cart count if server returns it
+      const count = data?.cart_count ?? data?.count ?? null;
+      if (count !== null) setCartCount(count);
+    } catch (err) {
+      showCartError(String(err?.message || err));
     } finally {
       btn.disabled = false;
+      btn.textContent = oldText;
     }
-  }
-
-  function hideExtraHiEmail(){
-    const keep = document.getElementById("userGreeting");
-    const candidates = Array.from(document.querySelectorAll("header, nav, .nav, .topbar, body"))
-      .flatMap(root => Array.from(root.querySelectorAll("*")));
-    for (const el of candidates) {
-      if (!el || !el.textContent) continue;
-      const t = el.textContent.trim();
-      if (t.startsWith("Hi ") && t.includes("@")) {
-        if (keep && keep.contains(el)) continue;
-        // hide ONLY the duplicate email greeting
-        el.style.display = "none";
-      }
-    }
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    // cart button -> cart page
-    const openCartBtn = document.getElementById("openCartBtn");
-    if (openCartBtn) openCartBtn.addEventListener("click", () => { window.location.href = "cart.html"; });
-
-    // wire add buttons
-    document.querySelectorAll(".btn-add").forEach(btn => {
-      btn.addEventListener("click", () => addToCart(btn));
-    });
-
-    // initial badge
-    loadCartCount();
-
-    // hide extra greeting if it appears later
-    setTimeout(hideExtraHiEmail, 600);
-    setTimeout(hideExtraHiEmail, 1800);
   });
+
+  
+  // Read cart count from server on page load
+  document.addEventListener("DOMContentLoaded", () => {
+    refreshCartCountFromServer();
+  });
+
+  // Re-read cart count when auth state changes (login/logout)
+  (async () => {
+    try {
+      const sb = window._supabase || window.supabaseClient || window.SupabaseClient || window.supabase;
+      if (sb?.auth?.onAuthStateChange) {
+        sb.auth.onAuthStateChange(() => {
+          refreshCartCountFromServer();
+        });
+      }
+    } catch (_) {}
+  })();
+
+// Keep existing count if already set; otherwise show 0
+  if (cartCountEl && !cartCountEl.textContent.trim()) setCartCount(0);
 })();
 </script>
 
