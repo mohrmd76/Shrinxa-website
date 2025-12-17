@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Shrinxa — Cart</title>
-  <style>
+<meta charset="utf-8"/>
+<title>Shrinxa – Premium Packaging Solutions</title>
+<meta content="width=device-width, initial-scale=1" name="viewport"/><meta content="Shrinxa is a GTA-based supplier of stretch wrap, pre-stretch film, and packaging tape with free delivery over $300 and wholesale pricing for warehouses and 3PLs." name="description"/>
+<style>
     :root {
       --bg: #050914;
       --bg-alt: #0b1224;
@@ -1286,13 +1286,20 @@
   }
 }
     .dropdown-menu.open{display:block;}
-
-  /* Hide email greeting if any script injects it */
-  .user-greeting, #userGreeting, #userEmailGreeting { display:none !important; }
-
 </style>
 </head>
 <body>
+<header>
+<div class="nav-inner">
+<div class="nav-left">
+<div class="nav-logo">
+<img alt="Shrinxa logo" src="shrinxa_transparent_4000px.png"/>
+</div>
+<div class="nav-brand-text">
+<strong>SHRINXA</strong>
+<span>Premium Packaging Solutions</span>
+</div>
+</div>
 <nav class="nav-links">
 <a class="nav-anchor nav-home" data-nav="home" href="index.html">Home</a>
 <div class="nav-dropdown">
@@ -1311,176 +1318,396 @@
 <a class="nav-anchor nav-contact" data-nav="contact" href="contactus.html">Contact us</a>
 
 <a class="nav-anchor nav-signin" data-nav="signin" href="login.html">Sign in</a></nav>
+<div class="nav-right"><div class="user-menu" id="user-menu" style="display:none; position:relative;"><button class="user-menu-toggle" id="userMenuToggle" type="button"><span id="userMenuName">Profile</span> ▾</button><div class="user-menu-dropdown" id="userMenuDropdown"><button class="user-menu-item" type="button" data-action="profile">Profile</button><button class="user-menu-item" type="button" data-action="history">Purchase History</button><button class="user-menu-item" type="button" data-action="signout">Sign out</button></div></div><div class="user-greeting" id="user-greeting"></div><button class="cart-chip" id="openCartBtn">
+      🧺 Cart <span class="badge" id="cartCount">0</span>
+</button></div></div>
+</header>
 
-<main class="container" style="max-width: 1200px; padding: 40px 20px;">
-  <h1 class="page-title" style="margin-bottom: 10px;">Cart</h1>
-  <p class="page-subtitle" style="margin-top: 0;">Your saved items (synced with your account).</p>
+<main class="container" style="padding-top: 110px;">
+  <section class="hero">
+    <h1>Your Cart</h1>
+    <p style="margin-top:6px;opacity:.9">Items saved to your account (server cart).</p>
+  </section>
 
-  <div class="card" style="margin-top: 20px;">
-    <div class="card-header" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
-      <h2 style="margin:0;">Items</h2>
-      <a class="btn" href="products.html">Continue shopping</a>
-    </div>
-
-    <div class="card-body">
-      <div id="cartStatus" style="color:#9fb4d6; margin-bottom:12px;">Loading…</div>
-
-      <div style="overflow:auto;">
-        <table style="width:100%; border-collapse:collapse; min-width:520px;">
-          <thead>
-            <tr>
-              <th style="text-align:left; padding:10px; border-bottom:1px solid rgba(255,255,255,.10);">Product</th>
-              <th style="text-align:right; padding:10px; border-bottom:1px solid rgba(255,255,255,.10);">Qty</th>
-              <th style="text-align:right; padding:10px; border-bottom:1px solid rgba(255,255,255,.10);">Price</th>
-              <th style="text-align:right; padding:10px; border-bottom:1px solid rgba(255,255,255,.10);">Line total</th>
-            </tr>
-          </thead>
-          <tbody id="cartRows"></tbody>
-        </table>
-      </div>
-
-      <div style="display:flex; justify-content:flex-end; margin-top:14px;">
-        <div style="min-width:280px; border-top:1px solid rgba(255,255,255,.10); padding-top:12px;">
-          <div style="display:flex; justify-content:space-between; margin:6px 0;">
-            <span>Subtotal</span><strong id="subtotal">$0.00</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between; margin:6px 0;">
-            <span>HST (13%)</span><strong id="hst">$0.00</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between; margin:10px 0; font-size:1.1em;">
-            <span>Total</span><strong id="total">$0.00</strong>
-          </div>
-          <div style="margin-top:10px; color:#9fb4d6; font-size:.95em;">
-            Checkout flow will be added next (payment / invoice).
-          </div>
+  <section class="card-grid" style="margin-top:18px;">
+    <div class="product-card" style="grid-column: 1 / -1;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+        <h2 style="margin:0;font-size:20px;">Cart Items</h2>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <button id="clearCartBtn" class="btn btn-secondary" type="button">Clear cart</button>
+          <button id="continueShoppingBtn" class="btn btn-primary" type="button">Continue shopping</button>
         </div>
       </div>
+
+      <div id="cartMsg" style="margin-top:12px;color:#c7d2fe;"></div>
+
+      <div id="cartList" style="margin-top:14px;display:flex;flex-direction:column;gap:10px;"></div>
+
+      <hr style="margin:16px 0; border:0; border-top:1px solid rgba(255,255,255,.08);" />
+
+      <div style="display:flex;justify-content:flex-end;gap:24px;flex-wrap:wrap;">
+        <div><strong>Subtotal:</strong> <span id="subTotal">$0.00</span></div>
+        <div><strong>HST (13%):</strong> <span id="hst">$0.00</span></div>
+        <div><strong>Total:</strong> <span id="grandTotal">$0.00</span></div>
+      </div>
     </div>
-  </div>
+  </section>
 </main>
 
 <footer>
   © <span id="year"></span> Shrinxa. All rights reserved.
 </footer>
 
-<script src="auth.js"></script>
 <script>
-  // Keep only ONE user greeting (hide any extra email greeting if injected)
-  const style = document.createElement("style");
-  style.textContent = ".user-greeting, #userGreeting, #userEmailGreeting { display:none !important; }";
-  document.head.appendChild(style);
+document.addEventListener("DOMContentLoaded", () => {
+  const y = document.getElementById("year");
+  if (y) y.textContent = new Date().getFullYear();
+});
+</script>
 
-  function setCartCount(count) {
-    const el = document.getElementById("cartCount");
-    if (el) el.textContent = String(count || 0);
-    try { localStorage.setItem("shrinxa_cart_count", String(count || 0)); } catch (e) {}
+
+<script>
+(function(){
+  // dropdown toggle (mobile friendly)
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest(".nav-dropdown > button");
+    const menu = document.querySelector(".nav-dropdown .dropdown-menu");
+    if (!btn && menu && !menu.contains(e.target)) {
+      menu.classList.remove("open");
+      return;
+    }
+    if (btn && menu) {
+      e.preventDefault();
+      menu.classList.toggle("open");
+    }
+  });
+
+  function setActivePill(target) {
+    document.querySelectorAll(".pill").forEach(p => p.classList.remove("active"));
+    if (target) target.classList.add("active");
   }
 
-  async function getSupabaseClient() {
-    if (window._supabase) return window._supabase;
-    if (window.supabaseClient) return window.supabaseClient;
+  function applyFilter(filterLabel) {
+    const cards = document.querySelectorAll(".product-card[data-type]");
+    if (!filterLabel || filterLabel === "all") {
+      cards.forEach(c => c.style.display = "");
+      return;
+    }
+    cards.forEach(c => {
+      const t = c.getAttribute("data-type") || "";
+      c.style.display = (t === filterLabel) ? "" : "none";
+    });
+  }
 
+  function catToLabel(cat) {
+    if (!cat) return "all";
+    const c = cat.toLowerCase();
+    if (c === "all") return "all";
+    if (c === "stretch") return "Stretch Wrap";
+    if (c === "prestretch") return "Pre-Stretch Wrap";
+    if (c === "tape") return "Packaging Tape";
+    return "all";
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const pills = Array.from(document.querySelectorAll(".pill[data-filter]"));
+    pills.forEach(p => {
+      p.addEventListener("click", () => {
+        const f = p.getAttribute("data-filter");
+        setActivePill(p);
+        applyFilter(f === "all" ? "all" : f);
+      });
+    });
+
+    // initial from query param
+    const params = new URLSearchParams(window.location.search);
+    const label = catToLabel(params.get("cat"));
+    if (label === "all") {
+      const allPill = pills.find(p => (p.getAttribute("data-filter") || "").toLowerCase() === "all");
+      setActivePill(allPill);
+      applyFilter("all");
+    } else {
+      const pill = pills.find(p => (p.getAttribute("data-filter") || "") === label);
+      setActivePill(pill);
+      applyFilter(label);
+    }
+  });
+})();
+</script>
+
+
+<script>
+// Products dropdown toggle (site-wide)
+document.addEventListener("DOMContentLoaded", () => {
+  const toggle = document.querySelector(".nav-dropdown-toggle");
+  const menu = document.querySelector(".nav-dropdown-menu");
+  if (!toggle || !menu) return;
+
+  const close = () => {
+    menu.classList.remove("open");
+    toggle.setAttribute("aria-expanded", "false");
+  };
+
+  toggle.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const isOpen = menu.classList.toggle("open");
+    toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!menu.contains(e.target) && !toggle.contains(e.target)) close();
+  });
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") close();
+  });
+});
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// Capture the SAME Supabase client created inside auth.js (without editing auth.js)
+// auth.js runs AFTER this script tag, so we wrap createClient *immediately*.
+(() => {
+  if (!window.supabase || typeof window.supabase.createClient !== "function") return;
+  if (window.__shrinxaCreateClientWrapped) return;
+  window.__shrinxaCreateClientWrapped = true;
+  const _orig = window.supabase.createClient.bind(window.supabase);
+  window.supabase.createClient = (...args) => {
+    const client = _orig(...args);
+    window.supabaseClient = client;
+    return client;
+  };
+})();
+
+/* User dropdown + actions (about/contact/delivery/products) */
+document.addEventListener("DOMContentLoaded", () => {
+  const toggle = document.getElementById("userMenuToggle");
+  const menu = document.getElementById("userMenuDropdown");
+  if (!toggle || !menu) return;
+
+  const closeMenu = () => menu.classList.remove("open");
+
+  toggle.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    menu.classList.toggle("open");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!menu.contains(e.target) && !toggle.contains(e.target)) closeMenu();
+  });
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeMenu();
+  });
+
+  const profileBtn = menu.querySelector('[data-action="profile"]');
+  const historyBtn = menu.querySelector('[data-action="history"]');
+  const signOutBtn = menu.querySelector('[data-action="signout"]');
+
+  profileBtn && profileBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    closeMenu();
+    window.location.href = "index.html#profile";
+  });
+
+  historyBtn && historyBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    closeMenu();
+    window.location.href = "index.html#history";
+  });
+
+  signOutBtn && signOutBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    closeMenu();
+    await doSignOut();
+    window.location.href = "index.html";
+  });
+});
+
+// --- Supabase sign out helper (NO auth.js edits) ---
+async function getSupabaseClient() {
+  if (window.supabaseClient?.auth) return window.supabaseClient;
+  if (window._supabase?.auth) return window._supabase;
+  if (window.supabase?.auth && !window.supabase.createClient) return window.supabase;
+
+  if (!window.supabase || typeof window.supabase.createClient !== "function") return null;
+
+  try {
     const res = await fetch("auth.js", { cache: "no-cache" });
     const txt = await res.text();
 
     const url =
-      (txt.match(/supabaseUrl\s*=\s*["']([^"']+)["']/i)?.[1]) ||
-      (txt.match(/SUPABASE[_\s]?URL\s*=\s*["']([^"']+)["']/i)?.[1]) ||
-      (txt.match(/createClient\(\s*["']([^"']*supabase\.co[^"']*)["']/i)?.[1]);
+      (txt.match(/supabaseUrl\s*=\s*['"]([^'"]+)['"]/i)?.[1]) ||
+      (txt.match(/SUPABASE[_\s]?URL\s*=\s*['"]([^'"]+)['"]/i)?.[1]) ||
+      (txt.match(/createClient\(\s*['"]([^'"]*supabase\.co[^'"]*)['"]/i)?.[1]);
 
     const key =
-      (txt.match(/supabaseAnonKey\s*=\s*["']([^"']+)["']/i)?.[1]) ||
-      (txt.match(/SUPABASE[_\s]?ANON[_\s]?KEY\s*=\s*["']([^"']+)["']/i)?.[1]) ||
-      (txt.match(/createClient\(\s*["'][^"']+["']\s*,\s*["']([^"']+)["']/i)?.[1]);
+      (txt.match(/supabaseKey\s*=\s*['"]([^'"]+)['"]/i)?.[1]) ||
+      (txt.match(/SUPABASE[_\s]?(ANON|PUBLIC)[_\s]?KEY\s*=\s*['"]([^'"]+)['"]/i)?.[2]) ||
+      (txt.match(/createClient\([^,]+,\s*['"]([^'"]+)['"]/i)?.[1]);
 
-    if (!url || !key || !window.supabase?.createClient) throw new Error("Supabase client not available");
-    window._supabase = window.supabase.createClient(url, key);
-    return window._supabase;
+    if (!url || !key) return null;
+
+    const sb = window.supabase.createClient(url, key);
+    window.supabaseClient = sb;
+    return sb;
+  } catch (e) {
+    return null;
   }
+}
 
-  function money(n) {
-    const x = Number(n) || 0;
-    return x.toLocaleString(undefined, { style: "currency", currency: "CAD" });
+async function doSignOut() {
+  try {
+    const sb = await getSupabaseClient();
+    if (sb?.auth?.signOut) await sb.auth.signOut();
+  } catch (e) {}
+}
+</script>
+
+<script src="auth.js"></script>
+
+<script>
+(function(){
+  function getSb(){
+    return (window.ShrinxaAuth && window.ShrinxaAuth.supabaseClient) ||
+           (window.Auth && window.Auth.supabaseClient) ||
+           window.supabaseClient || window._supabase || null;
   }
+  function money(n){ return "$" + (Number(n||0)).toFixed(2); }
 
-  async function loadCart() {
-    try {
-      const saved = parseInt(localStorage.getItem("shrinxa_cart_count") || "0", 10);
-      if (!Number.isNaN(saved)) setCartCount(saved);
-    } catch (e) {}
+  async function loadCart(){
+    const sb = getSb();
+    const msg = document.getElementById("cartMsg");
+    const list = document.getElementById("cartList");
 
-    const statusEl = document.getElementById("cartStatus");
-    const rowsEl = document.getElementById("cartRows");
+    if (!sb) { msg.textContent = "Auth not ready. Refresh the page."; return; }
 
-    try {
-      const sb = await getSupabaseClient();
-      const { data: sessData } = await sb.auth.getSession();
-      const session = sessData?.session;
-      if (!session) {
-        statusEl.textContent = "Please sign in to view your server cart.";
-        return;
-      }
+    const { data: sessData } = await sb.auth.getSession();
+    const session = sessData && sessData.session;
+    if (!session) { msg.textContent = "Please sign in to view your cart."; return; }
 
-      const tables = ["cart_items", "cart", "cart_item"];
-      let data = null;
+    msg.textContent = "Loading...";
+    list.innerHTML = "";
 
-      for (const t of tables) {
-        const resp = await sb.from(t).select("*");
-        if (!resp.error && Array.isArray(resp.data)) {
-          data = resp.data;
-          break;
-        }
-      }
+    const { data, error } = await sb
+      .from("cart_items")
+      .select("id, product_id, product_name, unit_price, quantity")
+      .order("created_at", { ascending: true });
 
-      if (!data) {
-        statusEl.textContent = "Cart table not found or no permission.";
-        return;
-      }
+    if (error) { console.error(error); msg.textContent = "Could not load cart."; return; }
 
-      const count = data.reduce((sum, r) => sum + (Number(r.qty) || 0), 0);
-      setCartCount(count);
-
-      rowsEl.innerHTML = "";
-      let subtotal = 0;
-
-      if (data.length === 0) {
-        statusEl.textContent = "Your cart is empty.";
-      } else {
-        statusEl.textContent = "";
-      }
-
-      for (const row of data) {
-        const name = row.product_name || row.name || row.title || row.sku || row.product_id || "Item";
-        const qty = Number(row.qty) || 0;
-        const price = Number(row.price ?? row.unit_price ?? row.retail_price ?? 0) || 0;
-        const line = qty * price;
-        subtotal += line;
-
-        const tr = document.createElement("tr");
-        tr.innerHTML =
-          '<td style="padding:10px; border-bottom:1px solid rgba(255,255,255,.08);">' + String(name) + '</td>' +
-          '<td style="padding:10px; border-bottom:1px solid rgba(255,255,255,.08); text-align:right;">' + qty + '</td>' +
-          '<td style="padding:10px; border-bottom:1px solid rgba(255,255,255,.08); text-align:right;">' + money(price) + '</td>' +
-          '<td style="padding:10px; border-bottom:1px solid rgba(255,255,255,.08); text-align:right;">' + money(line) + '</td>';
-        rowsEl.appendChild(tr);
-      }
-
-      const hst = subtotal * 0.13;
-      const total = subtotal + hst;
-      document.getElementById("subtotal").textContent = money(subtotal);
-      document.getElementById("hst").textContent = money(hst);
-      document.getElementById("total").textContent = money(total);
-
-    } catch (e) {
-      statusEl.textContent = "Failed to load cart.";
+    if (!data || data.length === 0) {
+      msg.textContent = "Your cart is empty.";
+      setTotals(0);
+      setCartCount(0);
+      return;
     }
+
+    msg.textContent = "";
+    let subtotal = 0;
+    let totalQty = 0;
+
+    data.forEach(row => {
+      const qty = Number(row.quantity) || 0;
+      const price = Number(row.unit_price) || 0;
+      subtotal += qty * price;
+      totalQty += qty;
+
+      const item = document.createElement("div");
+      item.style.display = "flex";
+      item.style.justifyContent = "space-between";
+      item.style.alignItems = "center";
+      item.style.gap = "12px";
+      item.style.padding = "12px";
+      item.style.border = "1px solid rgba(255,255,255,.08)";
+      item.style.borderRadius = "14px";
+      item.style.background = "rgba(0,0,0,.18)";
+
+      item.innerHTML = `
+        <div style="min-width:220px;">
+          <div style="font-weight:700;">${escapeHtml(row.product_name || row.product_id || "Item")}</div>
+          <div style="opacity:.85;font-size:13px;">Unit: ${money(price)}</div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;">
+          <label style="opacity:.85;font-size:13px;">Qty</label>
+          <input class="cartQty" type="number" min="1" value="${qty}" style="width:90px;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.2);color:#fff;" />
+          <div style="min-width:120px;text-align:right;font-weight:700;">${money(qty*price)}</div>
+          <button class="btn btn-secondary removeBtn" type="button">Remove</button>
+        </div>
+      `;
+
+      item.querySelector(".cartQty").addEventListener("change", async (e) => {
+        const newQty = Math.max(1, Number(e.target.value || 1));
+        await sb.from("cart_items").update({ quantity: newQty }).eq("id", row.id);
+        await loadCart();
+      });
+
+      item.querySelector(".removeBtn").addEventListener("click", async () => {
+        await sb.from("cart_items").delete().eq("id", row.id);
+        await loadCart();
+      });
+
+      list.appendChild(item);
+    });
+
+    setTotals(subtotal);
+    setCartCount(totalQty);
+  }
+
+  function setTotals(subtotal){
+    const hst = subtotal * 0.13;
+    const total = subtotal + hst;
+    document.getElementById("subTotal").textContent = money(subtotal);
+    document.getElementById("hst").textContent = money(hst);
+    document.getElementById("grandTotal").textContent = money(total);
+  }
+
+  function setCartCount(n){
+    const el = document.getElementById("cartCount");
+    if (el) el.textContent = String(n || 0);
+  }
+
+  function escapeHtml(str){
+    return String(str)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#39;");
+  }
+
+  async function clearCart(){
+    const sb = getSb();
+    if (!sb) return;
+    const { data: sessData } = await sb.auth.getSession();
+    if (!sessData || !sessData.session) { alert("Please sign in."); return; }
+
+    const ok = confirm("Clear all items from your cart?");
+    if (!ok) return;
+
+    // Delete all rows for this user (RLS must allow delete)
+    const { error } = await sb.from("cart_items").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    if (error) console.error(error);
+
+    await loadCart();
   }
 
   document.addEventListener("DOMContentLoaded", () => {
-    const y = document.getElementById("year");
-    if (y) y.textContent = String(new Date().getFullYear());
+    const cont = document.getElementById("continueShoppingBtn");
+    if (cont) cont.addEventListener("click", () => window.location.href = "products.html");
+
+    const clr = document.getElementById("clearCartBtn");
+    if (clr) clr.addEventListener("click", clearCart);
+
     loadCart();
   });
+})();
 </script>
+
 </body>
 </html>
