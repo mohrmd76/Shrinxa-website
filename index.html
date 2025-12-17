@@ -1905,5 +1905,81 @@ document.addEventListener("DOMContentLoaded", () => {
 })();
 </script>
 
+
+<script>
+(() => {
+  const SUPABASE_URL = "https://fgrjojxwevllnjdixiyd.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_k5D9JKO5lMCHlju-WhlSAQ_XEiEruT_";
+  const CART_COUNT_URL = `${SUPABASE_URL}/functions/v1/cart-count`;
+
+  const setCartCount = (n) => {
+    const el = document.getElementById("cartCount");
+    if (!el) return;
+    const v = Number(n || 0);
+    el.textContent = String(Number.isFinite(v) ? v : 0);
+  };
+
+  async function getClient() {
+    if (window.supabaseClient?.auth) return window.supabaseClient;
+    if (window._supabase?.auth) return window._supabase;
+    if (window.supabase?.auth && !window.supabase.createClient) return window.supabase; // already a client
+    if (window.supabase?.createClient) {
+      // Create a client using known URL + anon key (no auth.js edits)
+      window._supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      return window._supabase;
+    }
+    return null;
+  }
+
+  async function getAccessToken() {
+    const sb = await getClient();
+    if (!sb?.auth?.getSession) return null;
+    try {
+      const { data } = await sb.auth.getSession();
+      return data?.session?.access_token || null;
+    } catch {
+      return null;
+    }
+  }
+
+  async function refreshCartCountFromServer() {
+    try {
+      const token = await getAccessToken();
+      if (!token) return setCartCount(0);
+
+      const r = await fetch(CART_COUNT_URL, {
+        method: "GET",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!r.ok) return;
+      const j = await r.json();
+      setCartCount(j?.cart_count ?? j?.count ?? 0);
+    } catch {}
+  }
+
+  // Cart button should open cart.html
+  document.addEventListener("DOMContentLoaded", () => {
+    const cartBtn = document.getElementById("openCartBtn");
+    if (cartBtn) {
+      cartBtn.addEventListener("click", () => {
+        window.location.href = "cart.html";
+      });
+    }
+  });
+
+  // Load cart count on open and when returning via back button
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", refreshCartCountFromServer);
+  } else {
+    refreshCartCountFromServer();
+  }
+  window.addEventListener("pageshow", refreshCartCountFromServer);
+})();
+</script>
+
 </body>
 </html>
