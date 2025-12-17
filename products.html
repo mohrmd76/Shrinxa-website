@@ -1973,6 +1973,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const SUPABASE_ANON_KEY = "sb_publishable_k5D9JKO5lMCHlju-WhlSAQ_XEiEruT_";
   const CART_ADD_URL = `${SUPABASE_URL}/functions/v1/cart-add`;
 
+  const CART_COUNT_URL = `${SUPABASE_URL}/functions/v1/cart-count`;
   const cartCountEl = document.getElementById("cartCount");
 
   function setCartCount(n) {
@@ -1986,6 +1987,37 @@ document.addEventListener("DOMContentLoaded", () => {
     if (error) return null;
     return data?.session?.access_token || null;
   }
+
+  // Read cart count from server when the page opens (uses cart-count Edge Function)
+  async function refreshCartCountFromServer() {
+    try {
+      const token = await getAccessToken();
+      if (!token) return;
+
+      const r = await fetch(CART_COUNT_URL, {
+        method: "GET",
+        headers: {
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+      if (!r.ok) return;
+
+      const data = await r.json();
+      const count = data?.cart_count ?? data?.count ?? 0;
+      setCartCount(count);
+    } catch (_) {}
+  }
+
+  // Load count on page open + when returning via back button
+  const runCartRefresh = () => refreshCartCountFromServer();
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", runCartRefresh);
+  } else {
+    runCartRefresh();
+  }
+  window.addEventListener("pageshow", runCartRefresh);
+
 
   function showCartError(msg) {
     // Try to reuse an existing message area if present; otherwise alert
