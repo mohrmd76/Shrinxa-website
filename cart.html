@@ -1901,7 +1901,7 @@ async function doSignOut() {
           return;
         }
 
-        window.location.href = `invoice.html?invoice_no=${encodeURIComponent(out.invoice_no || "")}`;
+        window.location.href = `invoice.html?id=${encodeURIComponent(out.invoice_id)}`;
       } catch (e) {
         console.error(e);
         if (checkoutMsg) checkoutMsg.textContent = String(e && e.message ? e.message : e);
