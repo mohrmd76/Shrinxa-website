@@ -80,6 +80,14 @@
       text-align:right;
       min-width: 260px;
     }
+
+    .invoice-logo-right{
+      display:block;
+      height: 130px;     /* bigger (2x+) */
+      width: auto;
+      margin: 0 0 12px auto; /* right aligned */
+      object-fit: contain;
+    }
     .meta .row{
       font-size: 14px;
       line-height: 1.55;
@@ -224,8 +232,7 @@
     <div class="paper" id="invoiceRoot" aria-live="polite">
       <div class="top">
         <div class="brand-box">
-          <img class="invoice-logo" src="/shrinxa_transparent_4000px.png" alt="Shrinxa Logo">
-          <div class="invoice-title">Invoice</div>
+                    <div class="invoice-title">Invoice</div>
           <div class="brand">
             <div class="name" id="sellerName">Shrinxa Packaging</div>
             <div class="tag" id="sellerTag">Premium Packaging Solutions</div>
@@ -234,7 +241,9 @@
         </div>
 
         <div class="meta">
-          <div class="row"><b>Invoice #:</b> <span id="invoiceNumber">INV-</span></div>
+          
+          <img class="invoice-logo-right" src="/shrinxa_transparent_4000px.png" alt="Shrinxa Logo">
+<div class="row"><b>Invoice #:</b> <span id="invoiceNumber">INV-</span></div>
           <div class="row"><b>Date:</b> <span id="invoiceDate">—</span></div>
         </div>
       </div>
