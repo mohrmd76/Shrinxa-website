@@ -328,71 +328,89 @@
       }
     })();
 
-    // Delivery rule:
-    // - Default delivery = $30 when subtotal < $300
-    // - Delivery is taxable (included in HST base)
-    // - If admin already set delivery (non-zero or has note), do not override
-    (function () {
-      function parseMoney(txt) {
-        if (!txt) return NaN;
-        // keep digits, dot, minus
-        var n = txt.replace(/[^0-9.\-]/g, '');
-        return Number(n);
-      }
-      function formatMoney(n, templateText) {
-        // Keep "$" style used on page
-        var sign = (templateText && templateText.trim().startsWith('$')) ? '$' : '$';
-        return sign + (Number(n || 0).toFixed(2));
-      }
-      function getTaxRate() {
-        var lbl = document.getElementById('taxLabel');
-        if (!lbl) return 0.13;
-        var m = (lbl.textContent || '').match(/\((\s*\d+(?:\.\d+)?\s*)%\)/);
-        if (!m) return 0.13;
-        return Number(m[1].replace(/\s+/g,'')) / 100;
-      }
+    // Delivery rule (FIXED):
+// - Default delivery = $30 when subtotal < $300
+// - Delivery is taxable (included in HST base)
+// - If admin already set delivery (>0), do not override
+// This waits until invoice.js finishes rendering, then applies once (no "0 first then 30" bug).
+(function () {
+  function parseMoney(txt) {
+    if (!txt) return NaN;
+    var n = String(txt).replace(/[^0-9.\-]/g, '');
+    return Number(n);
+  }
+  function formatMoney(n, templateText) {
+    var hasDollar = templateText && String(templateText).trim().startsWith('$');
+    return (hasDollar ? '$' : '$') + (Number(n || 0).toFixed(2));
+  }
+  function getTaxRate() {
+    var lbl = document.getElementById('taxLabel');
+    if (!lbl) return 0.13;
+    var m = (lbl.textContent || '').match(/\((\s*\d+(?:\.\d+)?\s*)%\)/);
+    if (!m) return 0.13;
+    return Number(m[1].replace(/\s+/g, '')) / 100;
+  }
+  function isRendered() {
+    var invNo = document.getElementById('invoiceNumber');
+    var invDate = document.getElementById('invoiceDate');
+    var tb = document.getElementById('itemsTbody');
+    var invOk = invNo && invNo.textContent && invNo.textContent.trim() !== 'INV-';
+    var dateOk = invDate && invDate.textContent && invDate.textContent.trim() !== '—';
+    var hasItems = tb && tb.children && tb.children.length > 0;
+    return (invOk && dateOk) || hasItems;
+  }
+  function applyRule() {
+    var subtotalEl = document.getElementById('subtotal');
+    var deliveryEl = document.getElementById('delivery');
+    var taxEl = document.getElementById('tax');
+    var totalEl = document.getElementById('grandTotal');
+    if (!subtotalEl || !deliveryEl || !taxEl || !totalEl) return false;
 
-      function applyRuleOnce() {
-        var subtotalEl = document.getElementById('subtotal');
-        var deliveryEl = document.getElementById('delivery');
-        var taxEl = document.getElementById('tax');
-        var totalEl = document.getElementById('grandTotal');
-        if (!subtotalEl || !deliveryEl || !taxEl || !totalEl) return false;
+    var subtotal = parseMoney(subtotalEl.textContent);
+    if (!Number.isFinite(subtotal)) return false;
 
-        var subtotal = parseMoney(subtotalEl.textContent);
-        if (!Number.isFinite(subtotal)) return false;
+    var currentDelivery = parseMoney(deliveryEl.textContent);
+    var hasAdminDelivery = Number.isFinite(currentDelivery) && currentDelivery > 0;
 
-        var currentDelivery = parseMoney(deliveryEl.textContent);
-        var hasAdminDelivery = Number.isFinite(currentDelivery) && currentDelivery > 0;
+    var delivery = currentDelivery;
+    if (subtotal < 300 && !hasAdminDelivery) {
+      delivery = 30;
+      deliveryEl.textContent = formatMoney(delivery, deliveryEl.textContent);
+    }
 
-        // Only apply default delivery if subtotal < 300 AND delivery not set by admin (0 or blank)
-        var delivery = currentDelivery;
-        if (subtotal < 300 && !hasAdminDelivery) {
-          delivery = 30;
-          deliveryEl.textContent = formatMoney(delivery, deliveryEl.textContent);
-        }
+    var taxRate = getTaxRate();
+    var tax = (subtotal + (Number.isFinite(delivery) ? delivery : 0)) * taxRate;
+    taxEl.textContent = formatMoney(tax, taxEl.textContent);
 
-        // If we applied delivery (or admin delivery exists), recompute tax + total so delivery is taxable.
-        // Only recompute if subtotal already loaded (not placeholder) and tax label exists.
-        var taxRate = getTaxRate();
-        var tax = (subtotal + (Number.isFinite(delivery) ? delivery : 0)) * taxRate;
-        taxEl.textContent = formatMoney(tax, taxEl.textContent);
+    var total = subtotal + (Number.isFinite(delivery) ? delivery : 0) + tax;
+    totalEl.textContent = formatMoney(total, totalEl.textContent);
 
-        var total = subtotal + (Number.isFinite(delivery) ? delivery : 0) + tax;
-        totalEl.textContent = formatMoney(total, totalEl.textContent);
+    return true;
+  }
 
-        return true;
-      }
+  // Wait for invoice.js to render first, then apply once.
+  function runAfterRender() {
+    if (!isRendered()) return false;
+    // run after paint so we don't get overwritten by invoice.js
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        applyRule();
+      });
+    });
+    return true;
+  }
 
-      // Watch for invoice.js to fill totals, then apply once.
-      var tries = 0;
-      var timer = setInterval(function () {
-        tries++;
-        if (applyRuleOnce() || tries > 40) { // ~4 seconds max
-          clearInterval(timer);
-        }
-      }, 100);
-    })();
+  // Try immediately + observe changes
+  if (runAfterRender()) return;
+
+  var root = document.getElementById('invoiceRoot') || document.body;
+  var obs = new MutationObserver(function () {
+    if (runAfterRender()) obs.disconnect();
+  });
+  obs.observe(root, { subtree: true, childList: true, characterData: true });
+  // safety timeout
+  setTimeout(function(){ try{ obs.disconnect(); }catch(e){} }, 10000);
+})();
   </script>
 
   <script type="module" src="./invoice.js"></script>
