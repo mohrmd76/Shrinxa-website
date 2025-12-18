@@ -1,5 +1,4 @@
-// invoice.js (Supabase + render)
-// IMPORTANT: Put your Supabase URL + anon key in supabaseClient.js
+// invoice.js (Supabase + render) — SAFE VERSION (won't crash if an element is missing)
 import { supabase } from "./supabaseClient.js";
 
 const $ = (id) => document.getElementById(id);
@@ -13,12 +12,31 @@ function fmtDate(d) {
   if (!d) return "—";
   const dt = new Date(d);
   if (Number.isNaN(dt.getTime())) return String(d);
-  return dt.toLocaleDateString("en-CA"); // YYYY-MM-DD style
+  return dt.toLocaleDateString("en-CA"); // YYYY-MM-DD
 }
 
 function qparam(name) {
   const u = new URL(window.location.href);
   return u.searchParams.get(name);
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function setText(id, value) {
+  const el = $(id);
+  if (el) el.textContent = value;
+}
+
+function setHtml(id, value) {
+  const el = $(id);
+  if (el) el.innerHTML = value;
 }
 
 function lineItemRow(item) {
@@ -54,13 +72,13 @@ function lineItemRow(item) {
 }
 
 function renderInvoice(inv, items) {
-  $("invoiceNumber").textContent = inv.invoice_number || inv.number || "INV-";
-  $("invoiceDate").textContent = fmtDate(inv.invoice_date || inv.date);
+  setText("invoiceNumber", inv.invoice_number || inv.number || "INV-");
+  setText("invoiceDate", fmtDate(inv.invoice_date || inv.date));
 
   // Seller (optional)
-  if (inv.seller_name) $("sellerName").textContent = inv.seller_name;
-  if (inv.seller_tagline) $("sellerTag").textContent = inv.seller_tagline;
-  if (inv.seller_email) $("sellerEmail").textContent = inv.seller_email;
+  if (inv.seller_name) setText("sellerName", inv.seller_name);
+  if (inv.seller_tagline) setText("sellerTag", inv.seller_tagline);
+  if (inv.seller_email) setText("sellerEmail", inv.seller_email);
 
   // Bill To
   const billLines = [
@@ -72,77 +90,87 @@ function renderInvoice(inv, items) {
     inv.bill_to_phone,
   ].filter(Boolean);
 
-  $("billTo").innerHTML = billLines.map(s => `<div>${escapeHtml(String(s))}</div>`).join("");
+  setHtml("billTo", billLines.map(s => `<div>${escapeHtml(s)}</div>`).join(""));
 
   // Payment block
   const payLines = [
     inv.payment_method || "Pay on delivery",
     inv.payment_terms || "Payment due on delivery",
   ].filter(Boolean);
-  $("paymentBlock").innerHTML = payLines.map(s => `<div>${escapeHtml(String(s))}</div>`).join("");
+
+  setHtml("paymentBlock", payLines.map(s => `<div>${escapeHtml(s)}</div>`).join(""));
 
   // Items
   const tb = $("itemsTbody");
-  tb.innerHTML = "";
-  items.forEach(it => tb.appendChild(lineItemRow(it)));
+  if (tb) {
+    tb.innerHTML = "";
+    (items || []).forEach(it => tb.appendChild(lineItemRow(it)));
+  }
 
   // Totals
-  const currency = inv.currency || (items[0]?.currency) || "USD";
-  const subtotal = Number(inv.subtotal ?? items.reduce((a, it) => a + (Number(it.line_total) || (Number(it.qty||it.quantity||0) * Number(it.unit_price||it.price||0))), 0));
+  const currency = inv.currency || (items?.[0]?.currency) || "USD";
+  const subtotal =
+    Number(
+      inv.subtotal ??
+      (items || []).reduce((a, it) => {
+        const qty = Number(it.qty ?? it.quantity ?? 0);
+        const price = Number(it.unit_price ?? it.price ?? 0);
+        const lt = Number(it.line_total) || (qty * price);
+        return a + (Number.isFinite(lt) ? lt : 0);
+      }, 0)
+    );
+
   const delivery = Number(inv.delivery ?? 0);
   const taxRate = Number(inv.tax_rate ?? 0.13);
   const tax = Number(inv.tax ?? (subtotal + delivery) * taxRate);
   const total = Number(inv.total ?? (subtotal + delivery + tax));
 
-  $("subtotal").textContent = money(subtotal, currency);
-  $("delivery").textContent = inv.delivery_note
-    ? `${money(delivery, currency)} (${inv.delivery_note})`
-    : money(delivery, currency);
+  setText("subtotal", money(subtotal, currency));
+  setText(
+    "delivery",
+    inv.delivery_note ? `${money(delivery, currency)} (${inv.delivery_note})` : money(delivery, currency)
+  );
 
   const taxPct = Math.round(taxRate * 10000) / 100;
-  $("taxLabel").textContent = `${inv.tax_name || "HST"} (${taxPct}%)`;
-  $("tax").textContent = money(tax, currency);
-  $("grandTotal").textContent = money(total, currency);
+  setText("taxLabel", `${inv.tax_name || "HST"} (${taxPct}%)`);
+  setText("tax", money(tax, currency));
+  setText("grandTotal", money(total, currency));
 
-  if (inv.terms_text) $("termsText").innerHTML = escapeHtml(inv.terms_text).replace(/\n/g, "<br>");
+  if (inv.terms_text) setHtml("termsText", escapeHtml(inv.terms_text).replace(/\n/g, "<br>"));
 
-  $("generatedAt").textContent = new Date().toLocaleString();
-  $("pageHint").textContent = `Invoice #: ${inv.invoice_number || inv.number || ""}`;
-}
-
-function escapeHtml(str) {
-  return str
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+  setText("generatedAt", new Date().toLocaleString());
+  setText("pageHint", `Invoice #: ${inv.invoice_number || inv.number || ""}`);
 }
 
 async function loadInvoice() {
-  const invoiceId = qparam("id");          // preferred (UUID)
-  const invoiceNumber = qparam("inv");     // optional (INV-xxxxx)
+  const invoiceId = qparam("id");      // UUID
+  const invoiceNumber = qparam("inv"); // optional INV-xxxx
 
   if (!invoiceId && !invoiceNumber) {
-    $("invoiceRoot").insertAdjacentHTML(
-      "afterbegin",
-      `<div style="margin-bottom:12px;padding:10px;border:1px solid #fca5a5;background:#fff1f2;border-radius:10px;">
-        Missing invoice id. Open like: <b>invoice.html?id=YOUR_UUID</b> or <b>invoice.html?inv=INV-xxxxx</b>
-      </div>`
-    );
+    const root = $("invoiceRoot");
+    if (root) {
+      root.insertAdjacentHTML(
+        "afterbegin",
+        `<div style="margin-bottom:12px;padding:10px;border:1px solid #fca5a5;background:#fff1f2;border-radius:10px;">
+          Missing invoice id. Open like: <b>invoice.html?id=YOUR_UUID</b> or <b>invoice.html?inv=INV-xxxxx</b>
+        </div>`
+      );
+    }
     return;
   }
 
   // 1) Fetch invoice
   let invQuery = supabase.from("invoices").select("*").limit(1);
   invQuery = invoiceId ? invQuery.eq("id", invoiceId) : invQuery.eq("invoice_number", invoiceNumber);
+
   const { data: invRows, error: invErr } = await invQuery;
 
   if (invErr || !invRows?.length) {
-    console.error(invErr);
+    console.error("Invoice fetch error:", invErr);
     alert("Invoice not found in Supabase.");
     return;
   }
+
   const inv = invRows[0];
 
   // 2) Fetch items
@@ -153,7 +181,7 @@ async function loadInvoice() {
     .order("sort_order", { ascending: true });
 
   if (itemsErr) {
-    console.error(itemsErr);
+    console.error("Items fetch error:", itemsErr);
     alert("Failed to load invoice items.");
     return;
   }
@@ -161,7 +189,20 @@ async function loadInvoice() {
   renderInvoice(inv, items || []);
 }
 
-$("btnPrint").addEventListener("click", () => window.print());
-$("btnReload").addEventListener("click", () => loadInvoice());
+function init() {
+  // Bind buttons safely (won't crash if IDs don't exist)
+  const btnPrint = $("btnPrint");
+  if (btnPrint) btnPrint.addEventListener("click", () => window.print());
 
-loadInvoice();
+  const btnReload = $("btnReload");
+  if (btnReload) btnReload.addEventListener("click", () => loadInvoice());
+
+  // Start
+  loadInvoice();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
+} else {
+  init();
+}
