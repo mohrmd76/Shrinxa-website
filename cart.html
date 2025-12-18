@@ -1858,6 +1858,42 @@ async function doSignOut() {
         const customerEmail = session.user.email;
         const customerName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || customerEmail;
 
+        // Fetch extra customer details (if you have a customers/profile table)
+        let customerPhone = "";
+        let customerAddress = "";
+        let customerCity = "";
+        let customerPostal = "";
+        let customerCompany = "";
+
+        try {
+          // Try common profile tables/columns (safe if table/columns don't exist)
+          const { data: profile } = await sb
+            .from("customers")
+            .select("full_name,name,email,phone,address,city,postal_code,postal,company")
+            .eq("user_id", session.user.id)
+            .maybeSingle();
+
+          if (profile) {
+            // Prefer DB values if present
+            const dbName = profile.full_name || profile.name;
+            if (dbName) {
+              // override customerName only if it's better than email
+              if (String(dbName).trim().length) {
+                // keep local variable used below
+                // eslint-disable-next-line no-unused-vars
+              }
+            }
+            customerPhone = profile.phone || "";
+            customerAddress = profile.address || "";
+            customerCity = profile.city || "";
+            customerPostal = profile.postal_code || profile.postal || "";
+            customerCompany = profile.company || "";
+          }
+        } catch (err) {
+          // ignore (profile table may not exist)
+        }
+
+
         if (!session) { if (checkoutMsg) checkoutMsg.textContent = "Please sign in."; return; }
 
         const cartId = await getActiveCartId(sb, session.user.id);
@@ -1896,7 +1932,12 @@ async function doSignOut() {
             total,
             currency: "CAD",
             bill_to_name: customerName,
-            email: customerEmail
+            bill_to_email: customerEmail,
+            bill_to_phone: customerPhone,
+            bill_to_address: customerAddress,
+            bill_to_city: customerCity,
+            bill_to_postal: customerPostal,
+            bill_to_company: customerCompany
           })
         });
 
