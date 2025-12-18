@@ -38,6 +38,32 @@
       padding: 34px 36px 28px;
     }
 
+    /* Brand block (rounded square) + logo */
+    .brand-box{
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 18px 20px;
+      background: #fff;
+      display: inline-block;
+      max-width: 380px;
+    }
+    .invoice-logo{
+      display:block;
+      height: 62px;
+      width: auto;
+      margin: 0 0 10px 0;
+      object-fit: contain;
+    }
+
+    /* Thank you line: bigger + dark blue */
+    .thank-you{
+      font-size: 18px;
+      font-weight: 800;
+      color: #0b3c8a;
+      display: inline-block;
+      margin-top: 4px;
+    }
+
     .top{
       display:flex;
       align-items:flex-start;
@@ -197,7 +223,8 @@
 
     <div class="paper" id="invoiceRoot" aria-live="polite">
       <div class="top">
-        <div>
+        <div class="brand-box">
+          <img class="invoice-logo" src="/shrinxa_transparent_4000px.png" alt="Shrinxa Logo">
           <div class="invoice-title">Invoice</div>
           <div class="brand">
             <div class="name" id="sellerName">Shrinxa Packaging</div>
@@ -267,7 +294,10 @@
 
       <div class="terms">
         <b>Terms &amp; Conditions :</b><br>
-        <span id="termsText">Please send payment within 30 days of receiving this invoice.<br>Thank you for your business with us.</span>
+        <span id="termsText">
+          <span class="terms-main">Please send payment within 30 days of receiving this invoice.</span><br>
+          <span class="thank-you">Thank you for your business with us.</span>
+        </span>
       </div>
 
       <div class="footerline">
