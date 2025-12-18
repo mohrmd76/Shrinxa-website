@@ -1690,7 +1690,16 @@ async function doSignOut() {
 
     const { data: sessData } = await sb.auth.getSession();
     const session = sessData && sessData.session;
-    if (!session) { msg.textContent = "Please sign in to view your cart."; return; }
+    
+      const user = session.user;
+
+      const customerName =
+        user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        user.email;
+
+      const customerEmail = user.email;
+if (!session) { msg.textContent = "Please sign in to view your cart."; return; }
 
     msg.textContent = "Loading...";
     list.innerHTML = "";
@@ -1890,6 +1899,9 @@ async function doSignOut() {
             hst,
             total,
             currency: "CAD"
+
+        bill_to_name: customerName,
+        email: customerEmail,
           })
         });
 
