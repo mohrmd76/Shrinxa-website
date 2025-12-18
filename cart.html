@@ -1358,7 +1358,22 @@
           
           <div style="text-align:right; font-size: 1.1rem;"><strong>Total:</strong></div>
           <div style="text-align:right; font-size: 1.1rem;" id="grandTotal">$0.00</div>
+        
+      <div style="display:flex;justify-content:flex-end;margin-top:14px;">
+        <div style="display:flex;flex-direction:column;gap:10px;min-width:280px;">
+          <div style="display:flex;justify-content:flex-end;gap:10px;align-items:center;flex-wrap:wrap;">
+            <span style="font-size:0.85rem;opacity:.9;">Payment:</span>
+            <select id="paymentMethod" style="min-width:190px;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.2);color:#fff;">
+              <option value="pay_now">Pay now</option>
+              <option value="pay_later">Pay later at delivery</option>
+            </select>
+          </div>
+          <button id="buyNowBtn" class="btn btn-primary" type="button" style="width:100%;">Buy now</button>
+          <div id="checkoutMsg" style="text-align:right;font-size:0.85rem;color:#c7d2fe;"></div>
         </div>
+      </div>
+
+</div>
       </div>
     </div>
   </section>
@@ -1826,6 +1841,75 @@ async function doSignOut() {
   }
 
   document.addEventListener("DOMContentLoaded", () => {
+    const buyBtn = document.getElementById("buyNowBtn");
+    const paySel = document.getElementById("paymentMethod");
+    const checkoutMsg = document.getElementById("checkoutMsg");
+
+    async function startCheckout() {
+      try {
+        if (checkoutMsg) checkoutMsg.textContent = "Processing...";
+        const sb = getSb();
+        if (!sb) { if (checkoutMsg) checkoutMsg.textContent = "Auth not ready. Refresh."; return; }
+
+        const { data: sessData } = await sb.auth.getSession();
+        const session = sessData && sessData.session;
+        if (!session) { if (checkoutMsg) checkoutMsg.textContent = "Please sign in."; return; }
+
+        const cartId = await getActiveCartId(sb, session.user.id);
+
+        const { data: items, error } = await sb.from("cart_items").select("*").eq("cart_id", cartId);
+        if (error) throw error;
+        if (!items || items.length === 0) { if (checkoutMsg) checkoutMsg.textContent = "Your cart is empty."; return; }
+
+        let subtotal = 0;
+        items.forEach(r => { const q = pickQty(r); const p = pickUnitPrice(r); subtotal += q * p; });
+
+        const DELIVERY_THRESHOLD = 300;
+        const DELIVERY_FEE = 30;
+        const HST_RATE = 0.13;
+        const deliveryFee = subtotal < DELIVERY_THRESHOLD ? DELIVERY_FEE : 0;
+        const taxableBase = subtotal + deliveryFee;
+        const hst = taxableBase * HST_RATE;
+        const total = taxableBase + hst;
+
+        const method = (paySel && paySel.value) ? paySel.value : "pay_now";
+
+        const token = session.access_token;
+
+        const resp = await fetch("/functions/v1/create-invoice", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            cart_id: cartId,
+            payment_method: method,
+            subtotal,
+            delivery_fee: deliveryFee,
+            hst,
+            total,
+            currency: "CAD"
+          })
+        });
+
+        const out = await resp.json().catch(() => ({}));
+        if (!resp.ok || !out.ok) throw new Error(out.error || "Could not create invoice");
+
+        if (method === "pay_now") {
+          window.location.href = `payment.html?invoice_no=${encodeURIComponent(out.invoice_no || "")}`;
+          return;
+        }
+
+        window.location.href = `invoice.html?invoice_no=${encodeURIComponent(out.invoice_no || "")}`;
+      } catch (e) {
+        console.error(e);
+        if (checkoutMsg) checkoutMsg.textContent = String(e && e.message ? e.message : e);
+      }
+    }
+
+    if (buyBtn) buyBtn.addEventListener("click", startCheckout);
+
     const cont = document.getElementById("continueShoppingBtn");
     if (cont) cont.addEventListener("click", () => window.location.href = "products.html");
 

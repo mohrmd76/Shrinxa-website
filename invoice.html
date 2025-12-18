@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Invoice</title>
+
+  <!-- Font (safe fallback if blocked) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --ink:#111;
+      --muted:#666;
+      --line:#2f2f2f;          /* darker table lines (requested) */
+      --line-soft:#4a4a4a;
+      --bg:#fff;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--ink);
+      background:#f3f4f6;
+    }
+    .page{
+      max-width: 920px;
+      margin: 28px auto;
+      padding: 0 14px;
+    }
+    .paper{
+      background:var(--bg);
+      border:1px solid #e5e7eb;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.06);
+      padding: 34px 36px 28px;
+    }
+
+    .top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 18px;
+    }
+    .invoice-title{
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: .2px;
+      margin: 0 0 10px;
+    }
+    .meta{
+      text-align:right;
+      min-width: 260px;
+    }
+    .meta .row{
+      font-size: 14px;
+      line-height: 1.55;
+      color: var(--ink);
+    }
+    .meta .row b{ font-weight: 700; }
+    .brand{
+      margin-top: 6px;
+      font-size: 14px;
+      line-height: 1.55;
+      color: var(--ink);
+    }
+    .brand .name{ font-weight: 700; }
+    .brand .tag{ color: var(--muted); font-weight: 600; }
+
+    .grid2{
+      margin-top: 22px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 26px;
+    }
+    .block h3{
+      margin:0 0 8px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .block .txt{
+      font-size: 14px;
+      line-height: 1.55;
+      color: var(--ink);
+    }
+    .muted{ color: var(--muted); }
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+    thead th{
+      text-align:left;
+      font-weight: 700;
+      padding: 10px 10px;
+      border-bottom: 2px solid var(--line);
+      border-top: 2px solid var(--line);
+    }
+    tbody td{
+      padding: 10px 10px;
+      vertical-align: top;
+      border-bottom: 1.5px solid var(--line-soft); /* darker + clearer */
+    }
+    .col-qty{ width:70px; text-align:center; }
+    .col-price{ width:120px; text-align:right; }
+    .col-total{ width:120px; text-align:right; }
+    .item-name{ font-weight: 600; }
+    .item-desc{ color: var(--muted); font-size: 13px; margin-top: 2px; }
+
+    .totals{
+      margin-top: 18px;
+      display:flex;
+      justify-content:flex-end;
+    }
+    .totals table{
+      width: 340px;
+      margin: 0;
+      font-size: 14px;
+    }
+    .totals td{
+      padding: 7px 8px;
+      border-bottom: 0;
+    }
+    .totals tr td:first-child{
+      color: var(--muted);
+    }
+    .totals tr td:last-child{
+      text-align:right;
+      font-weight: 600;
+    }
+    .totals .grand td{
+      padding-top: 10px;
+      border-top: 2px solid var(--line);
+      font-size: 16px;
+    }
+    .totals .grand td:first-child{ color: var(--ink); font-weight: 700; }
+    .totals .grand td:last-child{ font-weight: 800; }
+
+    .terms{
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--ink);
+    }
+    .terms b{ font-weight: 700; }
+    .footerline{
+      margin-top: 14px;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .actions{
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      margin: 12px 0 0;
+    }
+    .btn{
+      border: 1px solid #d1d5db;
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-weight: 600;
+      cursor:pointer;
+    }
+    .btn.primary{
+      border-color:#111827;
+    }
+
+    /* Print */
+    @media print{
+      body{ background:#fff; }
+      .page{ margin:0; padding:0; max-width:none; }
+      .paper{ border:0; box-shadow:none; border-radius:0; padding: 0; }
+      .actions{ display:none; }
+      a{ color:inherit; text-decoration:none; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <div class="actions">
+      <button class="btn" id="btnReload" type="button">Reload</button>
+      <button class="btn primary" id="btnPrint" type="button">Print / Save PDF</button>
+    </div>
+
+    <div class="paper" id="invoiceRoot" aria-live="polite">
+      <div class="top">
+        <div>
+          <div class="invoice-title">Invoice</div>
+          <div class="brand">
+            <div class="name" id="sellerName">Shrinxa Packaging</div>
+            <div class="tag" id="sellerTag">Premium Packaging Solutions</div>
+            <div class="muted" id="sellerEmail">info@shrinxa.com</div>
+          </div>
+        </div>
+
+        <div class="meta">
+          <div class="row"><b>Invoice #:</b> <span id="invoiceNumber">INV-</span></div>
+          <div class="row"><b>Date:</b> <span id="invoiceDate">—</span></div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="block">
+          <h3>Bill to:</h3>
+          <div class="txt" id="billTo">
+            <!-- Filled by JS -->
+          </div>
+        </div>
+
+        <div class="block">
+          <h3>Payment</h3>
+          <div class="txt" id="paymentBlock">
+            <!-- Filled by JS -->
+          </div>
+        </div>
+      </div>
+
+      <table aria-label="Invoice items">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th class="col-qty">Qty</th>
+            <th class="col-price">Unit price</th>
+            <th class="col-total">Line total</th>
+          </tr>
+        </thead>
+        <tbody id="itemsTbody">
+          <!-- Filled by JS -->
+        </tbody>
+      </table>
+
+      <div class="totals">
+        <table aria-label="Totals">
+          <tbody>
+            <tr>
+              <td>Subtotal</td>
+              <td id="subtotal">$0.00</td>
+            </tr>
+            <tr>
+              <td>Delivery</td>
+              <td id="delivery">$0.00</td>
+            </tr>
+            <tr>
+              <td id="taxLabel">HST (13%)</td>
+              <td id="tax">$0.00</td>
+            </tr>
+            <tr class="grand">
+              <td>Total</td>
+              <td id="grandTotal">$0.00</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="terms">
+        <b>Terms &amp; Conditions :</b><br>
+        <span id="termsText">Please send payment within 30 days of receiving this invoice.<br>Thank you for your business with us.</span>
+      </div>
+
+      <div class="footerline">
+        <div id="generatedAt"></div>
+        <div id="pageHint"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./invoice.js"></script>
+</body>
+</html>
