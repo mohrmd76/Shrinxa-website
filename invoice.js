@@ -144,7 +144,7 @@ function renderInvoice(inv, items) {
 
 async function loadInvoice() {
   const invoiceId = qparam("id");      // UUID
-  const invoiceNumber = qparam("inv"); // optional INV-xxxx
+  const invoiceNumber = qparam("inv") || qparam("invoice_no") || qparam("invoice_number"); // optional INV-xxxx
 
   if (!invoiceId && !invoiceNumber) {
     const root = $("invoiceRoot");
