@@ -1876,7 +1876,7 @@ async function doSignOut() {
 
         const token = session.access_token;
 
-        const resp = await fetch("/functions/v1/create-invoice", {
+        const resp = await fetch("https://fgrjojxwevllnjdixiyd.supabase.co/functions/v1/create-invoice", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
