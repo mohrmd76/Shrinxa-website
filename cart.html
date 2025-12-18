@@ -1690,16 +1690,7 @@ async function doSignOut() {
 
     const { data: sessData } = await sb.auth.getSession();
     const session = sessData && sessData.session;
-    
-      const user = session.user;
-
-      const customerName =
-        user.user_metadata?.full_name ||
-        user.user_metadata?.name ||
-        user.email;
-
-      const customerEmail = user.email;
-if (!session) { msg.textContent = "Please sign in to view your cart."; return; }
+    if (!session) { msg.textContent = "Please sign in to view your cart."; return; }
 
     msg.textContent = "Loading...";
     list.innerHTML = "";
@@ -1862,6 +1853,11 @@ if (!session) { msg.textContent = "Please sign in to view your cart."; return; }
 
         const { data: sessData } = await sb.auth.getSession();
         const session = sessData && sessData.session;
+
+        // Customer info for invoice (minimal)
+        const customerEmail = session.user.email;
+        const customerName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || customerEmail;
+
         if (!session) { if (checkoutMsg) checkoutMsg.textContent = "Please sign in."; return; }
 
         const cartId = await getActiveCartId(sb, session.user.id);
@@ -1898,10 +1894,9 @@ if (!session) { msg.textContent = "Please sign in to view your cart."; return; }
             delivery_fee: deliveryFee,
             hst,
             total,
-            currency: "CAD"
-
-        bill_to_name: customerName,
-        email: customerEmail,
+            currency: "CAD",
+            bill_to_name: customerName,
+            email: customerEmail
           })
         });
 
