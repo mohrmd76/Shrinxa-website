@@ -316,79 +316,85 @@
     </div>
   </div>
 
+  
+  <script>
+    // Close button -> go to index.html
+    (function () {
+      var btn = document.getElementById('btnClose');
+      if (btn) {
+        btn.addEventListener('click', function () {
+          window.location.href = 'index.html';
+        });
+      }
+    })();
+
+    // Delivery rule:
+    // - Default delivery = $30 when subtotal < $300
+    // - Delivery is taxable (included in HST base)
+    // - If admin already set delivery (non-zero or has note), do not override
+    (function () {
+      function parseMoney(txt) {
+        if (!txt) return NaN;
+        // keep digits, dot, minus
+        var n = txt.replace(/[^0-9.\-]/g, '');
+        return Number(n);
+      }
+      function formatMoney(n, templateText) {
+        // Keep "$" style used on page
+        var sign = (templateText && templateText.trim().startsWith('$')) ? '$' : '$';
+        return sign + (Number(n || 0).toFixed(2));
+      }
+      function getTaxRate() {
+        var lbl = document.getElementById('taxLabel');
+        if (!lbl) return 0.13;
+        var m = (lbl.textContent || '').match(/\((\s*\d+(?:\.\d+)?\s*)%\)/);
+        if (!m) return 0.13;
+        return Number(m[1].replace(/\s+/g,'')) / 100;
+      }
+
+      function applyRuleOnce() {
+        var subtotalEl = document.getElementById('subtotal');
+        var deliveryEl = document.getElementById('delivery');
+        var taxEl = document.getElementById('tax');
+        var totalEl = document.getElementById('grandTotal');
+        if (!subtotalEl || !deliveryEl || !taxEl || !totalEl) return false;
+
+        var subtotal = parseMoney(subtotalEl.textContent);
+        if (!Number.isFinite(subtotal)) return false;
+
+        var currentDelivery = parseMoney(deliveryEl.textContent);
+        var hasAdminDelivery = Number.isFinite(currentDelivery) && currentDelivery > 0;
+
+        // Only apply default delivery if subtotal < 300 AND delivery not set by admin (0 or blank)
+        var delivery = currentDelivery;
+        if (subtotal < 300 && !hasAdminDelivery) {
+          delivery = 30;
+          deliveryEl.textContent = formatMoney(delivery, deliveryEl.textContent);
+        }
+
+        // If we applied delivery (or admin delivery exists), recompute tax + total so delivery is taxable.
+        // Only recompute if subtotal already loaded (not placeholder) and tax label exists.
+        var taxRate = getTaxRate();
+        var tax = (subtotal + (Number.isFinite(delivery) ? delivery : 0)) * taxRate;
+        taxEl.textContent = formatMoney(tax, taxEl.textContent);
+
+        var total = subtotal + (Number.isFinite(delivery) ? delivery : 0) + tax;
+        totalEl.textContent = formatMoney(total, totalEl.textContent);
+
+        return true;
+      }
+
+      // Watch for invoice.js to fill totals, then apply once.
+      var tries = 0;
+      var timer = setInterval(function () {
+        tries++;
+        if (applyRuleOnce() || tries > 40) { // ~4 seconds max
+          clearInterval(timer);
+        }
+      }, 100);
+    })();
+  </script>
+
   <script type="module" src="./invoice.js"></script>
-
-<script type="module">
-  // Close button -> go back to Index.html
-  const closeBtn = document.getElementById("btnClose");
-  if (closeBtn) {
-    closeBtn.addEventListener("click", () => {
-      // Use relative path so it works in /public and any subfolder
-      window.location.href = "./index.html";
-    });
-  }
-
-  // Delivery rule:
-  // Default delivery = 30 (taxable) when subtotal < 300, unless admin already set a non-zero delivery.
-  // If subtotal >= 300 -> default delivery = 0 (free), unless admin override.
-  function parseMoney(text) {
-    if (!text) return 0;
-    // keep digits, dot, minus
-    const n = String(text).replace(/[^0-9.\-]/g, "");
-    const v = parseFloat(n);
-    return Number.isFinite(v) ? v : 0;
-  }
-  function getCurrencyFromText(text) {
-    // basic currency detect; fallback USD
-    if (!text) return "USD";
-    if (text.includes("CA") || text.includes("CAD")) return "CAD";
-    if (text.includes("$")) return "USD";
-    return "USD";
-  }
-  function money(n, currency) {
-    try {
-      return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(n);
-    } catch {
-      return "$" + (Math.round(n * 100) / 100).toFixed(2);
-    }
-  }
-
-  function applyDeliveryRule() {
-    const subtotalEl = document.getElementById("subtotal");
-    const deliveryEl = document.getElementById("delivery");
-    const taxEl = document.getElementById("tax");
-    const totalEl = document.getElementById("grandTotal");
-    if (!subtotalEl || !deliveryEl || !taxEl || !totalEl) return;
-
-    const subtotalText = subtotalEl.textContent || "";
-    const currency = getCurrencyFromText(subtotalText) || "USD";
-    const subtotal = parseMoney(subtotalText);
-
-    const currentDelivery = parseMoney(deliveryEl.textContent || "");
-    const adminOverride = currentDelivery > 0.000001; // admin set a delivery value
-
-    let delivery = currentDelivery;
-    if (!adminOverride) {
-      delivery = subtotal < 300 ? 30 : 0;
-    }
-
-    const taxRate = 0.13; // HST
-    const tax = (subtotal + delivery) * taxRate;
-    const total = subtotal + delivery + tax;
-
-    // Update UI
-    deliveryEl.textContent = money(delivery, currency);
-    taxEl.textContent = money(tax, currency);
-    totalEl.textContent = money(total, currency);
-  }
-
-  // Run once, then also after invoice.js renders data
-  applyDeliveryRule();
-  const root = document.getElementById("invoiceRoot");
-  if (root) {
-    const mo = new MutationObserver(() => applyDeliveryRule());
-    mo.observe(root, { childList: true, subtree: true, characterData: true });
-  }
-</script>
 </body>
 </html>
