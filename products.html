@@ -2069,6 +2069,8 @@ const cartCountEl = document.getElementById("cartCount");
     const productName = card.dataset.name || card.getAttribute("data-name") || "";
     const productType = card.dataset.type || card.getAttribute("data-type") || "";
 const price = Number(card.dataset.retail || card.getAttribute("data-retail") || 0);
+const wholesale_price = Number(card.dataset.wholesale || card.getAttribute("data-wholesale") || 0);
+
 
     const token = await getAccessToken();
     if (!token) {
@@ -2095,6 +2097,7 @@ const price = Number(card.dataset.retail || card.getAttribute("data-retail") || 
           product_type: productType,
           qty,
           price,
+ 	wholesale_price,
         }),
       });
 
