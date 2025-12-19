@@ -1607,9 +1607,15 @@ async function doSignOut() {
   function pickQty(row){
     return Number(row.qty ?? row.quantity ?? 0) || 0;
   }
-  function pickUnitPrice(row){
-    return Number(row.unit_price ?? row.price ?? row.unitPrice ?? 0) || 0;
-  }
+  const WHOLESALE_QTY_THRESHOLD = 50;
+
+function pickUnitPrice(row, qty){
+  const retail = Number(row.unit_price ?? row.price ?? row.unitPrice ?? 0) || 0;
+  const wholesale = Number(row.wholesale_price ?? row.wholesalePrice ?? row.price_wholesale ?? row.unit_price_wholesale ?? 0) || 0;
+  // If wholesale price not provided, fallback to retail
+  if (Number(qty || 0) >= WHOLESALE_QTY_THRESHOLD && wholesale > 0) return wholesale;
+  return retail;
+}
   function pickName(row){
     return row.product_name ?? row.name ?? row.product_id ?? "Item";
   }
@@ -1729,7 +1735,7 @@ async function doSignOut() {
 
     data.forEach(row => {
       const qty = pickQty(row);
-      const price = pickUnitPrice(row);
+      const price = pickUnitPrice(row, qty);
       subtotal += qty * price;
       totalQty += qty;
 
@@ -1903,7 +1909,7 @@ async function doSignOut() {
         if (!items || items.length === 0) { if (checkoutMsg) checkoutMsg.textContent = "Your cart is empty."; return; }
 
         let subtotal = 0;
-        items.forEach(r => { const q = pickQty(r); const p = pickUnitPrice(r); subtotal += q * p; });
+        items.forEach(r => { const q = pickQty(r); const p = pickUnitPrice(r, q); subtotal += q * p; });
 
         const DELIVERY_THRESHOLD = 300;
         const DELIVERY_FEE = 30;
