@@ -1795,9 +1795,9 @@ async function doSignOut() {
     const HST_RATE = 0.13;
 
     let deliveryFee = 0;
-    if (subtotal < DELIVERY_THRESHOLD) {
-      deliveryFee = DELIVERY_FEE;
-    }
+    if (subtotal > 0 && subtotal < DELIVERY_THRESHOLD) {
+  deliveryFee = DELIVERY_FEE;
+}
     
     // Delivery is subject to HST
     const taxableBase = subtotal + deliveryFee;
