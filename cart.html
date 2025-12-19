@@ -1944,6 +1944,10 @@ async function doSignOut() {
         const out = await resp.json().catch(() => ({}));
         if (!resp.ok || !out.ok) throw new Error(out.error || "Could not create invoice");
 
+	await loadCart();      // refresh UI cart from server (will become empty)
+	setCartCount(0);       // force badge to 0 immediately
+
+
         if (method === "pay_now") {
           window.location.href = `payment.html?invoice_no=${encodeURIComponent(out.invoice_no || "")}`;
           return;
