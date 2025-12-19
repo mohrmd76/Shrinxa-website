@@ -1607,15 +1607,23 @@ async function doSignOut() {
   function pickQty(row){
     return Number(row.qty ?? row.quantity ?? 0) || 0;
   }
-  const WHOLESALE_QTY_THRESHOLD = 50;
+  const WHOLESALE_DEFAULT_QTY = 50;
 
-function pickUnitPrice(row, qty){
-  const retail = Number(row.unit_price ?? row.price ?? row.unitPrice ?? 0) || 0;
-  const wholesale = Number(row.wholesale_price ?? row.wholesalePrice ?? row.price_wholesale ?? row.unit_price_wholesale ?? 0) || 0;
-  // If wholesale price not provided, fallback to retail
-  if (Number(qty || 0) >= WHOLESALE_QTY_THRESHOLD && wholesale > 0) return wholesale;
-  return retail;
-}
+  function pickWholesalePrice(row){
+    // support common wholesale field names (safe if missing)
+    const w = row.wholesale_price ?? row.wholesalePrice ?? row.price_wholesale ?? row.unit_price_wholesale ?? row.wholesale ?? 0;
+    return Number(w) || 0;
+  }
+
+  function pickUnitPrice(row, qty){
+    const retail = Number(row.unit_price ?? row.price ?? row.unitPrice ?? 0) || 0;
+    const q = (qty != null) ? Number(qty) : pickQty(row);
+    const wholesale = pickWholesalePrice(row);
+
+    // If qty reaches the threshold AND wholesale price exists -> use wholesale
+    if (q >= WHOLESALE_DEFAULT_QTY && wholesale > 0) return wholesale;
+    return retail;
+  }
   function pickName(row){
     return row.product_name ?? row.name ?? row.product_id ?? "Item";
   }
@@ -1735,7 +1743,7 @@ function pickUnitPrice(row, qty){
 
     data.forEach(row => {
       const qty = pickQty(row);
-      const price = pickUnitPrice(row, qty);
+      const price = pickUnitPrice(row);
       subtotal += qty * price;
       totalQty += qty;
 
@@ -1909,7 +1917,7 @@ function pickUnitPrice(row, qty){
         if (!items || items.length === 0) { if (checkoutMsg) checkoutMsg.textContent = "Your cart is empty."; return; }
 
         let subtotal = 0;
-        items.forEach(r => { const q = pickQty(r); const p = pickUnitPrice(r, q); subtotal += q * p; });
+        items.forEach(r => { const q = pickQty(r); const p = pickUnitPrice(r); subtotal += q * p; });
 
         const DELIVERY_THRESHOLD = 300;
         const DELIVERY_FEE = 30;
