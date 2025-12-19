@@ -1607,22 +1607,8 @@ async function doSignOut() {
   function pickQty(row){
     return Number(row.qty ?? row.quantity ?? 0) || 0;
   }
-  const WHOLESALE_DEFAULT_QTY = 50;
-
-  function pickWholesalePrice(row){
-    // support common wholesale field names (safe if missing)
-    const w = row.wholesale_price ?? row.wholesalePrice ?? row.price_wholesale ?? row.unit_price_wholesale ?? row.wholesale ?? 0;
-    return Number(w) || 0;
-  }
-
-  function pickUnitPrice(row, qty){
-    const retail = Number(row.unit_price ?? row.price ?? row.unitPrice ?? 0) || 0;
-    const q = (qty != null) ? Number(qty) : pickQty(row);
-    const wholesale = pickWholesalePrice(row);
-
-    // If qty reaches the threshold AND wholesale price exists -> use wholesale
-    if (q >= WHOLESALE_DEFAULT_QTY && wholesale > 0) return wholesale;
-    return retail;
+  function pickUnitPrice(row){
+    return Number(row.unit_price ?? row.price ?? row.unitPrice ?? 0) || 0;
   }
   function pickName(row){
     return row.product_name ?? row.name ?? row.product_id ?? "Item";
