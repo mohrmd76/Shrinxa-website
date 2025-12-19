@@ -1607,15 +1607,7 @@ async function doSignOut() {
   function pickQty(row){
     return Number(row.qty ?? row.quantity ?? 0) || 0;
   }
-  const WHOLESALE_QTY_THRESHOLD = 50;
-
-function pickUnitPrice(row, qty){
-  const retail = Number(row.unit_price ?? row.price ?? row.unitPrice ?? 0) || 0;
-  const wholesale = Number(row.wholesale_price ?? row.wholesale ?? 0) || retail;
-  return (Number(qty || 0) >= WHOLESALE_QTY_THRESHOLD) ? wholesale : retail;
-}
-
-
+  function pickUnitPrice(row){
     return Number(row.unit_price ?? row.price ?? row.unitPrice ?? 0) || 0;
   }
   function pickName(row){
@@ -1737,7 +1729,7 @@ function pickUnitPrice(row, qty){
 
     data.forEach(row => {
       const qty = pickQty(row);
-      const price = pickUnitPrice(row, qty);
+      const price = pickUnitPrice(row);
       subtotal += qty * price;
       totalQty += qty;
 
@@ -1911,7 +1903,7 @@ function pickUnitPrice(row, qty){
         if (!items || items.length === 0) { if (checkoutMsg) checkoutMsg.textContent = "Your cart is empty."; return; }
 
         let subtotal = 0;
-        items.forEach(r => { const q = pickQty(r); const p = pickUnitPrice(r, pickQty(r)); subtotal += q * p; });
+        items.forEach(r => { const q = pickQty(r); const p = pickUnitPrice(r); subtotal += q * p; });
 
         const DELIVERY_THRESHOLD = 300;
         const DELIVERY_FEE = 30;
