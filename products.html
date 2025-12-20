@@ -1996,9 +1996,9 @@ const cartCountEl = document.getElementById("cartCount");
   let CURRENT_TIER = "standard";
 
   function normalizeTier(t) {
-    const v = String(t || "standard").toLowerCase();
-    if (v === "gold") return "gold";
-    if (v === "platinum") return "platinum";
+    const v = String(t || "standard").trim().toLowerCase();
+    if (v.includes("gold")) return "gold";
+    if (v.includes("platinum")) return "platinum";
     return "standard";
   }
 

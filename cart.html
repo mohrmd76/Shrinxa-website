@@ -1607,18 +1607,38 @@ async function doSignOut() {
   function pickQty(row){
     return Number(row.qty ?? row.quantity ?? 0) || 0;
   }
-    let WHOLESALE_THRESHOLD = 50; // default fallback
+
+  // Pricing context (loaded per signed-in user)
+  let WHOLESALE_THRESHOLD = 50; // default fallback
+  let USER_TIER = "standard";
+  let PLATINUM_PRICE_MAP = new Map(); // product_id -> { retail_price, wholesale_price }
 
   function pickUnitPrice(row){
     const qty = pickQty(row);
-    const retail = Number(row.unit_price ?? row.price ?? row.unitPrice ?? 0) || 0;
-    const wholesale = Number(row.wholesale_price ?? row.wholesalePrice ?? 0) || 0;
+
+    // Base prices stored on the row (standard/gold or whatever is saved in cart_items)
+    let retail = Number(row.unit_price ?? row.price ?? row.unitPrice ?? 0) || 0;
+    let wholesale = Number(row.wholesale_price ?? row.wholesalePrice ?? 0) || 0;
+
+    // Platinum override (per customer per product) if present
+    if (USER_TIER === "platinum") {
+      const pid = row.product_id ?? row.productId ?? null;
+      if (pid && PLATINUM_PRICE_MAP && PLATINUM_PRICE_MAP.has(pid)) {
+        const o = PLATINUM_PRICE_MAP.get(pid) || {};
+        const or = Number(o.retail_price ?? 0) || 0;
+        const ow = Number(o.wholesale_price ?? 0) || 0;
+
+        if (or > 0) retail = or;
+        if (ow > 0) wholesale = ow;
+      }
+    }
 
     const th = Number(WHOLESALE_THRESHOLD || 50) || 50;
     if (qty >= th && wholesale > 0) return wholesale;
 
     return retail;
   }
+  function pickName(row){  }
   function pickName(row){
     return row.product_name ?? row.name ?? row.product_id ?? "Item";
   }
@@ -1639,6 +1659,51 @@ async function doSignOut() {
     } catch (e) {
       return 50;
     }
+
+
+  async function loadUserTier(sb, userId){
+    try {
+      const { data, error } = await sb
+        .from("profiles")
+        .select("tier")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (error) return "standard";
+      const t = String(data?.tier || "standard").toLowerCase().trim();
+      return (t === "gold" || t === "platinum") ? t : "standard";
+    } catch (e) {
+      return "standard";
+    }
+  }
+
+  async function loadPlatinumPriceMap(sb, userId, productIds){
+    try {
+      if (!productIds || productIds.length === 0) return new Map();
+
+      // Remove null/undefined and duplicates
+      const ids = Array.from(new Set(productIds.filter(Boolean)));
+
+      const { data, error } = await sb
+        .from("platinum_prices")
+        .select("product_id, retail_price, wholesale_price")
+        .eq("customer_id", userId)
+        .in("product_id", ids);
+
+      if (error) return new Map();
+
+      const map = new Map();
+      (data || []).forEach(r => {
+        map.set(r.product_id, {
+          retail_price: r.retail_price,
+          wholesale_price: r.wholesale_price
+        });
+      });
+      return map;
+    } catch (e) {
+      return new Map();
+    }
+  }
   }
 
   function getImagePath(name) {
@@ -1726,6 +1791,8 @@ async function doSignOut() {
 
     WHOLESALE_THRESHOLD = await loadWholesaleThreshold(sb, userId);
 
+    USER_TIER = await loadUserTier(sb, userId);
+
     let cartId;
     try {
       cartId = await getActiveCartId(sb, userId);
@@ -1752,7 +1819,15 @@ async function doSignOut() {
       return;
     }
 
-    msg.textContent = "";
+        // Load per-customer platinum overrides (if tier is platinum)
+    if (USER_TIER === "platinum") {
+      const productIds = (data || []).map(r => r.product_id ?? r.productId).filter(Boolean);
+      PLATINUM_PRICE_MAP = await loadPlatinumPriceMap(sb, userId, productIds);
+    } else {
+      PLATINUM_PRICE_MAP = new Map();
+    }
+
+msg.textContent = "";
     let subtotal = 0;
     let totalQty = 0;
 
@@ -1929,11 +2004,45 @@ async function doSignOut() {
 
         WHOLESALE_THRESHOLD = await loadWholesaleThreshold(sb, session.user.id);
 
+        USER_TIER = await loadUserTier(sb, session.user.id);
+
         const { data: items, error } = await sb.from("cart_items").select("*").eq("cart_id", cartId);
         if (error) throw error;
         if (!items || items.length === 0) { if (checkoutMsg) checkoutMsg.textContent = "Your cart is empty."; return; }
 
-        let subtotal = 0;
+if (USER_TIER === "platinum") {
+        const productIds = (items || []).map(r => r.product_id ?? r.productId).filter(Boolean);
+        PLATINUM_PRICE_MAP = await loadPlatinumPriceMap(sb, session.user.id, productIds);
+      } else {
+        // If platinum overrides exist, write them to cart_items before creating invoice
+      // so the Edge Function will record the correct unit_price/wholesale_price.
+      if (USER_TIER === "platinum" && PLATINUM_PRICE_MAP && PLATINUM_PRICE_MAP.size) {
+        for (const r of (items || [])) {
+          const pid = r.product_id ?? r.productId;
+          if (!pid || !PLATINUM_PRICE_MAP.has(pid)) continue;
+          const o = PLATINUM_PRICE_MAP.get(pid) || {};
+          const retail = Number(o.retail_price ?? 0) || 0;
+          const wholesale = Number(o.wholesale_price ?? 0) || 0;
+
+          // Only update if values are provided (non-zero)
+          const patch = {};
+          if (retail > 0) patch.unit_price = retail;
+          if (wholesale > 0) patch.wholesale_price = wholesale;
+
+          if (Object.keys(patch).length) {
+            await sb.from("cart_items").update(patch).eq("id", r.id).eq("cart_id", cartId);
+          }
+        }
+
+        // Refresh items after updates so subtotal uses the saved values too
+        const { data: refreshed } = await sb.from("cart_items").select("*").eq("cart_id", cartId);
+        if (refreshed) items.splice(0, items.length, ...refreshed);
+      }
+
+        PLATINUM_PRICE_MAP = new Map();
+      }
+
+                let subtotal = 0;
         items.forEach(r => { const q = pickQty(r); const p = pickUnitPrice(r); subtotal += q * p; });
 
         const DELIVERY_THRESHOLD = 300;
