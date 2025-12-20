@@ -2057,21 +2057,33 @@ const cartCountEl = document.getElementById("cartCount");
       if (!sb?.from) return;
 
       try {
-        const { data, error } = await sb
+        // Load platinum prices with proper product_id -> public_id resolution
+        const { data: rows, error } = await sb
           .from("platinum_prices")
-          .select("retail_price, wholesale_price, products!inner(public_id)")
+          .select("product_id, retail_price, wholesale_price")
           .eq("customer_id", userId);
 
-        if (error || !Array.isArray(data)) return;
+        if (error || !Array.isArray(rows) || rows.length === 0) return;
 
-        for (const row of data) {
-          const key = row.products?.public_id;
-          if (!key) continue;
+        // Fetch product public_id mapping
+        const productIds = rows.map(r => r.product_id);
+        const { data: prods, error: pErr } = await sb
+          .from("products")
+          .select("id, public_id")
+          .in("id", productIds);
+
+        if (pErr || !Array.isArray(prods)) return;
+
+        const idMap = new Map(prods.map(p => [String(p.id), String(p.public_id)]));
+
+        for (const row of rows) {
+          const publicId = idMap.get(String(row.product_id));
+          if (!publicId) continue;
 
           const retail = Number(row.retail_price);
           const wholesale = Number(row.wholesale_price);
 
-          PLATINUM_OVERRIDES.set(String(key), {
+          PLATINUM_OVERRIDES.set(publicId, {
             price: Number.isFinite(retail) ? retail : null,
             wholesale_price: Number.isFinite(wholesale) ? wholesale : null
           });
