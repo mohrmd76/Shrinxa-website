@@ -15,6 +15,7 @@
     <thead>
       <tr>
         <th>ID</th>
+        <th>Email</th>
         <th>Full Name</th>
         <th>Company</th>
         <th>Phone</th>
@@ -56,7 +57,7 @@
       show("Loading customers…");
       const { data: customers, error: custErr } = await supabase
         .from("profiles")
-        .select("id, full_name, company_name, phone, is_admin")
+        .select("id, email, full_name, company_name, phone, is_admin")
         .order("created_at", { ascending: false });
 
       if (custErr) throw new Error("customers query error: " + custErr.message);
@@ -66,6 +67,7 @@
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${c.id}</td>
+          <td>${c.email ?? ""}</td>
           <td>${c.full_name ?? ""}</td>
           <td>${c.company_name ?? ""}</td>
           <td>${c.phone ?? ""}</td>
