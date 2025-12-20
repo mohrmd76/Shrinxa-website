@@ -2052,64 +2052,34 @@ const cartCountEl = document.getElementById("cartCount");
     }
   
     async function loadPlatinumOverrides(userId) {
-      // Clear old overrides
       PLATINUM_OVERRIDES.clear();
       const sb = window._supabase || window.supabaseClient || window.SupabaseClient || window.supabase;
       if (!sb?.from) return;
-  
-      // 1) Try JSON stored on profiles (common patterns)
-      const profileJsonCols = ["platinum_prices", "platinum_pricing", "custom_prices", "pricing_overrides", "price_overrides"];
-      for (const col of profileJsonCols) {
-        try {
-          const { data, error } = await sb.from("profiles").select(col).eq("id", userId).maybeSingle();
-          if (error || !data) continue;
-          const raw = data?.[col];
-          if (raw && typeof raw === "object") {
-            // Expected shape: { "<product_id>": { price, wholesale_price } } OR { "<product_id>": priceNumber }
-            for (const [pid, val] of Object.entries(raw)) {
-              if (!pid) continue;
-              if (val && typeof val === "object") {
-                const p = _asNumber(_pick(val, ["price", "retail_price", "retail", "unit_price"]));
-                const w = _asNumber(_pick(val, ["wholesale_price", "wholesale", "wh_price"]));
-                if (p !== null || w !== null) PLATINUM_OVERRIDES.set(String(pid), { price: p, wholesale_price: w });
-              } else {
-                const p = _asNumber(val);
-                if (p !== null) PLATINUM_OVERRIDES.set(String(pid), { price: p, wholesale_price: null });
-              }
-            }
-            return; // loaded from profiles
-          }
-        } catch (_) {}
-      }
-  
-      // 2) Try row-based tables (common patterns)
-      const tablesToTry = ["platinum_prices", "customer_prices", "customer_product_prices", "custom_prices", "price_overrides", "pricing_overrides"];
-      const userCols = ["user_id", "customer_id", "profile_id", "account_id"];
-      const productCols = ["product_id", "product", "sku", "product_sku", "product_key", "product_code"];
-      const priceCols = ["price", "retail_price", "retail", "unit_price"];
-      const wholesaleCols = ["wholesale_price", "wholesale", "wh_price"];
-  
-      for (const table of tablesToTry) {
-        for (const ucol of userCols) {
-          try {
-            const { data, error } = await sb.from(table).select("*").eq(ucol, userId).limit(1000);
-            if (error || !Array.isArray(data) || data.length === 0) continue;
-  
-            for (const row of data) {
-              const pid = _pick(row, productCols);
-              if (!pid) continue;
-              const p = _asNumber(_pick(row, priceCols));
-              const w = _asNumber(_pick(row, wholesaleCols));
-              if (p !== null || w !== null) PLATINUM_OVERRIDES.set(String(pid), { price: p, wholesale_price: w });
-            }
-  
-            if (PLATINUM_OVERRIDES.size > 0) return;
-          } catch (_) {}
+
+      try {
+        const { data, error } = await sb
+          .from("platinum_prices")
+          .select("retail_price, wholesale_price, products!inner(public_id)")
+          .eq("customer_id", userId);
+
+        if (error || !Array.isArray(data)) return;
+
+        for (const row of data) {
+          const key = row.products?.public_id;
+          if (!key) continue;
+
+          const retail = Number(row.retail_price);
+          const wholesale = Number(row.wholesale_price);
+
+          PLATINUM_OVERRIDES.set(String(key), {
+            price: Number.isFinite(retail) ? retail : null,
+            wholesale_price: Number.isFinite(wholesale) ? wholesale : null
+          });
         }
-      }
+      } catch (_) {}
     }
-  
-    function applyTierPricesToUI() {
+
+function applyTierPricesToUI() {
     try {
       document.querySelectorAll(".product-card").forEach((card) => {
         const prices = getCardTieredPrices(card);
