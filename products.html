@@ -1994,6 +1994,8 @@ const cartCountEl = document.getElementById("cartCount");
   // Tier pricing (standard / gold / platinum)
   // platinum uses gold prices by default (custom platinum per-customer pricing will be added later).
   let CURRENT_TIER = "standard";
+  let PRICE_OVERRIDES = {}; // productId -> { retail, wholesale }
+  let PRICE_OVERRIDES_LOADED = false;
 
   function normalizeTier(t) {
     const v = String(t || "standard").trim().toLowerCase();
@@ -2051,6 +2053,8 @@ const cartCountEl = document.getElementById("cartCount");
       }
       if (!user?.id) {
         CURRENT_TIER = "standard";
+        PRICE_OVERRIDES = {};
+        PRICE_OVERRIDES_LOADED = false;
         applyTierPricesToUI();
         return;
       }
@@ -2067,9 +2071,19 @@ const cartCountEl = document.getElementById("cartCount");
         CURRENT_TIER = normalizeTier(prof?.tier);
       }
 
+            if (CURRENT_TIER === "platinum" && user?.id) {
+        PRICE_OVERRIDES = await loadPriceOverridesForUser(sb, user.id);
+        PRICE_OVERRIDES_LOADED = true;
+      } else {
+        PRICE_OVERRIDES = {};
+        PRICE_OVERRIDES_LOADED = false;
+      }
+
       applyTierPricesToUI();
     } catch (_) {
       CURRENT_TIER = "standard";
+      PRICE_OVERRIDES = {};
+      PRICE_OVERRIDES_LOADED = false;
       applyTierPricesToUI();
     }
   }
