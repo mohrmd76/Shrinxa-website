@@ -35,15 +35,16 @@
     }
 
     const { data: customers } = await supabase
-      .from("profiles")
-      .select("email, tier, wholesale_qty_threshold")
-      .order("email");
+  .from("profiles")
+  .select("id, tier, wholesale_qty_threshold")
+  .order("id");
+
 
     const tbody = document.getElementById("rows");
     customers.forEach(c => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${c.email}</td>
+       <td>${c.id}</td>
         <td>${c.tier}</td>
         <td>${c.wholesale_qty_threshold}</td>
       `;
