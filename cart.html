@@ -1607,15 +1607,38 @@ async function doSignOut() {
   function pickQty(row){
     return Number(row.qty ?? row.quantity ?? 0) || 0;
   }
-    function pickUnitPrice(row){
+    let WHOLESALE_THRESHOLD = 50; // default fallback
+
+  function pickUnitPrice(row){
     const qty = pickQty(row);
     const retail = Number(row.unit_price ?? row.price ?? row.unitPrice ?? 0) || 0;
     const wholesale = Number(row.wholesale_price ?? row.wholesalePrice ?? 0) || 0;
-    if (qty >= 50 && wholesale > 0) return wholesale;
+
+    const th = Number(WHOLESALE_THRESHOLD || 50) || 50;
+    if (qty >= th && wholesale > 0) return wholesale;
+
     return retail;
   }
   function pickName(row){
     return row.product_name ?? row.name ?? row.product_id ?? "Item";
+  }
+
+
+  async function loadWholesaleThreshold(sb, userId){
+    try {
+      const { data, error } = await sb
+        .from("profiles")
+        .select("wholesale_qty_threshold")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (error) return 50;
+
+      const v = Number(data?.wholesale_qty_threshold);
+      return (Number.isFinite(v) && v >= 1) ? v : 50;
+    } catch (e) {
+      return 50;
+    }
   }
 
   function getImagePath(name) {
@@ -1700,6 +1723,8 @@ async function doSignOut() {
     list.innerHTML = "";
 
     const userId = session.user.id;
+
+    WHOLESALE_THRESHOLD = await loadWholesaleThreshold(sb, userId);
 
     let cartId;
     try {
@@ -1901,6 +1926,8 @@ async function doSignOut() {
         if (!session) { if (checkoutMsg) checkoutMsg.textContent = "Please sign in."; return; }
 
         const cartId = await getActiveCartId(sb, session.user.id);
+
+        WHOLESALE_THRESHOLD = await loadWholesaleThreshold(sb, session.user.id);
 
         const { data: items, error } = await sb.from("cart_items").select("*").eq("cart_id", cartId);
         if (error) throw error;
