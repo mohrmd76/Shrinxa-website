@@ -1992,21 +1992,122 @@ const cartCountEl = document.getElementById("cartCount");
 
 
   // Tier pricing (standard / gold / platinum)
-  // platinum uses gold prices by default (custom platinum per-customer pricing will be added later).
+  // platinum can have per-customer custom prices (loaded from Supabase). If no custom price exists,
+  // platinum falls back to GOLD prices.
   let CURRENT_TIER = "standard";
-  let PRICE_OVERRIDES = {}; // productId -> { retail, wholesale }
-  let PRICE_OVERRIDES_LOADED = false;
+  let PLATINUM_OVERRIDES = new Map(); // key: product_id -> { price, wholesale_price }
 
   function normalizeTier(t) {
     const v = String(t || "standard").trim().toLowerCase();
-    if (v.includes("gold")) return "gold";
     if (v.includes("platinum")) return "platinum";
+    if (v.includes("gold")) return "gold";
     return "standard";
   }
 
   function tierForPricing() {
-    // platinum defaults to gold pricing unless customized elsewhere
+    // gold uses gold pricing; platinum uses custom overrides or falls back to gold
     return (CURRENT_TIER === "gold" || CURRENT_TIER === "platinum") ? "gold" : "standard";
+  }
+
+  function numOrNull(v) {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function fillOverridesFromObject(obj) {
+    if (!obj || typeof obj !== "object") return;
+    // Supports shapes like:
+    // { "fortress-12": { "price": 44, "wholesale_price": 38 } }
+    // { "fortress-12": { "retail": 44, "wholesale": 38 } }
+    Object.entries(obj).forEach(([pid, val]) => {
+      if (!pid) return;
+      const v = (val && typeof val === "object") ? val : {};
+      const p =
+        numOrNull(v.price ?? v.retail_price ?? v.retail ?? v.unit_price ?? v.unitPrice ?? v.standard_price) ??
+        numOrNull(v.value);
+      const w =
+        numOrNull(v.wholesale_price ?? v.wholesale ?? v.wholesalePrice ?? v.wholesale_unit_price);
+      if (p !== null || w !== null) {
+        PLATINUM_OVERRIDES.set(String(pid), {
+          price: p,
+          wholesale_price: w,
+        });
+      }
+    });
+  }
+
+  async function loadPlatinumOverrides(userId) {
+    PLATINUM_OVERRIDES = new Map();
+    const sb = window._supabase || window.supabaseClient || window.SupabaseClient || window.supabase;
+    if (!sb?.from || !userId) return;
+
+    // 1) Try JSON-based storage on profiles table (recommended if you use it)
+    try {
+      const { data, error } = await sb
+        .from("profiles")
+        .select("platinum_prices, platinum_pricing, custom_prices, custom_pricing")
+        .eq("id", userId)
+        .maybeSingle();
+      if (!error && data) {
+        const obj =
+          data.platinum_prices ??
+          data.platinum_pricing ??
+          data.custom_prices ??
+          data.custom_pricing ??
+          null;
+        fillOverridesFromObject(obj);
+        if (PLATINUM_OVERRIDES.size > 0) return;
+      }
+    } catch (_) {}
+
+    // 2) Try row-based tables (we attempt common table/column name patterns)
+    const tableCandidates = [
+      "platinum_prices",
+      "customer_prices",
+      "custom_prices",
+      "customer_product_prices",
+      "product_customer_prices",
+      "pricing_overrides",
+      "price_overrides",
+    ];
+    const idCols = ["customer_id", "user_id", "profile_id", "customer", "account_id"];
+    const pidCols = ["product_id", "product", "sku", "item_id", "product_key", "product_code"];
+    const retailCols = ["price", "retail_price", "retail", "unit_price", "customer_price"];
+    const wholesaleCols = ["wholesale_price", "wholesale", "wholesale_unit_price", "wholesaleUnitPrice"];
+
+    for (const table of tableCandidates) {
+      for (const idCol of idCols) {
+        try {
+          const { data, error } = await sb.from(table).select("*").eq(idCol, userId);
+          if (error || !Array.isArray(data) || data.length === 0) continue;
+
+          for (const row of data) {
+            let pid = null;
+            for (const c of pidCols) {
+              if (row && row[c] != null) { pid = row[c]; break; }
+            }
+            if (!pid) continue;
+
+            let p = null;
+            for (const c of retailCols) {
+              const n = numOrNull(row?.[c]);
+              if (n !== null) { p = n; break; }
+            }
+            let w = null;
+            for (const c of wholesaleCols) {
+              const n = numOrNull(row?.[c]);
+              if (n !== null) { w = n; break; }
+            }
+
+            if (p !== null || w !== null) {
+              PLATINUM_OVERRIDES.set(String(pid), { price: p, wholesale_price: w });
+            }
+          }
+
+          if (PLATINUM_OVERRIDES.size > 0) return;
+        } catch (_) {}
+      }
+    }
   }
 
   function getCardTieredPrices(card) {
@@ -2017,6 +2118,17 @@ const cartCountEl = document.getElementById("cartCount");
 
     const retailGold = Number(card.dataset.retailGold || card.getAttribute("data-retail-gold") || retailStandard) || retailStandard;
     const wholesaleGold = Number(card.dataset.wholesaleGold || card.getAttribute("data-wholesale-gold") || wholesaleStandard) || wholesaleStandard;
+
+    // Platinum: use per-customer override if present; otherwise fall back to GOLD prices.
+    if (CURRENT_TIER === "platinum") {
+      const pid = String(card.dataset.id || card.getAttribute("data-id") || "");
+      const ov = pid ? PLATINUM_OVERRIDES.get(pid) : null;
+
+      const price = (ov && Number.isFinite(Number(ov.price))) ? Number(ov.price) : retailGold;
+      const wholesale_price = (ov && Number.isFinite(Number(ov.wholesale_price))) ? Number(ov.wholesale_price) : wholesaleGold;
+
+      return { price, wholesale_price };
+    }
 
     return {
       price: t === "gold" ? retailGold : retailStandard,
@@ -2053,8 +2165,7 @@ const cartCountEl = document.getElementById("cartCount");
       }
       if (!user?.id) {
         CURRENT_TIER = "standard";
-        PRICE_OVERRIDES = {};
-        PRICE_OVERRIDES_LOADED = false;
+        PLATINUM_OVERRIDES = new Map();
         applyTierPricesToUI();
         return;
       }
@@ -2071,19 +2182,16 @@ const cartCountEl = document.getElementById("cartCount");
         CURRENT_TIER = normalizeTier(prof?.tier);
       }
 
-            if (CURRENT_TIER === "platinum" && user?.id) {
-        PRICE_OVERRIDES = await loadPriceOverridesForUser(sb, user.id);
-        PRICE_OVERRIDES_LOADED = true;
+      if (CURRENT_TIER === "platinum") {
+        await loadPlatinumOverrides(user.id);
       } else {
-        PRICE_OVERRIDES = {};
-        PRICE_OVERRIDES_LOADED = false;
+        PLATINUM_OVERRIDES = new Map();
       }
 
       applyTierPricesToUI();
     } catch (_) {
       CURRENT_TIER = "standard";
-      PRICE_OVERRIDES = {};
-      PRICE_OVERRIDES_LOADED = false;
+      PLATINUM_OVERRIDES = new Map();
       applyTierPricesToUI();
     }
   }
