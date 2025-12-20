@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Admin – Customers</title>
+</head>
+<body>
+  <h2>Customers</h2>
+  <table border="1" cellpadding="6">
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>Tier</th>
+        <th>Wholesale Qty</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <script type="module">
+    import { supabase } from "../supabaseClient.js";
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) location.href = "../login.html";
+
+    const { data: me } = await supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .single();
+
+    if (!me?.is_admin) {
+      document.body.innerHTML = "Access denied";
+      throw "";
+    }
+
+    const { data: customers } = await supabase
+      .from("profiles")
+      .select("email, tier, wholesale_qty_threshold")
+      .order("email");
+
+    const tbody = document.getElementById("rows");
+    customers.forEach(c => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${c.email}</td>
+        <td>${c.tier}</td>
+        <td>${c.wholesale_qty_threshold}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  </script>
+</body>
+</html>
