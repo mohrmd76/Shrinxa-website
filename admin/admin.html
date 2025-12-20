@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Shrinxa Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      margin: 0;
+      padding: 40px;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #0b0f14;
+      color: #e9eef5;
+    }
+    .box {
+      max-width: 600px;
+      margin: auto;
+      border: 1px solid #243043;
+      border-radius: 10px;
+      padding: 24px;
+      background: #121826;
+      text-align: center;
+    }
+    .hidden { display: none; }
+    button {
+      margin-top: 20px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: 1px solid #2a3a55;
+      background: #0f1522;
+      color: #fff;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="loading" class="box">Checking admin access…</div>
+
+  <div id="denied" class="box hidden">
+    <h2>Access Denied</h2>
+    <p>You are not authorized to view this page.</p>
+  </div>
+
+  <div id="admin" class="box hidden">
+    <h2>Admin Panel</h2>
+    <p id="adminEmail"></p>
+    <button id="logoutBtn">Sign out</button>
+  </div>
+
+  <script type="module" src="./admin-auth.js"></script>
+</body>
+</html>
