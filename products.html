@@ -1990,6 +1990,102 @@ const cartCountEl = document.getElementById("cartCount");
     return data?.session?.access_token || null;
   }
 
+
+  // Tier pricing (standard / gold / platinum)
+  // platinum uses gold prices by default (custom platinum per-customer pricing will be added later).
+  let CURRENT_TIER = "standard";
+
+  function normalizeTier(t) {
+    const v = String(t || "standard").toLowerCase();
+    if (v === "gold") return "gold";
+    if (v === "platinum") return "platinum";
+    return "standard";
+  }
+
+  function tierForPricing() {
+    // platinum defaults to gold pricing unless customized elsewhere
+    return (CURRENT_TIER === "gold" || CURRENT_TIER === "platinum") ? "gold" : "standard";
+  }
+
+  function getCardTieredPrices(card) {
+    const t = tierForPricing();
+
+    const retailStandard = Number(card.dataset.retail || card.getAttribute("data-retail") || 0) || 0;
+    const wholesaleStandard = Number(card.dataset.wholesale || card.getAttribute("data-wholesale") || 0) || 0;
+
+    const retailGold = Number(card.dataset.retailGold || card.getAttribute("data-retail-gold") || retailStandard) || retailStandard;
+    const wholesaleGold = Number(card.dataset.wholesaleGold || card.getAttribute("data-wholesale-gold") || wholesaleStandard) || wholesaleStandard;
+
+    return {
+      price: t === "gold" ? retailGold : retailStandard,
+      wholesale_price: t === "gold" ? wholesaleGold : wholesaleStandard,
+    };
+  }
+
+  function applyTierPricesToUI() {
+    try {
+      document.querySelectorAll(".product-card").forEach((card) => {
+        const prices = getCardTieredPrices(card);
+        const strongs = card.querySelectorAll(".prod-prices .price-chip strong");
+        if (strongs && strongs.length >= 2) {
+          strongs[0].textContent = `$${Number(prices.price).toFixed(2)}`;
+          strongs[1].textContent = `$${Number(prices.wholesale_price).toFixed(2)}`;
+        }
+      });
+    } catch (_) {}
+  }
+
+  async function loadCustomerTier() {
+    try {
+      const sb = window._supabase || window.supabaseClient || window.SupabaseClient || window.supabase;
+      if (!sb?.auth) return;
+
+      let user = null;
+      if (sb.auth.getUser) {
+        const { data, error } = await sb.auth.getUser();
+        if (!error) user = data?.user || null;
+      }
+      if (!user && sb.auth.getSession) {
+        const { data, error } = await sb.auth.getSession();
+        if (!error) user = data?.session?.user || null;
+      }
+      if (!user?.id) {
+        CURRENT_TIER = "standard";
+        applyTierPricesToUI();
+        return;
+      }
+
+      const { data: prof, error: pErr } = await sb
+        .from("profiles")
+        .select("tier")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (pErr) {
+        CURRENT_TIER = "standard";
+      } else {
+        CURRENT_TIER = normalizeTier(prof?.tier);
+      }
+
+      applyTierPricesToUI();
+    } catch (_) {
+      CURRENT_TIER = "standard";
+      applyTierPricesToUI();
+    }
+  }
+
+  // Update tier prices when login state changes
+  (async () => {
+    try {
+      const sb = window._supabase || window.supabaseClient || window.SupabaseClient || window.supabase;
+      if (sb?.auth?.onAuthStateChange) {
+        sb.auth.onAuthStateChange(() => {
+          loadCustomerTier();
+        });
+      }
+    } catch (_) {}
+  })();
+
   // NEW: Read cart count from server when the page opens (no change to add-to-cart logic)
   async function refreshCartCountFromServer() {
     try {
@@ -2068,8 +2164,7 @@ const cartCountEl = document.getElementById("cartCount");
     const productId = card.dataset.id || card.getAttribute("data-id") || "";
     const productName = card.dataset.name || card.getAttribute("data-name") || "";
     const productType = card.dataset.type || card.getAttribute("data-type") || "";
-const price = Number(card.dataset.retail || card.getAttribute("data-retail") || 0);
-const wholesale_price = Number(card.dataset.wholesale || card.getAttribute("data-wholesale") || 0);
+const { price, wholesale_price } = getCardTieredPrices(card);
 
 
     const token = await getAccessToken();
@@ -2122,11 +2217,15 @@ const wholesale_price = Number(card.dataset.wholesale || card.getAttribute("data
     }
   });
 
-  // NEW: load cart count from server on page open
+  // NEW: load cart count + tier pricing from server on page open
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => refreshCartCountFromServer());
+    document.addEventListener("DOMContentLoaded", () => {
+      refreshCartCountFromServer();
+      loadCustomerTier();
+    });
   } else {
     refreshCartCountFromServer();
+    loadCustomerTier();
   }
 
   // Keep existing count if already set; otherwise show 0
