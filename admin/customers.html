@@ -6,10 +6,15 @@
 </head>
 <body>
   <h2>Customers</h2>
+
+  <div id="status" style="padding:8px;border:1px solid #ccc;display:inline-block;margin-bottom:10px;">
+    Loading…
+  </div>
+
   <table border="1" cellpadding="6">
     <thead>
       <tr>
-        <th>Email</th>
+        <th>ID</th>
         <th>Tier</th>
         <th>Wholesale Qty</th>
       </tr>
@@ -20,36 +25,55 @@
   <script type="module">
     import { supabase } from "../supabaseClient.js";
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) location.href = "../login.html";
-
-    const { data: me } = await supabase
-      .from("profiles")
-      .select("is_admin")
-      .eq("id", user.id)
-      .single();
-
-    if (!me?.is_admin) {
-      document.body.innerHTML = "Access denied";
-      throw "";
-    }
-
-    const { data: customers } = await supabase
-  .from("profiles")
-  .select("id, tier, wholesale_qty_threshold")
-  .order("id");
-
-
+    const status = document.getElementById("status");
     const tbody = document.getElementById("rows");
-    customers.forEach(c => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-       <td>${c.id}</td>
-        <td>${c.tier}</td>
-        <td>${c.wholesale_qty_threshold}</td>
-      `;
-      tbody.appendChild(tr);
-    });
+
+    function show(msg) { status.textContent = msg; }
+
+    try {
+      show("Checking login…");
+      const { data: { user }, error: userErr } = await supabase.auth.getUser();
+
+      if (userErr) throw new Error("getUser error: " + userErr.message);
+      if (!user) {
+        show("Not logged in → redirecting to login.html");
+        location.href = "../login.html";
+        throw new Error("Not logged in");
+      }
+
+      show("Checking admin…");
+      const { data: me, error: meErr } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", user.id)
+        .single();
+
+      if (meErr) throw new Error("profiles check error: " + meErr.message);
+      if (!me?.is_admin) throw new Error("Access denied (not admin)");
+
+      show("Loading customers…");
+      const { data: customers, error: custErr } = await supabase
+        .from("profiles")
+        .select("id, tier, wholesale_qty_threshold")
+        .order("id");
+
+      if (custErr) throw new Error("customers query error: " + custErr.message);
+
+      tbody.innerHTML = "";
+      for (const c of (customers || [])) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${c.id}</td>
+          <td>${c.tier ?? ""}</td>
+          <td>${c.wholesale_qty_threshold ?? ""}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+
+      show(`Done. Rows: ${(customers || []).length}`);
+    } catch (e) {
+      show("ERROR: " + (e?.message || String(e)));
+    }
   </script>
 </body>
 </html>
