@@ -19,6 +19,8 @@
         <th>Full Name</th>
         <th>Company</th>
         <th>Phone</th>
+        <th>Tier</th>
+        <th>Save</th>
         <th>Admin</th>
       </tr>
     </thead>
@@ -33,16 +35,22 @@
 
     function show(msg) { status.textContent = msg; }
 
-    try {
+    function tierSelect(current) {
+      const v = current || "standard";
+      return `
+        <select class="tierSel">
+          <option value="standard" ${v==="standard"?"selected":""}>standard</option>
+          <option value="gold" ${v==="gold"?"selected":""}>gold</option>
+          <option value="platinum" ${v==="platinum"?"selected":""}>platinum</option>
+        </select>
+      `;
+    }
+
+    async function load() {
       show("Checking login…");
       const { data: { user }, error: userErr } = await supabase.auth.getUser();
-
       if (userErr) throw new Error("getUser error: " + userErr.message);
-      if (!user) {
-        show("Not logged in → redirecting to login.html");
-        location.href = "../login.html";
-        throw new Error("Not logged in");
-      }
+      if (!user) { location.href = "../login.html"; return; }
 
       show("Checking admin…");
       const { data: me, error: meErr } = await supabase
@@ -57,7 +65,7 @@
       show("Loading customers…");
       const { data: customers, error: custErr } = await supabase
         .from("profiles")
-        .select("id, email, full_name, company_name, phone, is_admin")
+        .select("id, email, full_name, company_name, phone, tier, is_admin")
         .order("created_at", { ascending: false });
 
       if (custErr) throw new Error("customers query error: " + custErr.message);
@@ -65,21 +73,51 @@
       tbody.innerHTML = "";
       for (const c of (customers || [])) {
         const tr = document.createElement("tr");
+        tr.dataset.id = c.id;
+
         tr.innerHTML = `
           <td>${c.id}</td>
           <td>${c.email ?? ""}</td>
           <td>${c.full_name ?? ""}</td>
           <td>${c.company_name ?? ""}</td>
           <td>${c.phone ?? ""}</td>
+          <td>${tierSelect(c.tier)}</td>
+          <td><button class="saveBtn">Save</button></td>
           <td>${c.is_admin ? "YES" : "NO"}</td>
         `;
+
         tbody.appendChild(tr);
       }
 
+      // Save handler
+      tbody.addEventListener("click", async (e) => {
+        const btn = e.target?.closest?.(".saveBtn");
+        if (!btn) return;
+
+        const tr = btn.closest("tr");
+        const id = tr.dataset.id;
+        const sel = tr.querySelector(".tierSel");
+        const newTier = sel.value;
+
+        show("Saving tier…");
+
+        const { error: upErr } = await supabase
+          .from("profiles")
+          .update({ tier: newTier })
+          .eq("id", id);
+
+        if (upErr) {
+          show("ERROR: " + upErr.message);
+          return;
+        }
+
+        show("Saved ✅");
+      });
+
       show(`Done. Rows: ${(customers || []).length}`);
-    } catch (e) {
-      show("ERROR: " + (e?.message || String(e)));
     }
+
+    load().catch(err => show("ERROR: " + err.message));
   </script>
 </body>
 </html>
