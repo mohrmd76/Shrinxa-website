@@ -1713,6 +1713,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const y = document.getElementById("year");
   if (y) y.textContent = new Date().getFullYear();
 });
+
+  // Ensure pricing runs AFTER auth is ready (critical for Platinum)
+  if (window.supabaseClient?.auth?.onAuthStateChange) {
+    window.supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user?.id) {
+        try {
+          await loadCustomerTier();
+        } catch (_) {}
+      }
+    });
+  }
+
 </script>
 
 
@@ -1783,6 +1795,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 })();
+
+  // Ensure pricing runs AFTER auth is ready (critical for Platinum)
+  if (window.supabaseClient?.auth?.onAuthStateChange) {
+    window.supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user?.id) {
+        try {
+          await loadCustomerTier();
+        } catch (_) {}
+      }
+    });
+  }
+
 </script>
 
 
@@ -1813,10 +1837,34 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key === "Escape") close();
   });
 });
+
+  // Ensure pricing runs AFTER auth is ready (critical for Platinum)
+  if (window.supabaseClient?.auth?.onAuthStateChange) {
+    window.supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user?.id) {
+        try {
+          await loadCustomerTier();
+        } catch (_) {}
+      }
+    });
+  }
+
 </script>
 
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+  // Ensure pricing runs AFTER auth is ready (critical for Platinum)
+  if (window.supabaseClient?.auth?.onAuthStateChange) {
+    window.supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user?.id) {
+        try {
+          await loadCustomerTier();
+        } catch (_) {}
+      }
+    });
+  }
+
+</script>
 <script>
 // Capture the SAME Supabase client created inside auth.js (without editing auth.js)
 // auth.js runs AFTER this script tag, so we wrap createClient *immediately*.
@@ -1963,9 +2011,33 @@ document.addEventListener("DOMContentLoaded", () => {
   initAuthUI();
 });
 
+
+  // Ensure pricing runs AFTER auth is ready (critical for Platinum)
+  if (window.supabaseClient?.auth?.onAuthStateChange) {
+    window.supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user?.id) {
+        try {
+          await loadCustomerTier();
+        } catch (_) {}
+      }
+    });
+  }
+
 </script>
 
-<script src="auth.js"></script>
+<script src="auth.js">
+  // Ensure pricing runs AFTER auth is ready (critical for Platinum)
+  if (window.supabaseClient?.auth?.onAuthStateChange) {
+    window.supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user?.id) {
+        try {
+          await loadCustomerTier();
+        } catch (_) {}
+      }
+    });
+  }
+
+</script>
 
 <script>
 (() => {
@@ -2057,33 +2129,21 @@ const cartCountEl = document.getElementById("cartCount");
       if (!sb?.from) return;
 
       try {
-        // Load platinum prices with proper product_id -> public_id resolution
-        const { data: rows, error } = await sb
+        const { data, error } = await sb
           .from("platinum_prices")
-          .select("product_id, retail_price, wholesale_price")
+          .select("retail_price, wholesale_price, products!inner(public_id)")
           .eq("customer_id", userId);
 
-        if (error || !Array.isArray(rows) || rows.length === 0) return;
+        if (error || !Array.isArray(data)) return;
 
-        // Fetch product public_id mapping
-        const productIds = rows.map(r => r.product_id);
-        const { data: prods, error: pErr } = await sb
-          .from("products")
-          .select("id, public_id")
-          .in("id", productIds);
-
-        if (pErr || !Array.isArray(prods)) return;
-
-        const idMap = new Map(prods.map(p => [String(p.id), String(p.public_id)]));
-
-        for (const row of rows) {
-          const publicId = idMap.get(String(row.product_id));
-          if (!publicId) continue;
+        for (const row of data) {
+          const key = row.products?.public_id;
+          if (!key) continue;
 
           const retail = Number(row.retail_price);
           const wholesale = Number(row.wholesale_price);
 
-          PLATINUM_OVERRIDES.set(publicId, {
+          PLATINUM_OVERRIDES.set(String(key), {
             price: Number.isFinite(retail) ? retail : null,
             wholesale_price: Number.isFinite(wholesale) ? wholesale : null
           });
@@ -2304,6 +2364,18 @@ const { price, wholesale_price } = getCardTieredPrices(card);
   // Keep existing count if already set; otherwise show 0
   if (cartCountEl && !cartCountEl.textContent.trim()) setCartCount(0);
 })();
+
+  // Ensure pricing runs AFTER auth is ready (critical for Platinum)
+  if (window.supabaseClient?.auth?.onAuthStateChange) {
+    window.supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user?.id) {
+        try {
+          await loadCustomerTier();
+        } catch (_) {}
+      }
+    });
+  }
+
 </script>
 
 <script>
@@ -2315,6 +2387,18 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = "cart.html";
   });
 });
+
+  // Ensure pricing runs AFTER auth is ready (critical for Platinum)
+  if (window.supabaseClient?.auth?.onAuthStateChange) {
+    window.supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user?.id) {
+        try {
+          await loadCustomerTier();
+        } catch (_) {}
+      }
+    });
+  }
+
 </script>
 
 
