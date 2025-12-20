@@ -1973,7 +1973,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const SUPABASE_ANON_KEY = "sb_publishable_k5D9JKO5lMCHlju-WhlSAQ_XEiEruT_";
   const CART_ADD_URL = `${SUPABASE_URL}/functions/v1/cart-add`;
 
-    const CART_GET_URL = `${SUPABASE_URL}/functions/v1/cart-get`;
   const CART_COUNT_URL = `${SUPABASE_URL}/functions/v1/cart-count`;
 
 const cartCountEl = document.getElementById("cartCount");
@@ -1999,9 +1998,9 @@ const cartCountEl = document.getElementById("cartCount");
 
 
   function normalizeTier(t) {
-    const v = String(t || "standard").toLowerCase();
-    if (v === "gold") return "gold";
-    if (v === "platinum") return "platinum";
+    const v = String(t ?? "standard").trim().toLowerCase();
+    if (v.includes("platinum")) return "platinum";
+    if (v.includes("gold")) return "gold";
     return "standard";
   }
 
@@ -2138,11 +2137,7 @@ const cartCountEl = document.getElementById("cartCount");
       }
       if (!user?.id) {
         CURRENT_TIER = "standard";
-        if (CURRENT_TIER === "platinum") {
-        try { await loadPlatinumOverrides(user.id); } catch (_) {}
-      }
-
-      applyTierPricesToUI();
+        applyTierPricesToUI();
         return;
       }
 
@@ -2156,6 +2151,11 @@ const cartCountEl = document.getElementById("cartCount");
         CURRENT_TIER = "standard";
       } else {
         CURRENT_TIER = normalizeTier(prof?.tier);
+      }
+
+      // If Platinum, load per-customer overrides before applying prices
+      if (CURRENT_TIER === "platinum") {
+        try { await loadPlatinumOverrides(user.id); } catch (_) {}
       }
 
       applyTierPricesToUI();
@@ -2182,33 +2182,8 @@ const cartCountEl = document.getElementById("cartCount");
     try {
       const token = await getAccessToken();
       if (!token) { setCartCount(0); return; }
-
-      // Try cart-get (preferred) -> expects items array or count
-      try {
-        const r = await fetch(CART_GET_URL, {
-          method: "GET",
-          headers: {
-            "apikey": SUPABASE_ANON_KEY,
-            "Authorization": `Bearer ${token}`,
-          },
-        });
-        if (r.ok) {
-          const t = await r.text();
-          let data = null;
-          try { data = JSON.parse(t); } catch (_) { data = null; }
-
-          const items = data?.items || data?.cart || data?.data;
-          if (Array.isArray(items)) {
-            const sum = items.reduce((acc, it) => acc + (Number(it?.qty) || Number(it?.quantity) || 0), 0);
-            setCartCount(sum);
-            return;
-          }
-          const c = data?.cart_count ?? data?.count ?? (typeof data === "number" ? data : null);
-          if (c !== null && c !== undefined) { setCartCount(c); return; }
-        }
-      } catch (_) {}
-
-      // Try cart-count (fallback) -> expects {count} or {cart_count}
+      // cart-count -> expects {count} or {cart_count}
+ -> expects {count} or {cart_count}
       try {
         const r = await fetch(CART_COUNT_URL, {
           method: "GET",
