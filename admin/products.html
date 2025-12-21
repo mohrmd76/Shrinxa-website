@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin – Products</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Arial, sans-serif; margin: 18px; }
+    .wrap { max-width: 1300px; }
+    .nav { margin: 6px 0 14px; }
+    .nav a { margin-right: 10px; }
+    .status { padding:8px 10px; border:1px solid #ccc; display:inline-block; }
+    .top { display:flex; gap:12px; align-items:end; flex-wrap:wrap; margin-top:12px; }
+    label { font-size: 12px; color:#333; display:flex; flex-direction:column; gap:4px; }
+    input, select { padding:6px 8px; border:1px solid #bbb; border-radius:8px; min-width: 170px; }
+    button { padding:7px 10px; border:1px solid #888; border-radius:10px; background:#f6f6f6; cursor:pointer; }
+    button:hover { background:#efefef; }
+    .btnrow { display:flex; gap:8px; flex-wrap:wrap; }
+    table { border-collapse: collapse; width: 100%; margin-top: 14px; }
+    th, td { border:1px solid #ddd; padding:8px; vertical-align: top; }
+    th { background:#fafafa; position: sticky; top: 0; z-index: 2; }
+    .right { text-align:right; white-space:nowrap; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+    .pill { display:inline-block; padding:2px 8px; border:1px solid #ccc; border-radius:999px; font-size:12px; }
+    .muted { color:#666; font-size:12px; }
+    .row-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    dialog { border:1px solid #ddd; border-radius:16px; padding:0; width: min(720px, 96vw); }
+    .dlgHead { padding:14px 14px 10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .dlgBody { padding:14px; }
+    .grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+    .grid3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; }
+    .dlgFoot { padding:12px 14px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px; }
+    .w100 { min-width: 0; width: 100%; }
+    @media (max-width: 760px) {
+      .grid, .grid3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h2>Products</h2>
+
+    <div class="nav">
+      <a href="/admin/dashboard.html">Dashboard</a> |
+      <a href="/admin/customers.html">Customers</a> |
+      <a href="/admin/platinum.html">Platinum</a> |
+      <a href="/admin/products.html"><strong>Products</strong></a> |
+      <a href="/admin/orders.html">Orders</a>
+    </div>
+
+    <div class="status" id="status">Loading…</div>
+
+    <div class="top">
+      <label>
+        Search
+        <input id="q" type="text" placeholder="name / sku">
+      </label>
+
+      <label>
+        Active
+        <select id="activeFilter">
+          <option value="">All</option>
+          <option value="true" selected>Active</option>
+          <option value="false">Inactive</option>
+        </select>
+      </label>
+
+      <div class="btnrow">
+        <button id="btnLoad" type="button">Load</button>
+        <button id="btnNew" type="button">New Product</button>
+        <button id="btnExport" type="button">Export CSV</button>
+      </div>
+    </div>
+
+    <div style="overflow:auto; max-height: 72vh; margin-top:10px;">
+      <table>
+        <thead>
+          <tr>
+            <th style="min-width:240px;">Product</th>
+            <th style="min-width:120px;">SKU</th>
+            <th style="min-width:90px;">Active</th>
+            <th style="min-width:90px;">Sort</th>
+            <th style="min-width:120px;" class="right">Retail</th>
+            <th style="min-width:120px;" class="right">Wholesale</th>
+            <th style="min-width:120px;" class="right">Gold</th>
+            <th style="min-width:120px;" class="right">Platinum</th>
+            <th style="min-width:220px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+
+    <dialog id="dlg">
+      <div class="dlgHead">
+        <div>
+          <div class="mono" id="dlgId"></div>
+          <div style="font-weight:700;" id="dlgTitle">Product</div>
+          <div class="muted">Table: <span class="mono">public.products</span></div>
+        </div>
+        <button id="btnClose" type="button">Close</button>
+      </div>
+      <div class="dlgBody">
+        <div class="grid">
+          <label class="w100">
+            Name
+            <input id="f_name" class="w100" type="text" placeholder="Product name">
+          </label>
+          <label class="w100">
+            SKU
+            <input id="f_sku" class="w100" type="text" placeholder="SKU (optional)">
+          </label>
+        </div>
+
+        <div class="grid3" style="margin-top:12px;">
+          <label class="w100">
+            Active
+            <select id="f_active" class="w100">
+              <option value="true" selected>true</option>
+              <option value="false">false</option>
+            </select>
+          </label>
+          <label class="w100">
+            Sort order
+            <input id="f_sort" class="w100" type="number" step="1" placeholder="0">
+          </label>
+          <label class="w100">
+            Currency
+            <input id="f_currency" class="w100" type="text" placeholder="CAD" value="CAD">
+          </label>
+        </div>
+
+        <div class="grid" style="margin-top:12px;">
+          <label class="w100">
+            Retail price
+            <input id="f_retail" class="w100" type="number" step="0.01" placeholder="0.00">
+          </label>
+          <label class="w100">
+            Wholesale price
+            <input id="f_wholesale" class="w100" type="number" step="0.01" placeholder="0.00">
+          </label>
+        </div>
+
+        <div class="grid" style="margin-top:12px;">
+          <label class="w100">
+            Gold price
+            <input id="f_gold" class="w100" type="number" step="0.01" placeholder="0.00">
+          </label>
+          <label class="w100">
+            Platinum price
+            <input id="f_platinum" class="w100" type="number" step="0.01" placeholder="0.00">
+          </label>
+        </div>
+
+        <div class="muted" style="margin-top:10px;">
+          Notes: Platinum customer overrides are handled in <b>Platinum</b> page.
+        </div>
+      </div>
+      <div class="dlgFoot">
+        <button id="btnDelete" type="button">Delete</button>
+        <button id="btnSave" type="button">Save</button>
+      </div>
+    </dialog>
+  </div>
+
+  <script type="module">
+    import { supabase } from "../supabaseClient.js";
+
+    const statusEl = document.getElementById("status");
+    const tbody = document.getElementById("rows");
+
+    const qEl = document.getElementById("q");
+    const activeFilterEl = document.getElementById("activeFilter");
+    const btnLoad = document.getElementById("btnLoad");
+    const btnNew = document.getElementById("btnNew");
+    const btnExport = document.getElementById("btnExport");
+
+    const dlg = document.getElementById("dlg");
+    const dlgIdEl = document.getElementById("dlgId");
+    const dlgTitleEl = document.getElementById("dlgTitle");
+    const btnClose = document.getElementById("btnClose");
+    const btnSave = document.getElementById("btnSave");
+    const btnDelete = document.getElementById("btnDelete");
+
+    const f_name = document.getElementById("f_name");
+    const f_sku = document.getElementById("f_sku");
+    const f_active = document.getElementById("f_active");
+    const f_sort = document.getElementById("f_sort");
+    const f_currency = document.getElementById("f_currency");
+    const f_retail = document.getElementById("f_retail");
+    const f_wholesale = document.getElementById("f_wholesale");
+    const f_gold = document.getElementById("f_gold");
+    const f_platinum = document.getElementById("f_platinum");
+
+    let editing = null; // product row
+
+    function show(msg) { statusEl.textContent = msg; }
+
+    function n(v) {
+      const x = Number(v);
+      return Number.isFinite(x) ? x : null;
+    }
+
+    function money(v) {
+      const x = Number(v);
+      if (!Number.isFinite(x)) return "";
+      return x.toFixed(2);
+    }
+
+    async function requireAdmin() {
+      show("Checking login…");
+      const { data: { user }, error: userErr } = await supabase.auth.getUser();
+      if (userErr) throw new Error("getUser error: " + userErr.message);
+      if (!user) { location.href = "../login.html"; return null; }
+
+      show("Checking admin…");
+      const { data: me, error: meErr } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", user.id)
+        .single();
+      if (meErr) throw new Error("profiles check error: " + meErr.message);
+      if (!me?.is_admin) throw new Error("Access denied (not admin)");
+      return user;
+    }
+
+    function rowField(r, names, fallback = null) {
+      for (const k of names) if (r && r[k] !== undefined && r[k] !== null) return r[k];
+      return fallback;
+    }
+
+    function normalizeRow(r) {
+      return {
+        id: r.id,
+        name: rowField(r, ["name","product_name","title"], ""),
+        sku: rowField(r, ["sku","product_sku"], ""),
+        is_active: rowField(r, ["is_active","active","enabled"], true),
+        sort_order: rowField(r, ["sort_order","sort","display_order"], 0),
+        currency: rowField(r, ["currency"], "CAD"),
+        retail_price: rowField(r, ["retail_price","price_retail","retail"], 0),
+        wholesale_price: rowField(r, ["wholesale_price","price_wholesale","wholesale"], 0),
+        gold_price: rowField(r, ["gold_price","price_gold","gold"], null),
+        platinum_price: rowField(r, ["platinum_price","price_platinum","platinum"], null),
+        _raw: r
+      };
+    }
+
+    async function loadProducts() {
+      tbody.innerHTML = "";
+      show("Loading products…");
+
+      let q = supabase
+        .from("products")
+        .select("*")
+        .order("sort_order", { ascending: true, nullsFirst: true })
+        .order("name", { ascending: true })
+        .limit(2000);
+
+      const activeFilter = (activeFilterEl.value || "").trim();
+      if (activeFilter === "true") q = q.eq("is_active", true);
+      if (activeFilter === "false") q = q.eq("is_active", false);
+
+      const search = (qEl.value || "").trim();
+      if (search) {
+        const pat = `%${search}%`;
+        q = q.or(`name.ilike.${pat},sku.ilike.${pat},product_name.ilike.${pat},product_sku.ilike.${pat},title.ilike.${pat}`);
+      }
+
+      const { data, error } = await q;
+      if (error) { show("ERROR: " + error.message); return; }
+
+      const rows = (data || []).map(normalizeRow);
+
+      for (const r of rows) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>
+            <div style="font-weight:700;">${r.name || ""}</div>
+            <div class="muted mono">${r.id || ""}</div>
+          </td>
+          <td class="mono">${r.sku || ""}</td>
+          <td>${r.is_active ? `<span class="pill">active</span>` : `<span class="pill">inactive</span>`}</td>
+          <td class="right">${r.sort_order ?? ""}</td>
+          <td class="right">${money(r.retail_price)} ${r.currency || ""}</td>
+          <td class="right">${money(r.wholesale_price)} ${r.currency || ""}</td>
+          <td class="right">${r.gold_price === null ? "" : money(r.gold_price) + " " + (r.currency||"")}</td>
+          <td class="right">${r.platinum_price === null ? "" : money(r.platinum_price) + " " + (r.currency||"")}</td>
+          <td>
+            <div class="row-actions">
+              <button type="button" class="btnEdit" data-id="${r.id}">Edit</button>
+              <button type="button" class="btnToggle" data-id="${r.id}" data-active="${r.is_active ? "true" : "false"}">${r.is_active ? "Deactivate" : "Activate"}</button>
+            </div>
+          </td>
+        `;
+        tr.dataset.raw = JSON.stringify(r._raw);
+        tbody.appendChild(tr);
+      }
+
+      show(`Done ✅ Products: ${rows.length}`);
+    }
+
+    function openDialog(row) {
+      editing = row;
+      const r = row ? normalizeRow(row) : {
+        id: "",
+        name: "",
+        sku: "",
+        is_active: true,
+        sort_order: 0,
+        currency: "CAD",
+        retail_price: 0,
+        wholesale_price: 0,
+        gold_price: null,
+        platinum_price: null
+      };
+
+      dlgIdEl.textContent = r.id ? ("ID: " + r.id) : "New product";
+      dlgTitleEl.textContent = r.name || "Product";
+
+      f_name.value = r.name || "";
+      f_sku.value = r.sku || "";
+      f_active.value = String(!!r.is_active);
+      f_sort.value = r.sort_order ?? 0;
+      f_currency.value = r.currency || "CAD";
+      f_retail.value = r.retail_price ?? 0;
+      f_wholesale.value = r.wholesale_price ?? 0;
+      f_gold.value = r.gold_price ?? "";
+      f_platinum.value = r.platinum_price ?? "";
+
+      btnDelete.style.display = r.id ? "inline-block" : "none";
+
+      dlg.showModal();
+    }
+
+    function closeDialog() {
+      dlg.close();
+      editing = null;
+    }
+
+    async function saveDialog() {
+      show("Saving…");
+
+      const payload = {
+        // common column names (adjust if your schema differs)
+        name: String(f_name.value || "").trim(),
+        sku: String(f_sku.value || "").trim() || null,
+        is_active: String(f_active.value) === "true",
+        sort_order: Number(f_sort.value || 0),
+        currency: String(f_currency.value || "CAD").trim() || "CAD",
+        retail_price: n(f_retail.value) ?? 0,
+        wholesale_price: n(f_wholesale.value) ?? 0,
+        gold_price: f_gold.value === "" ? null : n(f_gold.value),
+        platinum_price: f_platinum.value === "" ? null : n(f_platinum.value),
+      };
+
+      if (!payload.name) { show("ERROR: Name required"); return; }
+
+      if (editing?.id) {
+        const { error } = await supabase
+          .from("products")
+          .update(payload)
+          .eq("id", editing.id);
+        if (error) { show("ERROR: " + error.message); return; }
+      } else {
+        const { error } = await supabase
+          .from("products")
+          .insert(payload);
+        if (error) { show("ERROR: " + error.message); return; }
+      }
+
+      closeDialog();
+      await loadProducts();
+      show("Saved ✅");
+    }
+
+    async function deleteDialog() {
+      if (!editing?.id) return;
+      show("Deleting…");
+
+      const { error } = await supabase
+        .from("products")
+        .delete()
+        .eq("id", editing.id);
+
+      if (error) { show("ERROR: " + error.message); return; }
+      closeDialog();
+      await loadProducts();
+      show("Deleted ✅");
+    }
+
+    async function toggleActive(id, currentActive) {
+      show("Saving…");
+      const { error } = await supabase
+        .from("products")
+        .update({ is_active: !currentActive })
+        .eq("id", id);
+      if (error) { show("ERROR: " + error.message); return; }
+      await loadProducts();
+      show("Saved ✅");
+    }
+
+    function downloadCsv(filename, rows) {
+      const esc = (v) => {
+        const s = String(v ?? "");
+        if (/[",\n]/.test(s)) return `"${s.replaceAll('"', '""')}"`;
+        return s;
+      };
+      const csv = rows.map(r => r.map(esc).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportCsvFromTable() {
+      const rows = [
+        ["id","name","sku","is_active","sort_order","currency","retail_price","wholesale_price","gold_price","platinum_price"]
+      ];
+      const trs = Array.from(tbody.querySelectorAll("tr"));
+      for (const tr of trs) {
+        const raw = JSON.parse(tr.dataset.raw || "{}");
+        const r = normalizeRow(raw);
+        rows.push([
+          r.id,
+          r.name,
+          r.sku,
+          r.is_active ? "true" : "false",
+          r.sort_order ?? "",
+          r.currency || "",
+          r.retail_price ?? "",
+          r.wholesale_price ?? "",
+          r.gold_price ?? "",
+          r.platinum_price ?? ""
+        ]);
+      }
+      downloadCsv("products.csv", rows);
+    }
+
+    tbody.addEventListener("click", async (e) => {
+      const editBtn = e.target?.closest?.(".btnEdit");
+      if (editBtn) {
+        const tr = editBtn.closest("tr");
+        const raw = JSON.parse(tr.dataset.raw || "{}");
+        openDialog(raw);
+        return;
+      }
+
+      const toggleBtn = e.target?.closest?.(".btnToggle");
+      if (toggleBtn) {
+        const id = toggleBtn.getAttribute("data-id");
+        const currentActive = toggleBtn.getAttribute("data-active") === "true";
+        await toggleActive(id, currentActive);
+        return;
+      }
+    });
+
+    btnLoad.addEventListener("click", loadProducts);
+    btnNew.addEventListener("click", () => openDialog(null));
+    btnExport.addEventListener("click", exportCsvFromTable);
+
+    btnClose.addEventListener("click", closeDialog);
+    btnSave.addEventListener("click", saveDialog);
+    btnDelete.addEventListener("click", deleteDialog);
+
+    (async () => {
+      await requireAdmin();
+      await loadProducts();
+    })();
+  </script>
+</body>
+</html>
