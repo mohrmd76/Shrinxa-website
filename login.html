@@ -1475,6 +1475,28 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!window.ShrinxaAuth?.signIn) throw new Error("Auth not loaded");
       await window.ShrinxaAuth.signIn(email, password);
 
+      const sb =
+        (window.Auth && window.Auth.supabaseClient) ||
+        (window.ShrinxaAuth && window.ShrinxaAuth.supabaseClient);
+
+      if (sb) {
+        const { data: u } = await sb.auth.getUser();
+        const user = u?.user;
+
+        if (user) {
+          const { data: p } = await sb
+            .from("profiles")
+            .select("is_admin")
+            .eq("id", user.id)
+            .maybeSingle();
+
+          if (p?.is_admin) {
+            window.location.href = "/admin/customers.html";
+            return;
+          }
+        }
+      }
+
       const params = new URLSearchParams(window.location.search);
       const next = params.get("next");
       window.location.href = next ? next : "index.html";
