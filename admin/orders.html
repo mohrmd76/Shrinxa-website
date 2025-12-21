@@ -99,6 +99,13 @@
   <script type="module">
     import { supabase } from "../supabaseClient.js";
 
+    // Actions config
+    // If your invoice page has a different path, change INVOICE_PAGE.
+    const INVOICE_PAGE = "/invoice.html"; // will open as /invoice.html?invoice_id=...
+    // Edge Function (optional): implement a function that resends invoice emails.
+    // Expected: supabase.functions.invoke(RESEND_FUNCTION, { body: { action: "resend", invoice_id } })
+    const RESEND_FUNCTION = "create-invoice";
+
     const statusEl = document.getElementById("status");
     const tbody = document.getElementById("rows");
 
@@ -223,6 +230,8 @@
           <td class="right">${fmtMoney(total)}</td>
           <td>
             <div class="row-actions">
+              <button type="button" class="btnOpen" data-id="${inv.id}">Open</button>
+              <button type="button" class="btnResend" data-id="${inv.id}">Resend Email</button>
               <button type="button" class="btnSaveStatus" data-id="${inv.id}">Save Status</button>
               <button type="button" class="btnCopy" data-id="${inv.id}">Copy JSON</button>
             </div>
@@ -247,7 +256,29 @@
 
     tbody.addEventListener("click", async (e) => {
 
-      const saveBtn = e.target?.closest?.(".btnSaveStatus");
+      
+      const openBtn = e.target?.closest?.(".btnOpen");
+      if (openBtn) {
+        const id = openBtn.getAttribute("data-id");
+        const url = `${INVOICE_PAGE}?invoice_id=${encodeURIComponent(id)}`;
+        window.open(url, "_blank");
+        return;
+      }
+
+      const resendBtn = e.target?.closest?.(".btnResend");
+      if (resendBtn) {
+        const id = resendBtn.getAttribute("data-id");
+        show("Resending invoice email…");
+        const { data, error } = await supabase.functions.invoke(RESEND_FUNCTION, {
+          body: { action: "resend", invoice_id: id }
+        });
+        if (error) { show("ERROR: " + error.message); return; }
+        // If function returns { ok: true } or similar, still show success.
+        show("Resend requested ✅");
+        return;
+      }
+
+const saveBtn = e.target?.closest?.(".btnSaveStatus");
       if (saveBtn) {
         const id = saveBtn.getAttribute("data-id");
         const tr = saveBtn.closest("tr");
