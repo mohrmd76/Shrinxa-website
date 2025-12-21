@@ -6,13 +6,14 @@
   <title>Admin – Products</title>
   <style>
     body { font-family: system-ui, -apple-system, Segoe UI, Arial, sans-serif; margin: 18px; }
-    .wrap { max-width: 1300px; }
+    .wrap { max-width: 1500px; }
     .nav { margin: 6px 0 14px; }
     .nav a { margin-right: 10px; }
     .status { padding:8px 10px; border:1px solid #ccc; display:inline-block; }
     .top { display:flex; gap:12px; align-items:end; flex-wrap:wrap; margin-top:12px; }
     label { font-size: 12px; color:#333; display:flex; flex-direction:column; gap:4px; }
-    input, select { padding:6px 8px; border:1px solid #bbb; border-radius:8px; min-width: 170px; }
+    input, select, textarea { padding:6px 8px; border:1px solid #bbb; border-radius:8px; min-width: 170px; }
+    textarea { min-height: 90px; resize: vertical; }
     button { padding:7px 10px; border:1px solid #888; border-radius:10px; background:#f6f6f6; cursor:pointer; }
     button:hover { background:#efefef; }
     .btnrow { display:flex; gap:8px; flex-wrap:wrap; }
@@ -24,14 +25,15 @@
     .pill { display:inline-block; padding:2px 8px; border:1px solid #ccc; border-radius:999px; font-size:12px; }
     .muted { color:#666; font-size:12px; }
     .row-actions { display:flex; gap:8px; flex-wrap:wrap; }
-    dialog { border:1px solid #ddd; border-radius:16px; padding:0; width: min(720px, 96vw); }
+    dialog { border:1px solid #ddd; border-radius:16px; padding:0; width: min(920px, 96vw); }
     .dlgHead { padding:14px 14px 10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; gap:10px; }
     .dlgBody { padding:14px; }
     .grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
     .grid3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; }
     .dlgFoot { padding:12px 14px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px; }
     .w100 { min-width: 0; width: 100%; }
-    @media (max-width: 760px) {
+    .small { font-size: 12px; }
+    @media (max-width: 900px) {
       .grid, .grid3 { grid-template-columns: 1fr; }
     }
   </style>
@@ -53,7 +55,7 @@
     <div class="top">
       <label>
         Search
-        <input id="q" type="text" placeholder="name / sku">
+        <input id="q" type="text" placeholder="name / description">
       </label>
 
       <label>
@@ -72,18 +74,28 @@
       </div>
     </div>
 
+    <div class="muted small" style="margin-top:8px;">
+      Platinum prices are managed in <b>Platinum</b> page (no Platinum column here).
+    </div>
+
     <div style="overflow:auto; max-height: 72vh; margin-top:10px;">
       <table>
         <thead>
           <tr>
-            <th style="min-width:240px;">Product</th>
-            <th style="min-width:120px;">SKU</th>
+            <th style="min-width:260px;">Product</th>
             <th style="min-width:90px;">Active</th>
-            <th style="min-width:90px;">Sort</th>
-            <th style="min-width:120px;" class="right">Retail</th>
-            <th style="min-width:120px;" class="right">Wholesale</th>
-            <th style="min-width:120px;" class="right">Gold</th>
-            <th style="min-width:120px;" class="right">Platinum</th>
+            <th style="min-width:80px;">Sort</th>
+
+            <th style="min-width:130px;" class="right">Std Retail</th>
+            <th style="min-width:130px;" class="right">Std Wholesale</th>
+
+            <th style="min-width:130px;" class="right">Gold Retail</th>
+            <th style="min-width:130px;" class="right">Gold Wholesale</th>
+
+            <th style="min-width:320px;">Description</th>
+            <th style="min-width:260px;">Specification</th>
+            <th style="min-width:110px;" class="right">Rolls/Box</th>
+
             <th style="min-width:220px;">Actions</th>
           </tr>
         </thead>
@@ -100,6 +112,7 @@
         </div>
         <button id="btnClose" type="button">Close</button>
       </div>
+
       <div class="dlgBody">
         <div class="grid">
           <label class="w100">
@@ -107,8 +120,8 @@
             <input id="f_name" class="w100" type="text" placeholder="Product name">
           </label>
           <label class="w100">
-            SKU
-            <input id="f_sku" class="w100" type="text" placeholder="SKU (optional)">
+            Image URL
+            <input id="f_image" class="w100" type="text" placeholder="https://.../image.png">
           </label>
         </div>
 
@@ -125,37 +138,57 @@
             <input id="f_sort" class="w100" type="number" step="1" placeholder="0">
           </label>
           <label class="w100">
+            Rolls / Box
+            <input id="f_rolls" class="w100" type="number" step="1" placeholder="0">
+          </label>
+        </div>
+
+        <div class="grid3" style="margin-top:12px;">
+          <label class="w100">
             Currency
             <input id="f_currency" class="w100" type="text" placeholder="CAD" value="CAD">
           </label>
+          <div></div><div></div>
         </div>
 
         <div class="grid" style="margin-top:12px;">
           <label class="w100">
-            Retail price
-            <input id="f_retail" class="w100" type="number" step="0.01" placeholder="0.00">
+            Std Retail price
+            <input id="f_std_retail" class="w100" type="number" step="0.01" placeholder="0.00">
           </label>
           <label class="w100">
-            Wholesale price
-            <input id="f_wholesale" class="w100" type="number" step="0.01" placeholder="0.00">
+            Std Wholesale price
+            <input id="f_std_wholesale" class="w100" type="number" step="0.01" placeholder="0.00">
           </label>
         </div>
 
         <div class="grid" style="margin-top:12px;">
           <label class="w100">
-            Gold price
-            <input id="f_gold" class="w100" type="number" step="0.01" placeholder="0.00">
+            Gold Retail price
+            <input id="f_gold_retail" class="w100" type="number" step="0.01" placeholder="0.00">
           </label>
           <label class="w100">
-            Platinum price
-            <input id="f_platinum" class="w100" type="number" step="0.01" placeholder="0.00">
+            Gold Wholesale price
+            <input id="f_gold_wholesale" class="w100" type="number" step="0.01" placeholder="0.00">
           </label>
         </div>
 
-        <div class="muted" style="margin-top:10px;">
-          Notes: Platinum customer overrides are handled in <b>Platinum</b> page.
+        <div class="grid" style="margin-top:12px;">
+          <label class="w100">
+            Description
+            <textarea id="f_desc" class="w100" placeholder="Description..."></textarea>
+          </label>
+          <label class="w100">
+            Specification
+            <textarea id="f_spec" class="w100" placeholder="Specification..."></textarea>
+          </label>
+        </div>
+
+        <div class="muted small" style="margin-top:10px;">
+          Platinum custom prices are per-customer in <b>Platinum</b> page.
         </div>
       </div>
+
       <div class="dlgFoot">
         <button id="btnDelete" type="button">Delete</button>
         <button id="btnSave" type="button">Save</button>
@@ -183,16 +216,21 @@
     const btnDelete = document.getElementById("btnDelete");
 
     const f_name = document.getElementById("f_name");
-    const f_sku = document.getElementById("f_sku");
+    const f_image = document.getElementById("f_image");
     const f_active = document.getElementById("f_active");
     const f_sort = document.getElementById("f_sort");
+    const f_rolls = document.getElementById("f_rolls");
     const f_currency = document.getElementById("f_currency");
-    const f_retail = document.getElementById("f_retail");
-    const f_wholesale = document.getElementById("f_wholesale");
-    const f_gold = document.getElementById("f_gold");
-    const f_platinum = document.getElementById("f_platinum");
 
-    let editing = null; // product row
+    const f_std_retail = document.getElementById("f_std_retail");
+    const f_std_wholesale = document.getElementById("f_std_wholesale");
+    const f_gold_retail = document.getElementById("f_gold_retail");
+    const f_gold_wholesale = document.getElementById("f_gold_wholesale");
+
+    const f_desc = document.getElementById("f_desc");
+    const f_spec = document.getElementById("f_spec");
+
+    let editing = null;
 
     function show(msg) { statusEl.textContent = msg; }
 
@@ -233,16 +271,28 @@
       return {
         id: r.id,
         name: rowField(r, ["name","product_name","title"], ""),
-        sku: rowField(r, ["sku","product_sku"], ""),
         is_active: rowField(r, ["is_active","active","enabled"], true),
         sort_order: rowField(r, ["sort_order","sort","display_order"], 0),
         currency: rowField(r, ["currency"], "CAD"),
-        retail_price: rowField(r, ["retail_price","price_retail","retail"], 0),
-        wholesale_price: rowField(r, ["wholesale_price","price_wholesale","wholesale"], 0),
-        gold_price: rowField(r, ["gold_price","price_gold","gold"], null),
-        platinum_price: rowField(r, ["platinum_price","price_platinum","platinum"], null),
+
+        std_retail: rowField(r, ["retail_price","price_retail","retail","standard_retail_price","std_retail_price"], 0),
+        std_wholesale: rowField(r, ["wholesale_price","price_wholesale","wholesale","standard_wholesale_price","std_wholesale_price"], 0),
+
+        gold_retail: rowField(r, ["gold_retail_price","gold_retail","price_gold_retail","gold_price_retail","gold_price"], null),
+        gold_wholesale: rowField(r, ["gold_wholesale_price","gold_wholesale","price_gold_wholesale","gold_price_wholesale","gold_wholesale"], null),
+
+        description: rowField(r, ["description","desc","product_description"], ""),
+        specification: rowField(r, ["specification","specs","product_specification"], ""),
+        rolls_per_box: rowField(r, ["rolls_per_box","rolls_box","rolls_per_case","rolls_case"], null),
+        image_url: rowField(r, ["image_url","image","photo_url","img_url"], ""),
+
         _raw: r
       };
+    }
+
+    function buildSearchOr(query) {
+      const pat = `%${query}%`;
+      return `name.ilike.${pat},product_name.ilike.${pat},title.ilike.${pat},description.ilike.${pat}`;
     }
 
     async function loadProducts() {
@@ -261,10 +311,7 @@
       if (activeFilter === "false") q = q.eq("is_active", false);
 
       const search = (qEl.value || "").trim();
-      if (search) {
-        const pat = `%${search}%`;
-        q = q.or(`name.ilike.${pat},sku.ilike.${pat},product_name.ilike.${pat},product_sku.ilike.${pat},title.ilike.${pat}`);
-      }
+      if (search) q = q.or(buildSearchOr(search));
 
       const { data, error } = await q;
       if (error) { show("ERROR: " + error.message); return; }
@@ -278,13 +325,19 @@
             <div style="font-weight:700;">${r.name || ""}</div>
             <div class="muted mono">${r.id || ""}</div>
           </td>
-          <td class="mono">${r.sku || ""}</td>
           <td>${r.is_active ? `<span class="pill">active</span>` : `<span class="pill">inactive</span>`}</td>
           <td class="right">${r.sort_order ?? ""}</td>
-          <td class="right">${money(r.retail_price)} ${r.currency || ""}</td>
-          <td class="right">${money(r.wholesale_price)} ${r.currency || ""}</td>
-          <td class="right">${r.gold_price === null ? "" : money(r.gold_price) + " " + (r.currency||"")}</td>
-          <td class="right">${r.platinum_price === null ? "" : money(r.platinum_price) + " " + (r.currency||"")}</td>
+
+          <td class="right">${money(r.std_retail)} ${r.currency || ""}</td>
+          <td class="right">${money(r.std_wholesale)} ${r.currency || ""}</td>
+
+          <td class="right">${r.gold_retail === null ? "" : money(r.gold_retail) + " " + (r.currency||"")}</td>
+          <td class="right">${r.gold_wholesale === null ? "" : money(r.gold_wholesale) + " " + (r.currency||"")}</td>
+
+          <td>${(r.description || "").replaceAll("\n","<br/>")}</td>
+          <td>${(r.specification || "").replaceAll("\n","<br/>")}</td>
+          <td class="right">${r.rolls_per_box ?? ""}</td>
+
           <td>
             <div class="row-actions">
               <button type="button" class="btnEdit" data-id="${r.id}">Edit</button>
@@ -304,31 +357,38 @@
       const r = row ? normalizeRow(row) : {
         id: "",
         name: "",
-        sku: "",
         is_active: true,
         sort_order: 0,
+        rolls_per_box: null,
         currency: "CAD",
-        retail_price: 0,
-        wholesale_price: 0,
-        gold_price: null,
-        platinum_price: null
+        std_retail: 0,
+        std_wholesale: 0,
+        gold_retail: null,
+        gold_wholesale: null,
+        description: "",
+        specification: "",
+        image_url: ""
       };
 
       dlgIdEl.textContent = r.id ? ("ID: " + r.id) : "New product";
       dlgTitleEl.textContent = r.name || "Product";
 
       f_name.value = r.name || "";
-      f_sku.value = r.sku || "";
+      f_image.value = r.image_url || "";
       f_active.value = String(!!r.is_active);
       f_sort.value = r.sort_order ?? 0;
+      f_rolls.value = r.rolls_per_box ?? "";
       f_currency.value = r.currency || "CAD";
-      f_retail.value = r.retail_price ?? 0;
-      f_wholesale.value = r.wholesale_price ?? 0;
-      f_gold.value = r.gold_price ?? "";
-      f_platinum.value = r.platinum_price ?? "";
+
+      f_std_retail.value = r.std_retail ?? 0;
+      f_std_wholesale.value = r.std_wholesale ?? 0;
+      f_gold_retail.value = r.gold_retail ?? "";
+      f_gold_wholesale.value = r.gold_wholesale ?? "";
+
+      f_desc.value = r.description || "";
+      f_spec.value = r.specification || "";
 
       btnDelete.style.display = r.id ? "inline-block" : "none";
-
       dlg.showModal();
     }
 
@@ -341,16 +401,21 @@
       show("Saving…");
 
       const payload = {
-        // common column names (adjust if your schema differs)
         name: String(f_name.value || "").trim(),
-        sku: String(f_sku.value || "").trim() || null,
         is_active: String(f_active.value) === "true",
         sort_order: Number(f_sort.value || 0),
         currency: String(f_currency.value || "CAD").trim() || "CAD",
-        retail_price: n(f_retail.value) ?? 0,
-        wholesale_price: n(f_wholesale.value) ?? 0,
-        gold_price: f_gold.value === "" ? null : n(f_gold.value),
-        platinum_price: f_platinum.value === "" ? null : n(f_platinum.value),
+
+        retail_price: n(f_std_retail.value) ?? 0,
+        wholesale_price: n(f_std_wholesale.value) ?? 0,
+
+        gold_retail_price: f_gold_retail.value === "" ? null : n(f_gold_retail.value),
+        gold_wholesale_price: f_gold_wholesale.value === "" ? null : n(f_gold_wholesale.value),
+
+        description: String(f_desc.value || ""),
+        specification: String(f_spec.value || ""),
+        rolls_per_box: f_rolls.value === "" ? null : Number(f_rolls.value),
+        image_url: String(f_image.value || "").trim() || null,
       };
 
       if (!payload.name) { show("ERROR: Name required"); return; }
@@ -419,7 +484,7 @@
 
     function exportCsvFromTable() {
       const rows = [
-        ["id","name","sku","is_active","sort_order","currency","retail_price","wholesale_price","gold_price","platinum_price"]
+        ["id","name","is_active","sort_order","currency","retail_price","wholesale_price","gold_retail_price","gold_wholesale_price","description","specification","rolls_per_box","image_url"]
       ];
       const trs = Array.from(tbody.querySelectorAll("tr"));
       for (const tr of trs) {
@@ -428,17 +493,20 @@
         rows.push([
           r.id,
           r.name,
-          r.sku,
           r.is_active ? "true" : "false",
           r.sort_order ?? "",
           r.currency || "",
-          r.retail_price ?? "",
-          r.wholesale_price ?? "",
-          r.gold_price ?? "",
-          r.platinum_price ?? ""
+          r.std_retail ?? "",
+          r.std_wholesale ?? "",
+          r.gold_retail ?? "",
+          r.gold_wholesale ?? "",
+          r.description ?? "",
+          r.specification ?? "",
+          r.rolls_per_box ?? "",
+          r.image_url ?? ""
         ]);
       }
-      downloadCsv("products.csv", rows);
+      downloadCsv("products_admin_export.csv", rows);
     }
 
     tbody.addEventListener("click", async (e) => {
