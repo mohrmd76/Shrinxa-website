@@ -57,7 +57,7 @@
       <a href="/admin/dashboard.html">Dashboard</a> |
       <a href="/admin/customers.html">Customers</a> |
       <a href="/admin/platinum.html">Platinum</a> |
-      <a href="/admin/products.html"><strong>Products</strong></a> |
+      <a href="/admin/products-admin.html"><strong>Products</strong></a> |
       <a href="/admin/orders.html">Orders</a>
     </div>
 
@@ -94,6 +94,7 @@
         <thead>
           <tr>
             <th style="min-width:260px;" class="sticky-col">Product</th>
+            <th style="min-width:160px;">Category</th>
             <th style="min-width:90px;">Active</th>
             <th style="min-width:80px;">Sort</th>
 
@@ -160,7 +161,16 @@
             Currency
             <input id="f_currency" class="w100" type="text" placeholder="CAD" value="CAD">
           </label>
-          <div></div><div></div>
+          <label class="w100">
+            Category
+            <select id="f_category" class="w100">
+              <option value="">-- select --</option>
+              <option value="Stretch Wrap">Stretch Wrap</option>
+              <option value="Pre-Stretch Wrap">Pre-Stretch Wrap</option>
+              <option value="Tape Rolls">Tape Rolls</option>
+            </select>
+          </label>
+          <div></div>
         </div>
 
         <div class="grid" style="margin-top:12px;">
@@ -240,6 +250,7 @@
     const f_sort = document.getElementById("f_sort");
     const f_rolls = document.getElementById("f_rolls");
     const f_currency = document.getElementById("f_currency");
+    const f_category = document.getElementById("f_category");
 
     const f_std_retail = document.getElementById("f_std_retail");
     const f_std_wholesale = document.getElementById("f_std_wholesale");
@@ -386,9 +397,9 @@
         if ((Number(r.std_wholesale) || 0) === 0 && cat.std_wholesale) patch.wholesale_price = cat.std_wholesale;
 
         // Content fields
-        if (!String(r.description || "").trim() && cat.desc) patch.prod_desc = cat.desc;
-        if (!String(r.specification || "").trim() && cat.spec) patch.prod_spec = cat.spec;
-        if (!String(r.features || "").trim() && cat.features) patch.prod_features = cat.features;
+        if (!String(r.description || "").trim() && cat.desc) patch.description = cat.desc;
+        if (!String(r.specification || "").trim() && cat.spec) patch.specification = cat.spec;
+        if (!String(r.features || "").trim() && cat.features) patch.features = cat.features;
 
         // Rolls/box
         if ((r.rolls_per_box === null || r.rolls_per_box === undefined || Number(r.rolls_per_box) === 0) && cat.rolls_per_box) {
@@ -405,9 +416,9 @@
             // Update local row object so UI shows immediately
             if (patch.retail_price !== undefined) r.std_retail = patch.retail_price;
             if (patch.wholesale_price !== undefined) r.std_wholesale = patch.wholesale_price;
-            if (patch.prod_desc !== undefined) r.description = patch.prod_desc;
-            if (patch.prod_spec !== undefined) r.specification = patch.prod_spec;
-            if (patch.prod_features !== undefined) r.features = patch.prod_features;
+            if (patch.description !== undefined) r.description = patch.description;
+            if (patch.specification !== undefined) r.specification = patch.specification;
+            if (patch.features !== undefined) r.features = patch.features;
             if (patch.rolls_per_box !== undefined) r.rolls_per_box = patch.rolls_per_box;
           }
         } catch (_) {}
@@ -463,7 +474,9 @@ function show(msg) { statusEl.textContent = msg; }
         sort_order: rowField(r, ["sort_order","sort","display_order"], 0),
         currency: rowField(r, ["currency"], "CAD"),
 
-        std_retail: rowField(r, ["retail_price","price_retail","retail","standard_retail_price","std_retail_price","std_retail","std_retail_amount"], 0),
+        
+
+        category: rowField(r, ["category","product_category","cat"], ""),std_retail: rowField(r, ["retail_price","price_retail","retail","standard_retail_price","std_retail_price","std_retail","std_retail_amount"], 0),
         std_wholesale: rowField(r, ["wholesale_price","price_wholesale","wholesale","standard_wholesale_price","std_wholesale_price","std_wholesale","std_wholesale_amount"], 0),
 
         gold_retail: rowField(r, ["gold_retail_price","gold_retail","price_gold_retail","gold_price_retail","gold_price"], null),
@@ -481,9 +494,8 @@ function show(msg) { statusEl.textContent = msg; }
 
     function buildSearchOr(query) {
       const pat = `%${query}%`;
-      return `name.ilike.${pat},product_name.ilike.${pat},title.ilike.${pat},description.ilike.${pat},prod_desc.ilike.${pat},prod_spec.ilike.${pat},prod_features.ilike.${pat}`;
+      return `name.ilike.${pat},description.ilike.${pat},specification.ilike.${pat},features.ilike.${pat},category.ilike.${pat}`;
     }
-
     async function loadProducts() {
       tbody.innerHTML = "";
       show("Loading products…");
@@ -515,6 +527,7 @@ function show(msg) { statusEl.textContent = msg; }
             <div style="font-weight:700;">${r.name || ""}</div>
             <div class="muted mono">${r.id || ""}</div>
           </td>
+          <td>${r.category || ""}</td>
           <td>${r.is_active ? `<span class="pill">active</span>` : `<span class="pill">inactive</span>`}</td>
           <td class="right">${r.sort_order ?? ""}</td>
 
@@ -552,6 +565,7 @@ function show(msg) { statusEl.textContent = msg; }
         sort_order: 0,
         rolls_per_box: null,
         currency: "CAD",
+        category: "",
         std_retail: 0,
         std_wholesale: 0,
         gold_retail: null,
@@ -571,6 +585,7 @@ function show(msg) { statusEl.textContent = msg; }
       f_sort.value = r.sort_order ?? 0;
       f_rolls.value = r.rolls_per_box ?? "";
       f_currency.value = r.currency || "CAD";
+      f_category.value = r.category || "";
 
       f_std_retail.value = r.std_retail ?? 0;
       f_std_wholesale.value = r.std_wholesale ?? 0;
@@ -599,15 +614,17 @@ function show(msg) { statusEl.textContent = msg; }
         sort_order: Number(f_sort.value || 0),
         currency: String(f_currency.value || "CAD").trim() || "CAD",
 
+        category: f_category.value || null,
+
         retail_price: n(f_std_retail.value) ?? 0,
         wholesale_price: n(f_std_wholesale.value) ?? 0,
 
         gold_retail_price: f_gold_retail.value === "" ? null : n(f_gold_retail.value),
         gold_wholesale_price: f_gold_wholesale.value === "" ? null : n(f_gold_wholesale.value),
 
-        prod_desc: String(f_desc.value || ""),
-        prod_spec: String(f_spec.value || ""),
-        prod_features: String(f_features.value || ""),
+        description: String(f_desc.value || ""),
+        specification: String(f_spec.value || ""),
+        features: String(f_features.value || ""),
         rolls_per_box: f_rolls.value === "" ? null : Number(f_rolls.value),
         image_url: String(f_image.value || "").trim() || null,
       };
@@ -678,7 +695,7 @@ function show(msg) { statusEl.textContent = msg; }
 
     function exportCsvFromTable() {
       const rows = [
-        ["id","name","is_active","sort_order","currency","retail_price","wholesale_price","gold_retail_price","gold_wholesale_price","prod_desc","prod_spec","prod_features","rolls_per_box","image_url"]
+        ["id","name","category","is_active","sort_order","currency","retail_price","wholesale_price","gold_retail_price","gold_wholesale_price","description","specification","features","rolls_per_box","image_url"]
       ];
       const trs = Array.from(tbody.querySelectorAll("tr"));
       for (const tr of trs) {
@@ -687,6 +704,7 @@ function show(msg) { statusEl.textContent = msg; }
         rows.push([
           r.id,
           r.name,
+          r.category || "",
           r.is_active ? "true" : "false",
           r.sort_order ?? "",
           r.currency || "",
