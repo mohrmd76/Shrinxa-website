@@ -26,6 +26,9 @@
     .row-actions { display:flex; gap:8px; flex-wrap:wrap; }
     details summary { cursor:pointer; }
     pre { white-space: pre-wrap; word-break: break-word; background:#f7f7f7; border:1px solid #e2e2e2; padding:10px; border-radius:10px; margin:8px 0 0; }
+  
+    select.stSel { padding:6px 8px; border:1px solid #bbb; border-radius:6px; background:#fff; }
+
   </style>
 </head>
 <body>
@@ -208,10 +211,19 @@
             <div class="muted">${company}${company && phone ? " · " : ""}${phone}</div>
           </td>
           <td>${fmtDate(created)}</td>
-          <td>${stv ? `<span class="pill">${stv}</span>` : ""}</td>
+          <td>
+            <select class="stSel">
+              <option value="" ${!stv ? "selected" : ""}>(blank)</option>
+              <option value="paid" ${stv==="paid" ? "selected" : ""}>paid</option>
+              <option value="unpaid" ${stv==="unpaid" ? "selected" : ""}>unpaid</option>
+              <option value="pending" ${stv==="pending" ? "selected" : ""}>pending</option>
+              <option value="cancelled" ${stv==="cancelled" ? "selected" : ""}>cancelled</option>
+            </select>
+          </td>
           <td class="right">${fmtMoney(total)}</td>
           <td>
             <div class="row-actions">
+              <button type="button" class="btnSaveStatus" data-id="${inv.id}">Save Status</button>
               <button type="button" class="btnCopy" data-id="${inv.id}">Copy JSON</button>
             </div>
             <details>
@@ -234,6 +246,24 @@
     }
 
     tbody.addEventListener("click", async (e) => {
+
+      const saveBtn = e.target?.closest?.(".btnSaveStatus");
+      if (saveBtn) {
+        const id = saveBtn.getAttribute("data-id");
+        const tr = saveBtn.closest("tr");
+        const sel = tr?.querySelector?.(".stSel");
+        const newStatus = (sel?.value || "").trim();
+
+        show("Saving status…");
+        const { error: upErr } = await supabase
+          .from("invoices")
+          .update({ status: newStatus || null })
+          .eq("id", id);
+
+        if (upErr) { show("ERROR: " + upErr.message); return; }
+        show("Status saved ✅");
+        return;
+      }
       const btn = e.target?.closest?.(".btnCopy");
       if (!btn) return;
       try {
