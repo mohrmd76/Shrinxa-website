@@ -104,7 +104,7 @@
     const INVOICE_PAGE = "/invoice.html"; // opens as /invoice.html?id=...
     // Edge Function (optional): implement a function that resends invoice emails.
     // Expected: supabase.functions.invoke(RESEND_FUNCTION, { body: { action: "resend", invoice_id } })
-    const RESEND_FUNCTION = "resend-invoice";
+    const RESEND_FUNCTION = "create-invoice";
 
     const statusEl = document.getElementById("status");
     const tbody = document.getElementById("rows");
@@ -270,8 +270,9 @@
         const id = resendBtn.getAttribute("data-id");
         show("Resending invoice email…");
         const { data, error } = await supabase.functions.invoke(RESEND_FUNCTION, {
-          body: { invoice_id: id }
-        });
+ 	 body: { action: "resend", invoice_id: id }
+	});
+
         if (error) { show("ERROR: " + error.message); return; }
         // If function returns { ok: true } or similar, still show success.
         show("Resend requested ✅");
