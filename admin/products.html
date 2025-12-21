@@ -252,7 +252,138 @@
 
     let editing = null;
 
-    function show(msg) { statusEl.textContent = msg; }
+    
+    // --- Import defaults from public products.html (catalog) ---
+    // We use this to auto-fill Std prices, Description, Specification, Features, and Rolls/Box
+    // when they are missing in the database.
+    let __CATALOG_CACHE = null;
+
+    function normName(s) {
+      return String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
+    }
+
+    function parseRollsPerBox(specText, metaText) {
+      const txt = `${specText || ""} ${metaText || ""}`;
+      const m = txt.match(/(\d+)\s*rolls?\s*\/\s*box/i) || txt.match(/(\d+)\s*rolls?\s*per\s*box/i);
+      if (m) return Number(m[1]) || null;
+      return null;
+    }
+
+    async function loadCatalogFromProductsHtml() {
+      if (__CATALOG_CACHE) return __CATALOG_CACHE;
+
+      const tryUrls = ["../products.html", "products.html"];
+      let html = null;
+
+      for (const url of tryUrls) {
+        try {
+          const r = await fetch(url, { cache: "no-cache" });
+          if (r.ok) { html = await r.text(); break; }
+        } catch (_) {}
+      }
+
+      if (!html) {
+        __CATALOG_CACHE = { byName: new Map(), byId: new Map() };
+        return __CATALOG_CACHE;
+      }
+
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      const cards = Array.from(doc.querySelectorAll("article.product-card"));
+
+      const byName = new Map();
+      const byId = new Map();
+
+      for (const card of cards) {
+        const pid = card.getAttribute("data-id") || "";
+        const name = card.getAttribute("data-name") || (card.querySelector(".prod-name")?.textContent || "");
+        const spec = (card.querySelector(".prod-spec")?.textContent || "").trim();
+        const desc = (card.querySelector(".prod-desc")?.textContent || "").trim();
+        const featuresArr = Array.from(card.querySelectorAll(".prod-features li")).map(li => (li.textContent || "").trim()).filter(Boolean);
+        const features = featuresArr.join("\n");
+
+        const stdRetail = Number(card.getAttribute("data-retail") || 0) || 0;
+        const stdWholesale = Number(card.getAttribute("data-wholesale") || 0) || 0;
+
+        const goldRetail = Number(card.getAttribute("data-retail-gold") || 0) || 0;
+        const goldWholesale = Number(card.getAttribute("data-wholesale-gold") || 0) || 0;
+
+        const meta1 = (card.querySelector(".prod-meta span")?.textContent || "").trim();
+        const rolls = parseRollsPerBox(spec, meta1);
+
+        const payload = {
+          public_id: pid || null,
+          name,
+          spec,
+          desc,
+          features,
+          rolls_per_box: rolls,
+          std_retail: stdRetail,
+          std_wholesale: stdWholesale,
+          gold_retail: goldRetail,
+          gold_wholesale: goldWholesale,
+        };
+
+        if (pid) byId.set(String(pid), payload);
+        if (name) byName.set(normName(name), payload);
+      }
+
+      __CATALOG_CACHE = { byName, byId };
+      return __CATALOG_CACHE;
+    }
+
+    async function applyCatalogDefaultsAndPersist(rows) {
+      const catalog = await loadCatalogFromProductsHtml();
+      if (!catalog?.byName) return rows;
+
+      let updatedCount = 0;
+
+      for (const r of rows) {
+        const key = normName(r.name);
+        const cat = catalog.byName.get(key);
+        if (!cat) continue;
+
+        const patch = {};
+
+        // Standard prices
+        if ((Number(r.std_retail) || 0) === 0 && cat.std_retail) patch.retail_price = cat.std_retail;
+        if ((Number(r.std_wholesale) || 0) === 0 && cat.std_wholesale) patch.wholesale_price = cat.std_wholesale;
+
+        // Content fields
+        if (!String(r.description || "").trim() && cat.desc) patch.prod_desc = cat.desc;
+        if (!String(r.specification || "").trim() && cat.spec) patch.prod_spec = cat.spec;
+        if (!String(r.features || "").trim() && cat.features) patch.prod_features = cat.features;
+
+        // Rolls/box
+        if ((r.rolls_per_box === null || r.rolls_per_box === undefined || Number(r.rolls_per_box) === 0) && cat.rolls_per_box) {
+          patch.rolls_per_box = cat.rolls_per_box;
+        }
+
+        if (Object.keys(patch).length === 0) continue;
+
+        try {
+          // Persist into DB so admin page shows values next time too
+          const { error } = await supabase.from("products").update(patch).eq("id", r.id);
+          if (!error) {
+            updatedCount++;
+            // Update local row object so UI shows immediately
+            if (patch.retail_price !== undefined) r.std_retail = patch.retail_price;
+            if (patch.wholesale_price !== undefined) r.std_wholesale = patch.wholesale_price;
+            if (patch.prod_desc !== undefined) r.description = patch.prod_desc;
+            if (patch.prod_spec !== undefined) r.specification = patch.prod_spec;
+            if (patch.prod_features !== undefined) r.features = patch.prod_features;
+            if (patch.rolls_per_box !== undefined) r.rolls_per_box = patch.rolls_per_box;
+          }
+        } catch (_) {}
+      }
+
+      if (updatedCount) {
+        show(`Imported ${updatedCount} product(s) from products.html`);
+      }
+
+      return rows;
+    }
+
+function show(msg) { statusEl.textContent = msg; }
 
     function n(v) {
       const x = Number(v);
@@ -337,7 +468,8 @@
       const { data, error } = await q;
       if (error) { show("ERROR: " + error.message); return; }
 
-      const rows = (data || []).map(normalizeRow);
+      let rows = (data || []).map(normalizeRow);
+      rows = await applyCatalogDefaultsAndPersist(rows);
 
       for (const r of rows) {
         const tr = document.createElement("tr");
