@@ -1949,6 +1949,8 @@ const DELIVERY_FEE = Number(DELIVERY_RULE.fee || 0);
         const cartId = await getActiveCartId(sb, session.user.id);
 
         WHOLESALE_THRESHOLD = await loadWholesaleThreshold(sb, session.user.id);
+await loadDeliveryRule(sb);
+
 
         const { data: items, error } = await sb.from("cart_items").select("*").eq("cart_id", cartId);
         if (error) throw error;
@@ -1957,8 +1959,8 @@ const DELIVERY_FEE = Number(DELIVERY_RULE.fee || 0);
         let subtotal = 0;
         items.forEach(r => { const q = pickQty(r); const p = pickUnitPrice(r); subtotal += q * p; });
 
-        const DELIVERY_THRESHOLD = 300;
-        const DELIVERY_FEE = 30;
+     const DELIVERY_THRESHOLD = Number(DELIVERY_RULE.min_subtotal || 300);
+const DELIVERY_FEE = Number(DELIVERY_RULE.fee || 0);
         const HST_RATE = 0.13;
         const deliveryFee = subtotal < DELIVERY_THRESHOLD ? DELIVERY_FEE : 0;
         const taxableBase = subtotal + deliveryFee;
