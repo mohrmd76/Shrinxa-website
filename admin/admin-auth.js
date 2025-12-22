@@ -1,4 +1,5 @@
 import { supabase } from "../supabaseClient.js";
+window.supabaseClient = supabase;
 
 const loading = document.getElementById("loading");
 const denied = document.getElementById("denied");
