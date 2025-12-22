@@ -1,6 +1,11 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Delivery Rules - Admin</title>
+
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Delivery Rules - Admin</title>
@@ -31,27 +36,28 @@
     th { color:#333; font-size: 13px; text-transform: uppercase; letter-spacing:.03em; }
     .badge { display:inline-block; padding:4px 8px; border-radius:999px; font-size: 12px; background:#f0f0f7; }
   </style>
+
 </head>
 <body>
+
   <header>
     <div class="row">
       <div>
         <strong>Shrinxa Admin</strong> <span class="badge" style="margin-left:10px;">Delivery Rules</span>
       </div>
-      <div class="row" style="gap:14px;">
-        <a href="./index.html">Admin Home</a>
+            <div class="row" style="gap:14px;">
         <a href="./dashboard.html">Dashboard</a>
         <a href="./orders.html">Orders</a>
         <a href="./customers.html">Customers</a>
         <a href="./products-admin.html">Products</a>
         <a href="./platinum.html">Platinum</a>
-        <a href="./delivery-admin.html">Delivery Rules</a>
-        <a href="../index.html">Website</a>
+        <a href="./delivery-admin.html" style="text-decoration:underline;">Delivery Rules</a>
       </div>
     </div>
   </header>
 
   <main>
+    <div id="pageMsg" class="msg" style="margin-bottom:12px;"></div>
     <div class="grid">
       <!-- Default Rule -->
       <div class="card">
@@ -133,279 +139,87 @@
     </div>
   </main>
 
-  <!-- Your existing auth.js should initialize window.supabaseClient -->
-  <script src="../auth.js"></script>
+  
+<script type="module">
+  import { supabase } from "../supabaseClient.js";
+  import "./admin-auth.js";
 
-  <script>
-    // Bridge for different auth.js versions:
-    // Some builds set window.supabase instead of window.supabaseClient.
-    window.supabaseClient =
-      window.supabaseClient ||
-      window.supabase ||
-      window.sb ||
-      window.client ||
-      null;
-  </script>
+  const $ = id => document.getElementById(id);
 
-  <script>
-    function showMsg(el, text, ok=true) {
-      el.className = "msg " + (ok ? "ok" : "err");
-      el.textContent = text || "";
+  function money(n){ const v = Number(n||0); return isFinite(v)?v:0; }
+
+  async function loadDefaultRule(){
+    const { data } = await supabase
+      .from("delivery_rules")
+      .select("*")
+      .is("customer_id",null)
+      .single();
+    if(data){
+      $("defaultMinSubtotal").value = data.min_subtotal;
+      $("defaultFee").value = data.fee;
     }
+  }
 
-    function money(n) {
-      const v = Number(n || 0);
-      return isFinite(v) ? v : 0;
-    }
+  async function saveDefaultRule(){
+    await supabase.from("delivery_rules").upsert({
+      customer_id:null,
+      min_subtotal: money($("defaultMinSubtotal").value),
+      fee: money($("defaultFee").value),
+      is_active:true
+    });
+    loadOverridesTable();
+  }
 
-    async function requireSupabase() {
-      if (!window.supabaseClient) {
-        throw new Error("Supabase client not found. Check ../auth.js path, and that it initializes window.supabaseClient (or window.supabase).");
-      }
-      return window.supabaseClient;
-    }
+  async function loadCustomers(){
+    const { data } = await supabase
+      .from("profiles")
+      .select("id,email,full_name")
+      .order("email");
+    $("customerSelect").innerHTML =
+      `<option value="">-- choose customer --</option>` +
+      data.map(c=>`<option value="${c.id}">${c.full_name||c.email}</option>`).join("");
+  }
 
-    async function loadDefaultRule() {
-      const supabase = await requireSupabase();
-      const msg = document.getElementById("defaultMsg");
-      showMsg(msg, "");
+  async function loadOverridesTable(){
+    const { data } = await supabase
+      .from("delivery_rules")
+      .select("customer_id,min_subtotal,fee,updated_at")
+      .not("customer_id","is",null)
+      .order("updated_at",{ascending:false});
+    $("overrideTbody").innerHTML = data.map(r=>
+      `<tr>
+        <td>${r.customer_id}</td>
+        <td>${r.min_subtotal}</td>
+        <td>${r.fee}</td>
+        <td>${new Date(r.updated_at).toLocaleString()}</td>
+      </tr>`).join("");
+  }
 
-      const { data, error } = await supabase
-        .from("delivery_rules")
-        .select("*")
-        .is("customer_id", null)
-        .limit(1)
-        .maybeSingle();
+  async function saveCustomerOverride(){
+    await supabase.from("delivery_rules").upsert({
+      customer_id:$("customerSelect").value,
+      min_subtotal: money($("custMinSubtotal").value),
+      fee: money($("custFee").value),
+      is_active:true
+    });
+    loadOverridesTable();
+  }
 
-      if (error) {
-        showMsg(msg, error.message, false);
-        return;
-      }
+  async function deleteCustomerOverride(){
+    await supabase.from("delivery_rules")
+      .delete()
+      .eq("customer_id",$("customerSelect").value);
+    loadOverridesTable();
+  }
 
-      document.getElementById("defaultMinSubtotal").value = data?.min_subtotal ?? 300;
-      document.getElementById("defaultFee").value = data?.fee ?? 30;
-      showMsg(msg, "Default rule loaded.", true);
-    }
+  $("btnSaveDefault").onclick = saveDefaultRule;
+  $("btnReloadDefault").onclick = loadDefaultRule;
+  $("btnSaveCustomer").onclick = saveCustomerOverride;
+  $("btnDeleteCustomer").onclick = deleteCustomerOverride;
 
-    async function saveDefaultRule() {
-      const supabase = await requireSupabase();
-      const msg = document.getElementById("defaultMsg");
-      showMsg(msg, "");
-
-      const min_subtotal = money(document.getElementById("defaultMinSubtotal").value);
-      const fee = money(document.getElementById("defaultFee").value);
-
-      const { error } = await supabase
-        .from("delivery_rules")
-        .upsert({
-          customer_id: null,
-          min_subtotal,
-          fee,
-          is_active: true
-        }, { onConflict: "customer_id" });
-
-      if (error) {
-        showMsg(msg, error.message, false);
-        return;
-      }
-
-      showMsg(msg, "Default rule saved.", true);
-      await loadOverridesTable();
-    }
-
-    async function loadCustomers() {
-      const supabase = await requireSupabase();
-      const select = document.getElementById("customerSelect");
-
-      // Adjust these fields if your profiles table differs
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, email, full_name")
-        .order("email", { ascending: true });
-
-      if (error) {
-        select.innerHTML = `<option value="">Error loading customers</option>`;
-        return;
-      }
-
-      const rows = (data || []).filter(x => x.id);
-      if (!rows.length) {
-        select.innerHTML = `<option value="">No customers found</option>`;
-        return;
-      }
-
-      select.innerHTML = `<option value="">-- choose customer --</option>` + rows.map(c => {
-        const name = (c.full_name || "").trim();
-        const label = name ? `${name} — ${c.email}` : c.email;
-        return `<option value="${c.id}">${label}</option>`;
-      }).join("");
-    }
-
-    async function loadCustomerOverride(customerId) {
-      const supabase = await requireSupabase();
-      const msg = document.getElementById("custMsg");
-      showMsg(msg, "");
-
-      if (!customerId) {
-        document.getElementById("custMinSubtotal").value = "";
-        document.getElementById("custFee").value = "";
-        showMsg(msg, "Select a customer.", true);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("delivery_rules")
-        .select("*")
-        .eq("customer_id", customerId)
-        .limit(1)
-        .maybeSingle();
-
-      if (error) {
-        showMsg(msg, error.message, false);
-        return;
-      }
-
-      if (!data) {
-        document.getElementById("custMinSubtotal").value = "";
-        document.getElementById("custFee").value = "";
-        showMsg(msg, "No override for this customer (default will apply).", true);
-        return;
-      }
-
-      document.getElementById("custMinSubtotal").value = data.min_subtotal ?? "";
-      document.getElementById("custFee").value = data.fee ?? "";
-      showMsg(msg, "Override loaded.", true);
-    }
-
-    async function saveCustomerOverride() {
-      const supabase = await requireSupabase();
-      const msg = document.getElementById("custMsg");
-      showMsg(msg, "");
-
-      const customerId = document.getElementById("customerSelect").value;
-      if (!customerId) return showMsg(msg, "Choose a customer first.", false);
-
-      const min_subtotal = money(document.getElementById("custMinSubtotal").value);
-      const fee = money(document.getElementById("custFee").value);
-
-      const { error } = await supabase
-        .from("delivery_rules")
-        .upsert({
-          customer_id: customerId,
-          min_subtotal,
-          fee,
-          is_active: true
-        }, { onConflict: "customer_id" });
-
-      if (error) {
-        showMsg(msg, error.message, false);
-        return;
-      }
-
-      showMsg(msg, "Customer override saved.", true);
-      await loadOverridesTable();
-    }
-
-    async function deleteCustomerOverride() {
-      const supabase = await requireSupabase();
-      const msg = document.getElementById("custMsg");
-      showMsg(msg, "");
-
-      const customerId = document.getElementById("customerSelect").value;
-      if (!customerId) return showMsg(msg, "Choose a customer first.", false);
-
-      const { error } = await supabase
-        .from("delivery_rules")
-        .delete()
-        .eq("customer_id", customerId);
-
-      if (error) {
-        showMsg(msg, error.message, false);
-        return;
-      }
-
-      document.getElementById("custMinSubtotal").value = "";
-      document.getElementById("custFee").value = "";
-      showMsg(msg, "Override deleted (default will apply).", true);
-      await loadOverridesTable();
-    }
-
-    async function loadOverridesTable() {
-      const supabase = await requireSupabase();
-      const tbody = document.getElementById("overrideTbody");
-
-      const { data, error } = await supabase
-        .from("delivery_rules")
-        .select("customer_id, min_subtotal, fee, is_active, updated_at")
-        .not("customer_id", "is", null)
-        .order("updated_at", { ascending: false });
-
-      if (error) {
-        tbody.innerHTML = `<tr><td colspan="5" class="muted">Error: ${error.message}</td></tr>`;
-        return;
-      }
-
-      if (!data || !data.length) {
-        tbody.innerHTML = `<tr><td colspan="5" class="muted">No overrides yet.</td></tr>`;
-        return;
-      }
-
-      // fetch customer names/emails for display
-      const ids = data.map(r => r.customer_id).filter(Boolean);
-      const { data: customers } = await supabase
-        .from("profiles")
-        .select("id, email, full_name")
-        .in("id", ids);
-
-      const map = new Map((customers || []).map(c => [c.id, c]));
-
-      tbody.innerHTML = data.map(r => {
-        const c = map.get(r.customer_id) || {};
-        const name = (c.full_name || "").trim();
-        const label = name ? `${name} — ${c.email || ""}` : (c.email || r.customer_id);
-
-        return `
-          <tr>
-            <td>${label}</td>
-            <td>$${Number(r.min_subtotal).toFixed(2)}</td>
-            <td>$${Number(r.fee).toFixed(2)}</td>
-            <td>${r.is_active ? "Active" : "Off"}</td>
-            <td>${r.updated_at ? new Date(r.updated_at).toLocaleString() : ""}</td>
-          </tr>
-        `;
-      }).join("");
-    }
-
-    async function init() {
-      // wait a bit for auth.js to set window.supabaseClient
-      for (let i=0;i<20;i++){
-        if (window.supabaseClient) break;
-        await new Promise(r => setTimeout(r, 100));
-      }
-
-      try {
-        await requireSupabase();
-      } catch (e) {
-        alert(e.message);
-        return;
-      }
-
-      await loadDefaultRule();
-      await loadCustomers();
-      await loadOverridesTable();
-
-      document.getElementById("btnSaveDefault").addEventListener("click", saveDefaultRule);
-      document.getElementById("btnReloadDefault").addEventListener("click", loadDefaultRule);
-
-      document.getElementById("customerSelect").addEventListener("change", (e) => {
-        loadCustomerOverride(e.target.value);
-      });
-
-      document.getElementById("btnSaveCustomer").addEventListener("click", saveCustomerOverride);
-      document.getElementById("btnDeleteCustomer").addEventListener("click", deleteCustomerOverride);
-    }
-
-    init();
-  </script>
+  loadDefaultRule();
+  loadCustomers();
+  loadOverridesTable();
+</script>
 </body>
 </html>
