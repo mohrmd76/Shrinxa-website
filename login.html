@@ -1472,12 +1472,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const password = (passEl?.value || "").trim();
 
     try {
-      if (!window.ShrinxaAuth?.signIn) throw new Error("Auth not loaded");
-      await window.ShrinxaAuth.signIn(email, password);
-
+      // Use existing auth helper if present, otherwise use the global Supabase client from auth.js
       const sb =
+        window.supabaseClient ||
+        window.supabase ||
         (window.Auth && window.Auth.supabaseClient) ||
         (window.ShrinxaAuth && window.ShrinxaAuth.supabaseClient);
+
+      if (window.ShrinxaAuth?.signIn) {
+        await window.ShrinxaAuth.signIn(email, password);
+      } else if (sb?.auth?.signInWithPassword) {
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+      } else {
+        throw new Error("Auth not loaded");
+      }
 
       if (sb) {
         const { data: u } = await sb.auth.getUser();
@@ -1579,7 +1588,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
 
   // Use the ONE Supabase client from auth.js
-  const sb = (window.Auth && window.Auth.supabaseClient) || (window.ShrinxaAuth && window.ShrinxaAuth.supabaseClient);
+  const sb =
+    window.supabaseClient ||
+    window.supabase ||
+    (window.Auth && window.Auth.supabaseClient) ||
+    (window.ShrinxaAuth && window.ShrinxaAuth.supabaseClient);
   if (!sb) return;
 
   // -------- Password Recovery Mode (from email link) --------
