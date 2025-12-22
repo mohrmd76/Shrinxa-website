@@ -38,14 +38,19 @@
       <div>
         <strong>Shrinxa Admin</strong> <span class="badge" style="margin-left:10px;">Delivery Rules</span>
       </div>
-      <div class="row" style="gap:14px;">
-        <a href="./index.html">Admin Home</a>
-        <a href="../index.html">Website</a>
+            <div class="row" style="gap:14px;">
+        <a href="./dashboard.html">Dashboard</a>
+        <a href="./orders.html">Orders</a>
+        <a href="./customers.html">Customers</a>
+        <a href="./products-admin.html">Products</a>
+        <a href="./platinum.html">Platinum</a>
+        <a href="./delivery-admin.html" style="text-decoration:underline;">Delivery Rules</a>
       </div>
     </div>
   </header>
 
   <main>
+    <div id="pageMsg" class="msg" style="margin-bottom:12px;"></div>
     <div class="grid">
       <!-- Default Rule -->
       <div class="card">
@@ -130,45 +135,9 @@
   <!-- Your existing auth.js should initialize window.supabaseClient -->
   <script src="../auth.js"></script>
 
-  <!-- Fallback: if auth.js is an ES module or doesn't attach client to window, create one here -->
-  <script type="module">
-    // Try to reuse an existing client first
+  <script>
+    // Bridge: support different auth.js globals
     window.supabaseClient = window.supabaseClient || window.supabase || window.sb || window.client || null;
-
-    // If still missing, try to build a client from commonly-used global vars
-    if (!window.supabaseClient) {
-      try {
-        const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
-        const url =
-          window.SUPABASE_URL ||
-          window.supabaseUrl ||
-          localStorage.getItem("SUPABASE_URL") ||
-          localStorage.getItem("supabase_url") ||
-          "";
-
-        const key =
-          window.SUPABASE_ANON_KEY ||
-          window.supabaseAnonKey ||
-          localStorage.getItem("SUPABASE_ANON_KEY") ||
-          localStorage.getItem("supabase_anon_key") ||
-          "";
-
-        if (url && key) {
-          window.supabaseClient = createClient(url, key);
-        }
-      } catch (_) {}
-    }
-
-    // Final check
-    if (!window.supabaseClient) {
-      alert(
-        "Supabase client not found.
-
-Fix: open a working admin page (dashboard/customers) and copy the SUPABASE_URL and SUPABASE_ANON_KEY values into a global (window.SUPABASE_URL / window.SUPABASE_ANON_KEY) or store them in localStorage keys SUPABASE_URL and SUPABASE_ANON_KEY.
-
-Then reload."
-      );
-    }
   </script>
 
   <script>
@@ -183,8 +152,14 @@ Then reload."
     }
 
     async function requireSupabase() {
+      // wait for auth.js to initialize (some builds attach globals late)
+      for (let i = 0; i < 40; i++) {
+        window.supabaseClient = window.supabaseClient || window.supabase || window.sb || window.client || null;
+        if (window.supabaseClient) break;
+        await new Promise(r => setTimeout(r, 100));
+      }
       if (!window.supabaseClient) {
-        throw new Error("Supabase client not found. Make sure ../auth.js sets window.supabaseClient.");
+        throw new Error("Supabase client not found. Check ../auth.js path, and ensure it sets window.supabaseClient (or window.supabase).");
       }
       return window.supabaseClient;
     }
@@ -410,7 +385,8 @@ Then reload."
       try {
         await requireSupabase();
       } catch (e) {
-        alert(e.message);
+        const pm = document.getElementById('pageMsg');
+        showMsg(pm, e.message + '  (Fix: in auth.js, after creating the client, add: window.supabaseClient = supabaseClient;)', false);
         return;
       }
 
