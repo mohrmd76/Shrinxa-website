@@ -1725,6 +1725,7 @@ async function doSignOut() {
     const userId = session.user.id;
 
     WHOLESALE_THRESHOLD = await loadWholesaleThreshold(sb, userId);
+    await loadDeliveryRule(sb);
 
     let cartId;
     try {
