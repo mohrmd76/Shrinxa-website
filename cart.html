@@ -1609,6 +1609,25 @@ async function doSignOut() {
   }
     let WHOLESALE_THRESHOLD = 50; // default fallback
 
+let DELIVERY_RULE = { min_subtotal: 300, fee: 30 }; // fallback
+
+async function loadDeliveryRule(sb){
+  try{
+    const { data, error } = await sb
+      .from("delivery_rules")
+      .select("min_subtotal,fee")
+      .is("customer_id", null)
+      .eq("is_active", true)
+      .order("updated_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!error && data) DELIVERY_RULE = data;
+  } catch (_) {}
+}
+
+
   function pickUnitPrice(row){
     const qty = pickQty(row);
     const retail = Number(row.unit_price ?? row.price ?? row.unitPrice ?? 0) || 0;
@@ -1725,7 +1744,8 @@ async function doSignOut() {
     const userId = session.user.id;
 
     WHOLESALE_THRESHOLD = await loadWholesaleThreshold(sb, userId);
-    await loadDeliveryRule(sb);
+await loadDeliveryRule(sb);
+
 
     let cartId;
     try {
@@ -1816,8 +1836,8 @@ async function doSignOut() {
 
   function setTotals(subtotal){
     // Conditional Delivery Fee Logic
-    const DELIVERY_THRESHOLD = 300;
-    const DELIVERY_FEE = 30;
+  const DELIVERY_THRESHOLD = Number(DELIVERY_RULE.min_subtotal || 300);
+const DELIVERY_FEE = Number(DELIVERY_RULE.fee || 0);
     const HST_RATE = 0.13;
 
     let deliveryFee = 0;
