@@ -133,9 +133,19 @@
             <input id="f_name" class="w100" type="text" placeholder="Product name">
           </label>
           <label class="w100">
-            Image URL
-            <input id="f_image" class="w100" type="text" placeholder="https://.../image.png">
-          </label>
+  Product image (upload)
+  <input id="f_image_file" class="w100" type="file" accept="image/*">
+</label>
+<div class="w100" style="display:flex; flex-direction:column; gap:6px;">
+  <label class="w100" style="min-width:0;">
+    Image URL (auto)
+    <input id="f_image" class="w100" type="text" placeholder="Upload an image to auto-fill" readonly>
+  </label>
+  <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+    <button id="btnUploadImg" type="button">Upload</button>
+    <span class="muted small" id="imgUploadStatus"></span>
+  </div>
+</div>
         </div>
 
         <div class="grid3" style="margin-top:12px;">
@@ -246,6 +256,9 @@
 
     const f_name = document.getElementById("f_name");
     const f_image = document.getElementById("f_image");
+    const f_image_file = document.getElementById("f_image_file");
+    const btnUploadImg = document.getElementById("btnUploadImg");
+    const imgUploadStatus = document.getElementById("imgUploadStatus");
     const f_active = document.getElementById("f_active");
     const f_sort = document.getElementById("f_sort");
     const f_rolls = document.getElementById("f_rolls");
@@ -444,6 +457,59 @@ function show(msg) { statusEl.textContent = msg; }
       return x.toFixed(2);
     }
 
+// --- Image upload (Supabase Storage: product-images) ---
+const IMAGE_BUCKET = "product-images";
+
+function safeSlug(s) {
+  return String(s || "product")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "") || "product";
+}
+
+async function uploadSelectedImage() {
+  const file = f_image_file?.files?.[0];
+  if (!file) throw new Error("Choose an image first.");
+
+  // Must be authenticated for storage insert policy
+  const { data: sess } = await supabase.auth.getSession();
+  if (!sess?.session?.user) throw new Error("Please sign in again, then upload.");
+
+  const name = (f_name.value || "").trim();
+  const ext = (file.name.split(".").pop() || "png").toLowerCase();
+  const path = `products/${safeSlug(name)}-${Date.now()}.${ext}`;
+
+  imgUploadStatus.textContent = "Uploading…";
+  const { error: upErr } = await supabase.storage
+    .from(IMAGE_BUCKET)
+    .upload(path, file, { upsert: true, contentType: file.type });
+
+  if (upErr) throw upErr;
+
+  const { data: pub } = supabase.storage.from(IMAGE_BUCKET).getPublicUrl(path);
+  const url = pub?.publicUrl;
+  if (!url) throw new Error("Could not generate public URL.");
+
+  // Auto-fill image_url field
+  f_image.value = url;
+  imgUploadStatus.textContent = "Uploaded ✅";
+  return url;
+}
+
+btnUploadImg?.addEventListener("click", async () => {
+  try {
+    btnUploadImg.disabled = true;
+    await uploadSelectedImage();
+  } catch (e) {
+    imgUploadStatus.textContent = "";
+    alert(e?.message || String(e));
+  } finally {
+    btnUploadImg.disabled = false;
+  }
+});
+
+
     async function requireAdmin() {
       show("Checking login…");
       const { data: { user }, error: userErr } = await supabase.auth.getUser();
@@ -581,6 +647,8 @@ function show(msg) { statusEl.textContent = msg; }
 
       f_name.value = r.name || "";
       f_image.value = r.image_url || "";
+      if (f_image_file) f_image_file.value = "";
+      if (imgUploadStatus) imgUploadStatus.textContent = "";
       f_active.value = String(!!r.is_active);
       f_sort.value = r.sort_order ?? 0;
       f_rolls.value = r.rolls_per_box ?? "";
