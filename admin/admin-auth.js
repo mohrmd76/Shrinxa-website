@@ -8,7 +8,6 @@ const adminEmail = document.getElementById("adminEmail");
 const logoutBtn = document.getElementById("logoutBtn");
 
 async function checkAdmin() {
-  // 1) Must be logged in
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -16,16 +15,15 @@ async function checkAdmin() {
     return;
   }
 
-  // 2) Check admin flag
   const { data: profile, error } = await supabase
     .from("profiles")
-    .select("email, is_admin, blocked")
+    .select("email, is_admin")
     .eq("id", user.id)
     .single();
 
   loading.classList.add("hidden");
 
-  if (error || !profile || profile.blocked || !profile.is_admin) {
+  if (error || !profile || !profile.is_admin) {
     denied.classList.remove("hidden");
     return;
   }
