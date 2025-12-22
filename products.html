@@ -1332,541 +1332,8 @@
 <button class="pill" data-filter="Pre-Stretch Wrap">Pre-Stretch Wrap</button>
 <button class="pill" data-filter="Tape Rolls">Tape rolls</button>
 </div>
-<!-- Products are rendered from Supabase (managed by admin/products-admin.html) -->
-<div class="products-grid" id="productsGrid"></div>
-
-<script>
-/* Render products from Supabase DB so admin changes reflect on the website */
-(function(){
-  const SUPABASE_URL = "https://fgrjojxwevllnjdixiyd.supabase.co";
-  const SUPABASE_ANON_KEY = "sb_publishable_k5D9JKO5lMCHlju-WhlSAQ_XEiEruT_";
-
-  const grid = document.getElementById("productsGrid");
-
-  function esc(s) {
-    return String(s ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
-  }
-
-  function toLines(v) {
-    return String(v ?? "")
-      .split("
-")
-      .map(x => x.trim())
-      .filter(Boolean);
-  }
-
-  function num(v, fallback = 0) {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : fallback;
-  }
-
-  function rollsLabel(p) {
-    const r = num(p.rolls_per_box, 0);
-    if (!r) return "";
-    return r === 1 ? "1 roll per box" : `${r} rolls per box`;
-  }
-
-  function buildCard(p) {
-    const name = p.name ?? "";
-    const category = p.category ?? "";
-    const publicId = p.public_id || p.publicId || p.sku || name;
-    const retail = num(p.retail_price, 0);
-    const wholesale = num(p.wholesale_price, 0);
-    const goldRetail = num(p.gold_retail_price, retail);
-    const goldWholesale = num(p.gold_wholesale_price, wholesale);
-
-    const features = toLines(p.features);
-    const featuresHtml = features.length
-      ? features.map(li => `<li>${esc(li)}</li>`).join("")
-      : "";
-
-    const img = p.image_url || p.image || "";
-    const imgHtml = img
-      ? `<img alt="${esc(name)}" src="${esc(img)}"/>`
-      : `<img alt="${esc(name)}" src="shrinxa_transparent_4000px.png"/>`;
-
-    return `
-<article class="product-card"
-  data-id="${esc(publicId)}"
-  data-name="${esc(name)}"
-  data-type="${esc(category)}"
-  data-retail="${retail}"
-  data-wholesale="${wholesale}"
-  data-retail-gold="${goldRetail}"
-  data-wholesale-gold="${goldWholesale}">
-  <div class="prod-header">
-    <div class="prod-name">${esc(name)}</div>
-    <div class="prod-category">${esc(category)}</div>
-  </div>
-
-  <div class="prod-image-wrap">
-    ${imgHtml}
-  </div>
-
-  <div class="prod-main">
-    <div class="prod-spec">${esc(p.specification || "")}</div>
-    <p class="prod-desc">${esc(p.description || "")}</p>
-
-    <ul class="prod-features">${featuresHtml}</ul>
-
-    <div class="prod-prices">
-      <span class="price-chip">Retail <strong>$${retail.toFixed(2)}</strong></span>
-      <span class="price-chip">Wholesale <strong>$${wholesale.toFixed(2)}</strong></span>
-    </div>
-
-    <div class="prod-meta">
-      <span>${esc(rollsLabel(p))}</span>
-      <span>Cart uses tiered pricing (retail 1–49 boxes, wholesale 50+)</span>
-    </div>
-  </div>
-
-  <div class="prod-actions">
-    <span class="qty-note">Qty (boxes)</span>
-    <input class="qty-input" min="1" type="number" value="1"/>
-    <button class="btn-add">Add to cart</button>
-  </div>
-</article>`;
-  }
-
-  async function waitForSupabase() {
-    for (let i = 0; i < 60; i++) { // up to ~6s
-      if (window.supabase && typeof window.supabase.createClient === "function") return true;
-      await new Promise(r => setTimeout(r, 100));
-    }
-    return false;
-  }
-
-  async function loadProducts() {
-    if (!grid) return;
-
-    const ok = await waitForSupabase();
-    if (!ok) {
-      grid.innerHTML = `<div class="pricing-note">Products could not load (Supabase library not ready).</div>`;
-      return;
-    }
-
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // Try to select common column names (won't fail if extra columns don't exist)
-    const select = [
-      "id",
-      "public_id",
-      "name",
-      "category",
-      "description",
-      "specification",
-      "features",
-      "rolls_per_box",
-      "retail_price",
-      "wholesale_price",
-      "gold_retail_price",
-      "gold_wholesale_price",
-      "image_url",
-      "is_active",
-      "active",
-      "sort_order"
-    ].join(",");
-
-    const { data, error } = await sb
-      .from("products")
-      .select(select)
-      .order("sort_order", { ascending: true })
-      .order("name", { ascending: true });
-
-    if (error) {
-      grid.innerHTML = `<div class="pricing-note">Products could not load: <strong>${esc(error.message)}</strong></div>`;
-      return;
-    }
-
-    const products = (Array.isArray(data) ? data : [])
-      .filter(p => p && p.name)
-      // hide deactivated products (supports either is_active or active)
-      .filter(p => (p.is_active !== false) && (p.active !== false));
-
-    if (!products.length) {
-      grid.innerHTML = `<div class="pricing-note">No products available right now.</div>`;
-      return;
-    }
-
-    grid.innerHTML = products.map(buildCard).join("");
-
-    // After rendering, re-apply tier prices (Gold/Platinum) if your existing code is loaded
-    try { if (typeof window.loadCustomerTier === "function") window.loadCustomerTier(); } catch (_) {}
-    try { if (typeof window.applyTierPricesToUI === "function") window.applyTierPricesToUI(); } catch (_) {}
-  }
-
-  document.addEventListener("DOMContentLoaded", loadProducts);
-})();
-</script>
-<div class="prod-category">Stretch Wrap</div>
-</div>
-<div class="prod-image-wrap">
-<img alt="Fortress Mid-Wrap 12 inch stretch film" src="fortress-12.png"/>
-</div>
-<div class="prod-main"><div class="prod-spec">12" · Gauge 80 · 450M · 4 rolls/box</div><p class="prod-desc">
-          Durable, high-strength hand film for everyday palletizing. Delivers reliable puncture
-          resistance and tight load containment for medium-to-heavy loads where control and
-          precision wrapping are important.
-        </p><ul class="prod-features">
-<li>Medium-width roll ideal for narrower or irregular pallets.</li>
-<li>Gauge 80 strength for confident containment of mixed loads.</li>
-<li>Smooth unwind for faster wrapping with less operator fatigue.</li>
-<li>High-clarity film keeps labels and barcodes visible.</li>
-</ul><div class="prod-prices">
-<span class="price-chip">Retail <strong>$48.00</strong></span>
-<span class="price-chip">Wholesale <strong>$40.00</strong></span>
-</div><div class="prod-meta">
-<span>4 rolls per box</span>
-<span>Cart uses tiered pricing (retail 1–49 boxes, wholesale 50+)</span>
-</div></div>
-<div class="prod-actions">
-<span class="qty-note">Qty (boxes)</span><input class="qty-input" min="1" type="number" value="1"/>
-<button class="btn-add">Add to cart</button>
-</div>
-</article>
-<article class="product-card" data-id="titan-14" data-name='Titan Heavy-Wrap (14")' data-retail="55" data-retail-gold="50" data-type="Stretch Wrap" data-wholesale="47" data-wholesale-gold="43">
-<div class="prod-header">
-<div class="prod-name">Titan Heavy-Wrap (14")</div>
-<div class="prod-category">Stretch Wrap</div>
-</div>
-<div class="prod-image-wrap">
-<img alt="Titan Heavy-Wrap 14 inch stretch film" src="titan-14.png"/>
-</div>
-<div class="prod-main"><div class="prod-spec">14" · Gauge 90 · 450M · 4 rolls/box</div><p class="prod-desc">
-          Heavy-duty stretch film engineered for demanding loads. Extra gauge thickness and wider
-          web provide aggressive containment for bulky, uneven, or high-density pallets.
-        </p><ul class="prod-features">
-<li>Gauge 90 for higher puncture and tear resistance.</li>
-<li>14" width gives more coverage with each pass around the pallet.</li>
-<li>Helps stabilize tall or top-heavy pallets during transit.</li>
-<li>Ideal for construction materials, hardware and dense cartons.</li>
-</ul><div class="prod-prices">
-<span class="price-chip">Retail <strong>$55.00</strong></span>
-<span class="price-chip">Wholesale <strong>$47.00</strong></span>
-</div><div class="prod-meta">
-<span>4 rolls per box</span>
-<span>Cart uses tiered pricing (retail 1–49 boxes, wholesale 50+)</span>
-</div></div>
-<div class="prod-actions">
-<span class="qty-note">Qty (boxes)</span><input class="qty-input" min="1" type="number" value="1"/>
-<button class="btn-add">Add to cart</button>
-</div>
-</article>
-<article class="product-card" data-id="steadfast-18" data-name='Steadfast All-Purpose (18")' data-retail="70" data-retail-gold="60" data-type="Stretch Wrap" data-wholesale="62" data-wholesale-gold="53">
-<div class="prod-header">
-<div class="prod-name">Steadfast All-Purpose (18")</div>
-<div class="prod-category">Stretch Wrap</div>
-</div>
-<div class="prod-image-wrap">
-<img alt="Steadfast All-Purpose 18 inch stretch film" src="steadfast-18.png"/>
-</div>
-<div class="prod-main"><div class="prod-spec">18" · Gauge 80 · 450M · 4 rolls/box</div><p class="prod-desc">
-          A versatile, all-purpose 18" hand film that balances strength and usability. Perfect for
-          warehouses that wrap a wide mix of pallets and want one reliable go-to film.
-        </p><ul class="prod-features">
-<li>Popular 18" width for maximum coverage per revolution.</li>
-<li>Gauge 80 film gives dependable performance on most pallet weights.</li>
-<li>Good puncture resistance to handle corners and sharp edges.</li>
-<li>Clear optics help with product identification and scanning.</li>
-</ul><div class="prod-prices">
-<span class="price-chip">Retail <strong>$70.00</strong></span>
-<span class="price-chip">Wholesale <strong>$62.00</strong></span>
-</div><div class="prod-meta">
-<span>4 rolls per box</span>
-<span>Cart uses tiered pricing (retail 1–49 boxes, wholesale 50+)</span>
-</div></div>
-<div class="prod-actions">
-<span class="qty-note">Qty (boxes)</span><input class="qty-input" min="1" type="number" value="1"/>
-<button class="btn-add">Add to cart</button>
-</div>
-</article>
-<article class="product-card" data-id="colossus-20-max" data-name='Colossus Max-Load (20")' data-retail="70" data-retail-gold="60" data-type="Stretch Wrap" data-wholesale="62" data-wholesale-gold="53">
-<div class="prod-header">
-<div class="prod-name">Colossus Max-Load (20")</div>
-<div class="prod-category">Stretch Wrap</div>
-</div>
-<div class="prod-image-wrap">
-<img alt="Colossus Max-Load 20 inch stretch film" src="colossus-max-20.png"/>
-</div>
-<div class="prod-main"><div class="prod-spec">20" · Gauge 70 · 1800M · 1 roll/box</div><p class="prod-desc">
-          Long-length stretch film for efficient wrapping of medium-duty pallets. Designed to reduce
-          roll changeovers while maintaining secure, consistent load containment.
-        </p><ul class="prod-features">
-<li>20" width rapidly covers large pallet faces.</li>
-<li>Gauge 70 for strong everyday performance with optimized material use.</li>
-<li>1800M roll length lowers downtime from frequent roll changes.</li>
-<li>Great fit for busy shipping departments and production lines.</li>
-</ul><div class="prod-prices">
-<span class="price-chip">Retail <strong>$70.00</strong></span>
-<span class="price-chip">Wholesale <strong>$62.00</strong></span>
-</div><div class="prod-meta">
-<span>1 roll per box</span>
-<span>Cart uses tiered pricing (retail 1–49 boxes, wholesale 50+)</span>
-</div></div>
-<div class="prod-actions">
-<span class="qty-note">Qty (boxes)</span><input class="qty-input" min="1" type="number" value="1"/>
-<button class="btn-add">Add to cart</button>
-</div>
-</article>
-<article class="product-card" data-id="colossus-20-heavy" data-name='Colossus Heavy-Duty (20")' data-retail="80" data-retail-gold="70" data-type="Stretch Wrap" data-wholesale="72" data-wholesale-gold="60">
-<div class="prod-header">
-<div class="prod-name">Colossus Heavy-Duty (20")</div>
-<div class="prod-category">Stretch Wrap</div>
-</div>
-<div class="prod-image-wrap">
-<img alt="Colossus Heavy-Duty 20 inch stretch film" src="colossus-heavy-20.png"/>
-</div>
-<div class="prod-main"><div class="prod-spec">20" · Gauge 90 · 1800M · 1 roll/box</div><p class="prod-desc">
-          A true heavy-duty 20" film for the most demanding applications. Extra-thick gauge and long
-          roll length provide maximum security on heavy, sharp, or high-value pallets.
-        </p><ul class="prod-features">
-<li>Gauge 90 film resists punctures, tears and corner damage.</li>
-<li>Excellent for metal goods, building materials and dense freight.</li>
-<li>Reduces risk of load shifting on long or rough routes.</li>
-<li>1800M length helps keep high-volume operations moving.</li>
-</ul><div class="prod-prices">
-<span class="price-chip">Retail <strong>$80.00</strong></span>
-<span class="price-chip">Wholesale <strong>$72.00</strong></span>
-</div><div class="prod-meta">
-<span>1 roll per box</span>
-<span>Cart uses tiered pricing (retail 1–49 boxes, wholesale 50+)</span>
-</div></div>
-<div class="prod-actions">
-<span class="qty-note">Qty (boxes)</span><input class="qty-input" min="1" type="number" value="1"/>
-<button class="btn-add">Add to cart</button>
-</div>
-</article>
-<!-- PRE-STRETCH -->
-<article class="product-card" data-id="flexlite-12" data-name='FlexLite Mid-Stretch (12")' data-retail="38" data-retail-gold="35" data-type="Pre-Stretch Wrap" data-wholesale="30" data-wholesale-gold="28">
-<div class="prod-header">
-<div class="prod-name">FlexLite Mid-Stretch (12")</div>
-<div class="prod-category">Pre-Stretch Wrap</div>
-</div>
-<div class="prod-image-wrap">
-<img alt="FlexLite Mid-Stretch 12 inch pre-stretch film" src="flexlite-12.png"/>
-</div>
-<div class="prod-main"><div class="prod-spec">12" · 10 Microns · 400M · 4 rolls/box</div><p class="prod-desc">
-          Lightweight, ultra-thin pre-stretch film that arrives already stretched for you. Delivers
-          consistent holding force with less effort and material compared to traditional hand wrap.
-        </p><ul class="prod-features">
-<li>Ultra-thin 10 micron film maximizes yield per roll.</li>
-<li>Pre-stretched design reduces operator fatigue and improves speed.</li>
-<li>Ideal for light to medium-weight pallets and frequent hand wrapping.</li>
-<li>Great upgrade when moving away from standard gauge hand films.</li>
-</ul><div class="prod-prices">
-<span class="price-chip">Retail <strong>$38.00</strong></span>
-<span class="price-chip">Wholesale <strong>$30.00</strong></span>
-</div><div class="prod-meta">
-<span>4 rolls per box</span>
-<span>Cart uses tiered pricing (retail 1–49 boxes, wholesale 50+)</span>
-</div></div>
-<div class="prod-actions">
-<span class="qty-note">Qty (boxes)</span><input class="qty-input" min="1" type="number" value="1"/>
-<button class="btn-add">Add to cart</button>
-</div>
-</article>
-<article class="product-card" data-id="flexlite-14" data-name='FlexLite Reinforced (14")' data-retail="45" data-retail-gold="40" data-type="Pre-Stretch Wrap" data-wholesale="37" data-wholesale-gold="32">
-<div class="prod-header">
-<div class="prod-name">FlexLite Reinforced (14")</div>
-<div class="prod-category">Pre-Stretch Wrap</div>
-</div>
-<div class="prod-image-wrap">
-<img alt="FlexLite Reinforced 14 inch pre-stretch film" src="flexlite-14.png"/>
-</div>
-<div class="prod-main"><div class="prod-spec">14" · 10 Microns · 400M · 4 rolls/box</div><p class="prod-desc">
-          A slightly wider pre-stretch option that provides excellent cling and containment. Designed
-          to handle more challenging mixed pallets while still saving film per load.
-        </p><ul class="prod-features">
-<li>14" width covers more surface area in fewer wraps.</li>
-<li>Pre-stretch technology keeps tension stable around the pallet.</li>
-<li>Helps reduce neck-down and film breaks compared to low-quality films.</li>
-<li>Ideal for 3PL and distribution environments with varied SKUs.</li>
-</ul><div class="prod-prices">
-<span class="price-chip">Retail <strong>$45.00</strong></span>
-<span class="price-chip">Wholesale <strong>$37.00</strong></span>
-</div><div class="prod-meta">
-<span>4 rolls per box</span>
-<span>Cart uses tiered pricing (retail 1–49 boxes, wholesale 50+)</span>
-</div></div>
-<div class="prod-actions">
-<span class="qty-note">Qty (boxes)</span><input class="qty-input" min="1" type="number" value="1"/>
-<button class="btn-add">Add to cart</button>
-</div>
-</article>
-<article class="product-card" data-id="flexlite-18" data-name='FlexLite Pro-Stretch (18")' data-retail="60" data-retail-gold="50" data-type="Pre-Stretch Wrap" data-wholesale="52" data-wholesale-gold="43">
-<div class="prod-header">
-<div class="prod-name">FlexLite Pro-Stretch (18")</div>
-<div class="prod-category">Pre-Stretch Wrap</div>
-</div>
-<div class="prod-image-wrap">
-<img alt="FlexLite Pro-Stretch 18 inch pre-stretch film" src="flexlite-18.png"/>
-</div>
-<div class="prod-main"><div class="prod-spec">18" · 10 Microns · 400M · 4 rolls/box</div><p class="prod-desc">
-          Professional-grade pre-stretch film for operations that want the lowest cost per pallet.
-          Combines wide coverage with light, easy handling.
-        </p><ul class="prod-features">
-<li>18" width speeds up wrapping on standard pallet footprints.</li>
-<li>Great combination of film savings and load security.</li>
-<li>Ideal for shipping departments with high daily pallet counts.</li>
-<li>Reduces overall film consumption compared to conventional rolls.</li>
-</ul><div class="prod-prices">
-<span class="price-chip">Retail <strong>$60.00</strong></span>
-<span class="price-chip">Wholesale <strong>$52.00</strong></span>
-</div><div class="prod-meta">
-<span>4 rolls per box</span>
-<span>Cart uses tiered pricing (retail 1–49 boxes, wholesale 50+)</span>
-</div></div>
-<div class="prod-actions">
-<span class="qty-note">Qty (boxes)</span><input class="qty-input" min="1" type="number" value="1"/>
-<button class="btn-add">Add to cart</button>
-</div>
-</article>
-<article class="product-card" data-id="flexlite-20" data-name='FlexLite Max-Stretch (20")' data-retail="85" data-retail-gold="75" data-type="Pre-Stretch Wrap" data-wholesale="75" data-wholesale-gold="65">
-<div class="prod-header">
-<div class="prod-name">FlexLite Max-Stretch (20")</div>
-<div class="prod-category">Pre-Stretch Wrap</div>
-</div>
-<div class="prod-image-wrap">
-<img alt="FlexLite Max-Stretch 20 inch pre-stretch film" src="flexlite-20.png"/>
-</div>
-<div class="prod-main"><div class="prod-spec">20" · 10.7 Microns · 2700M · 1 roll/box</div><p class="prod-desc">
-          High-yield pre-stretch film with an extra-long 2700M roll length. Built for operations that
-          want to minimize changeovers and keep lines running.
-        </p><ul class="prod-features">
-<li>20" width quickly covers large and tall pallets.</li>
-<li>10.7 micron film provides excellent yield with dependable containment.</li>
-<li>2700M length drastically reduces roll changes on busy shifts.</li>
-<li>Perfect for high-volume production, co-packers and 3PL facilities.</li>
-</ul><div class="prod-prices">
-<span class="price-chip">Retail <strong>$85.00</strong></span>
-<span class="price-chip">Wholesale <strong>$75.00</strong></span>
-</div><div class="prod-meta">
-<span>1 roll per box</span>
-<span>Cart uses tiered pricing (retail 1–49 boxes, wholesale 50+)</span>
-</div></div>
-<div class="prod-actions">
-<span class="qty-note">Qty (boxes)</span><input class="qty-input" min="1" type="number" value="1"/>
-<button class="btn-add">Add to cart</button>
-</div>
-</article>
-<!-- TAPE ROLLS -->
-<article class="product-card" data-id="water-2" data-name='Water Glue Clear-Tape (2")' data-retail="65" data-retail-gold="55" data-type="Packaging Tape" data-wholesale="57" data-wholesale-gold="50">
-<div class="prod-header">
-<div class="prod-name">Water Glue Clear-Tape (2")</div>
-<div class="prod-category">Packaging Tape</div>
-</div>
-<div class="prod-image-wrap">
-<img alt="Water Glue Tape 2 inch" src="water-tape-2.png"/>
-</div>
-<div class="prod-main"><div class="prod-spec">Water glue · 50 Microns · 100M · 36 rolls/box</div><p class="prod-desc">
-          Clear water-based adhesive tape designed for clean, tamper-evident seals on standard
-          cartons. Activates with pressure for a permanent bond on corrugated surfaces.
-        </p><ul class="prod-features">
-<li>50 micron film for strong sealing strength on everyday boxes.</li>
-<li>Excellent adhesion to virgin and recycled corrugated board.</li>
-<li>2" width is ideal for standard e-commerce and shipper cartons.</li>
-<li>Resists humidity and temperature swings during storage and transport.</li>
-</ul><div class="prod-prices">
-<span class="price-chip">Retail <strong>$65.00</strong></span>
-<span class="price-chip">Wholesale <strong>$57.00</strong></span>
-</div><div class="prod-meta">
-<span>36 rolls per box</span>
-<span>Cart uses tiered pricing (retail 1–49 boxes, wholesale 50+)</span>
-</div></div>
-<div class="prod-actions">
-<span class="qty-note">Qty (boxes)</span><input class="qty-input" min="1" type="number" value="1"/>
-<button class="btn-add">Add to cart</button>
-</div>
-</article>
-<article class="product-card" data-id="hotmelt-2" data-name='Hot Melt Max-Grip (2")' data-retail="75" data-retail-gold="70" data-type="Packaging Tape" data-wholesale="67" data-wholesale-gold="62">
-<div class="prod-header">
-<div class="prod-name">Hot Melt Max-Grip (2")</div>
-<div class="prod-category">Packaging Tape</div>
-</div>
-<div class="prod-image-wrap">
-<img alt="Hot Melt Tape 2 inch" src="hotmelt-2.png"/>
-</div>
-<div class="prod-main"><div class="prod-spec">Hot melt · 50 Microns · 100M · 36 rolls/box</div><p class="prod-desc">
-          Strong pressure-sensitive carton sealing tape with aggressive hot-melt adhesive. Designed
-          for fast-moving packing stations and reliable sealing on a wide range of box types.
-        </p><ul class="prod-features">
-<li>High-tack hot-melt adhesive grabs quickly and holds firmly.</li>
-<li>Performs well on both virgin and recycled corrugated cartons.</li>
-<li>2" width works with standard tape guns and dispensers.</li>
-<li>Excellent choice for general shipping, fulfillment and 3PL use.</li>
-</ul><div class="prod-prices">
-<span class="price-chip">Retail <strong>$75.00</strong></span>
-<span class="price-chip">Wholesale <strong>$67.00</strong></span>
-</div><div class="prod-meta">
-<span>36 rolls per box</span>
-<span>Cart uses tiered pricing (retail 1–49 boxes, wholesale 50+)</span>
-</div></div>
-<div class="prod-actions">
-<span class="qty-note">Qty (boxes)</span><input class="qty-input" min="1" type="number" value="1"/>
-<button class="btn-add">Add to cart</button>
-</div>
-</article>
-<article class="product-card" data-id="water-3" data-name='Water Glue Clear-Tape (3")' data-retail="65" data-retail-gold="55" data-type="Packaging Tape" data-wholesale="57" data-wholesale-gold="50">
-<div class="prod-header">
-<div class="prod-name">Water Glue Clear-Tape (3")</div>
-<div class="prod-category">Packaging Tape</div>
-</div>
-<div class="prod-image-wrap">
-<img alt="Water Glue Tape 3 inch" src="water-tape-3.png"/>
-</div>
-<div class="prod-main"><div class="prod-spec">Water glue · 50 Microns · 100M · 24 rolls/box</div><p class="prod-desc">
-          Wider-format water glue tape for extra sealing security on heavy or oversized cartons.
-          Creates a tamper-evident, permanent bond once applied.
-        </p><ul class="prod-features">
-<li>3" width provides more coverage and edge protection on big boxes.</li>
-<li>Ideal for export shipments, heavy products and over-packed cartons.</li>
-<li>Strong adhesion even on rough or recycled corrugated surfaces.</li>
-<li>Helps prevent carton opening during vibration and long-distance transit.</li>
-</ul><div class="prod-prices">
-<span class="price-chip">Retail <strong>$65.00</strong></span>
-<span class="price-chip">Wholesale <strong>$57.00</strong></span>
-</div><div class="prod-meta">
-<span>24 rolls per box</span>
-<span>Cart uses tiered pricing (retail 1–49 boxes, wholesale 50+)</span>
-</div></div>
-<div class="prod-actions">
-<span class="qty-note">Qty (boxes)</span><input class="qty-input" min="1" type="number" value="1"/>
-<button class="btn-add">Add to cart</button>
-</div>
-</article>
-<article class="product-card" data-id="hotmelt-3" data-name='Hot Melt Max-Grip (3")' data-retail="75" data-retail-gold="70" data-type="Packaging Tape" data-wholesale="67" data-wholesale-gold="62">
-<div class="prod-header">
-<div class="prod-name">Hot Melt Max-Grip (3")</div>
-<div class="prod-category">Packaging Tape</div>
-</div>
-<div class="prod-image-wrap">
-<img alt="Hot Melt Tape 3 inch" src="hotmelt-3.png"/>
-</div>
-<div class="prod-main"><div class="prod-spec">Hot melt · 50 Microns · 100M · 24 rolls/box</div><p class="prod-desc">
-          Extra-wide hot-melt sealing tape offering powerful grip and coverage. Made for heavy
-          cartons, unstable loads and shipments where box integrity is critical.
-        </p><ul class="prod-features">
-<li>3" width improves seal strength across major carton seams.</li>
-<li>Hot-melt adhesive delivers a strong, reliable bond in seconds.</li>
-<li>Performs well under vibration, stacking and long-term storage.</li>
-<li>Great option for industrial, manufacturing and export customers.</li>
-</ul><div class="prod-prices">
-<span class="price-chip">Retail <strong>$75.00</strong></span>
-<span class="price-chip">Wholesale <strong>$67.00</strong></span>
-</div><div class="prod-meta">
-<span>24 rolls per box</span>
-<span>Cart uses tiered pricing (retail 1–49 boxes, wholesale 50+)</span>
-</div></div>
-<div class="prod-actions">
-<span class="qty-note">Qty (boxes)</span><input class="qty-input" min="1" type="number" value="1"/>
-<button class="btn-add">Add to cart</button>
-</div>
-</article>
+<div class="products-grid">
+<!-- Products are loaded from Supabase (admin-controlled). -->
 </div>
 </section>
 </main>
@@ -2214,6 +1681,168 @@ document.addEventListener("DOMContentLoaded", () => {
     const CART_GET_URL = `${SUPABASE_URL}/functions/v1/cart-get`;
   const CART_COUNT_URL = `${SUPABASE_URL}/functions/v1/cart-count`;
 
+
+  // --- Load products from DB and render cards (keeps existing layout/classes) ---
+  const productsGridEl = document.querySelector(".products-grid");
+
+  function pickField(obj, keys, fallback = null) {
+    for (const k of keys) {
+      if (obj && Object.prototype.hasOwnProperty.call(obj, k) && obj[k] !== null && obj[k] !== undefined) return obj[k];
+    }
+    return fallback;
+  }
+
+  function normalizeCategoryLabel(cat) {
+    const c = String(cat || "").trim();
+    // Ensure website filters match DB categories
+    if (!c) return "All";
+    if (/^stretch wrap$/i.test(c)) return "Stretch Wrap";
+    if (/^pre-?stretch wrap$/i.test(c)) return "Pre-Stretch Wrap";
+    if (/^tape rolls$/i.test(c)) return "Tape Rolls";
+    return c;
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function featuresToLis(text) {
+    const raw = String(text ?? "").trim();
+    if (!raw) return "";
+    // Split on newlines, bullets, or semicolons.
+    const parts = raw
+      .split(/\r?\n|•|\u2022|;+/g)
+      .map(s => s.trim())
+      .filter(Boolean);
+    if (!parts.length) return "";
+    return parts.map(p => `<li>${escapeHtml(p)}</li>`).join("");
+  }
+
+  function money(v) {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  async function renderProductsFromDB() {
+    if (!productsGridEl) return;
+
+    const sb = window._supabase || window.supabaseClient || window.SupabaseClient || window.supabase;
+    if (!sb?.from) {
+      // If Supabase isn't ready yet, try once shortly after.
+      await new Promise(r => setTimeout(r, 150));
+    }
+    const sb2 = window._supabase || window.supabaseClient || window.SupabaseClient || window.supabase;
+    if (!sb2?.from) return;
+
+    let rows = [];
+    try {
+      const { data, error } = await sb2.from("products").select("*").order("sort_order", { ascending: true });
+      if (error) throw error;
+      rows = Array.isArray(data) ? data : [];
+    } catch (_) {
+      // Fallback: try without ordering
+      try {
+        const { data } = await sb2.from("products").select("*");
+        rows = Array.isArray(data) ? data : [];
+      } catch (_) {
+        rows = [];
+      }
+    }
+
+    // Active filter: support is_active or active (or default true if missing)
+    rows = rows.filter(r => {
+      const v = (r?.is_active ?? r?.active);
+      if (v === null || v === undefined) return true;
+      return v === true;
+    });
+
+    // If sort_order missing, sort by name to keep stable
+    rows.sort((a, b) => {
+      const sa = Number(a?.sort_order);
+      const sb = Number(b?.sort_order);
+      if (Number.isFinite(sa) && Number.isFinite(sb) && sa !== sb) return sa - sb;
+      const na = String(a?.name || "");
+      const nb = String(b?.name || "");
+      return na.localeCompare(nb);
+    });
+
+    const cardsHtml = rows.map(r => {
+      const publicId = String(pickField(r, ["public_id", "publicId", "slug", "id"], "") || "");
+      const name = String(pickField(r, ["name", "product_name", "title"], "") || "");
+      const category = normalizeCategoryLabel(pickField(r, ["category", "type", "product_type"], ""));
+      const desc = String(pickField(r, ["description", "prod_desc", "prod_description"], "") || "");
+      const spec = String(pickField(r, ["specification", "prod_spec", "spec"], "") || "");
+      const feats = String(pickField(r, ["features", "prod_features"], "") || "");
+      const rolls = pickField(r, ["rolls_per_box", "rollsPerBox", "rolls_box", "rolls"], "");
+      const img = String(pickField(r, ["image_url", "image", "image_path", "img_url"], "") || "");
+      const imgSrc = img ? img : (publicId ? `${publicId}.png` : "shrinxa_transparent_4000px.png");
+
+      const retailStd = money(pickField(r, ["retail_price", "std_retail", "price_retail"], 0));
+      const wholesaleStd = money(pickField(r, ["wholesale_price", "std_wholesale", "price_wholesale"], 0));
+      const retailGold = money(pickField(r, ["gold_retail_price", "retail_gold", "gold_retail"], retailStd));
+      const wholesaleGold = money(pickField(r, ["gold_wholesale_price", "wholesale_gold", "gold_wholesale"], wholesaleStd));
+
+      const lis = featuresToLis(feats);
+
+      return `
+<article class="product-card"
+  data-id="${escapeHtml(publicId)}"
+  data-name="${escapeHtml(name)}"
+  data-type="${escapeHtml(category)}"
+  data-retail="${retailStd}"
+  data-wholesale="${wholesaleStd}"
+  data-retail-gold="${retailGold}"
+  data-wholesale-gold="${wholesaleGold}">
+  <div class="prod-header">
+    <div class="prod-name">${escapeHtml(name)}</div>
+    <div class="prod-category">${escapeHtml(category)}</div>
+  </div>
+  <div class="prod-image-wrap">
+    <img alt="${escapeHtml(name)}" src="${escapeHtml(imgSrc)}"/>
+  </div>
+  <div class="prod-main">
+    <div class="prod-spec">${escapeHtml(spec)}</div>
+    <p class="prod-desc">${escapeHtml(desc)}</p>
+    <ul class="prod-features">${lis}</ul>
+    <div class="prod-prices">
+      <span class="price-chip">Retail <strong>$${retailStd.toFixed(2)}</strong></span>
+      <span class="price-chip">Wholesale <strong>$${wholesaleStd.toFixed(2)}</strong></span>
+    </div>
+    <div class="prod-meta">
+      <span>${escapeHtml(rolls)} rolls per box</span>
+      <span>Cart uses tiered pricing (retail 1–49 boxes, wholesale 50+)</span>
+    </div>
+  </div>
+  <div class="prod-actions">
+    <span class="qty-note">Qty (boxes)</span>
+    <input class="qty-input" min="1" type="number" value="1"/>
+    <button class="btn-add">Add to cart</button>
+  </div>
+</article>`;
+    }).join("\n");
+
+    productsGridEl.innerHTML = cardsHtml;
+
+    // Re-apply filter state (from query or active pill)
+    try {
+      const activePill = document.querySelector(".pill.active");
+      const f = activePill?.getAttribute("data-filter") || "all";
+      const cards = document.querySelectorAll(".product-card[data-type]");
+      if (f === "all") {
+        cards.forEach(c => c.style.display = "");
+      } else {
+        cards.forEach(c => {
+          const t = c.getAttribute("data-type") || "";
+          c.style.display = (t === f) ? "" : "none";
+        });
+      }
+    } catch (_) {}
+  }
 const cartCountEl = document.getElementById("cartCount");
 
   function setCartCount(n) {
@@ -2518,7 +2147,8 @@ const { price, wholesale_price } = getCardTieredPrices(card);
 
   // NEW: load cart count + tier pricing from server on page open
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", async () => {
+      await renderProductsFromDB();
       refreshCartCountFromServer();
       loadCustomerTier();
     });
