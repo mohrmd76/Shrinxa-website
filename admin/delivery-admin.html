@@ -40,6 +40,12 @@
       </div>
       <div class="row" style="gap:14px;">
         <a href="./index.html">Admin Home</a>
+        <a href="./dashboard.html">Dashboard</a>
+        <a href="./orders.html">Orders</a>
+        <a href="./customers.html">Customers</a>
+        <a href="./products-admin.html">Products</a>
+        <a href="./platinum.html">Platinum</a>
+        <a href="./delivery-admin.html">Delivery Rules</a>
         <a href="../index.html">Website</a>
       </div>
     </div>
@@ -131,6 +137,17 @@
   <script src="../auth.js"></script>
 
   <script>
+    // Bridge for different auth.js versions:
+    // Some builds set window.supabase instead of window.supabaseClient.
+    window.supabaseClient =
+      window.supabaseClient ||
+      window.supabase ||
+      window.sb ||
+      window.client ||
+      null;
+  </script>
+
+  <script>
     function showMsg(el, text, ok=true) {
       el.className = "msg " + (ok ? "ok" : "err");
       el.textContent = text || "";
@@ -143,7 +160,7 @@
 
     async function requireSupabase() {
       if (!window.supabaseClient) {
-        throw new Error("Supabase client not found. Make sure ../auth.js sets window.supabaseClient.");
+        throw new Error("Supabase client not found. Check ../auth.js path, and that it initializes window.supabaseClient (or window.supabase).");
       }
       return window.supabaseClient;
     }
