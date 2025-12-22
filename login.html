@@ -1487,7 +1487,7 @@ document.addEventListener("DOMContentLoaded", () => {
           const { data: p } = await sb
             .from("profiles")
             .select("is_admin")
-            .eq("id", user.id)
+            .eq("email", user.email)
             .maybeSingle();
 
           if (p?.is_admin) {
