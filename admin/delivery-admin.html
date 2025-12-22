@@ -4,94 +4,172 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Delivery Rules - Admin</title>
+
+  <!-- Bootstrap (restored) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; background:#f6f7fb; color:#111; }
-    header { background:#111; color:#fff; padding:14px 18px; }
-    header .row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-    header a { color:#fff; text-decoration:none; }
-    main { max-width: 1100px; margin: 18px auto; padding: 0 14px 30px; }
-    .card { background:#fff; border:1px solid #e6e6ef; border-radius:12px; padding:14px; }
-    .grid { display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
-    @media (max-width: 900px){ .grid { grid-template-columns: 1fr; } }
-    label { display:block; font-size:13px; margin-bottom:6px; }
-    input, select { width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; }
-    .row { display:flex; gap:10px; margin-top:10px; }
-    .btn { padding:10px 14px; border:0; border-radius:8px; cursor:pointer; font-weight:600; }
-    .btn-primary { background:#111; color:#fff; }
-    .btn-danger { background:#c0392b; color:#fff; }
-    .btn-ghost { background:#eee; }
-    table { width:100%; border-collapse:collapse; margin-top:10px; }
-    th, td { padding:8px; border-bottom:1px solid #eee; font-size:14px; }
+    body { background:#f6f7fb; }
+    header { background:#111; }
+    header a { color:#fff; text-decoration:none; opacity:.9; }
+    header a:hover { opacity:1; text-decoration:underline; }
+    .nav-links { gap:14px; flex-wrap:wrap; }
+    .card { border-radius: 14px; }
+    .table td, .table th { vertical-align: middle; }
+    .muted { color:#6c757d; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
   </style>
 </head>
 <body>
 
-<header>
-  <div class="row">
-    <div><strong>Shrinxa Admin</strong></div>
-    <div class="row">
+<header class="py-3">
+  <div class="container-fluid px-4 d-flex align-items-center justify-content-between gap-3">
+    <div class="text-white fw-bold">Shrinxa Admin</div>
+    <div class="d-flex nav-links">
       <a href="./dashboard.html">Dashboard</a>
       <a href="./orders.html">Orders</a>
       <a href="./customers.html">Customers</a>
       <a href="./products-admin.html">Products</a>
       <a href="./platinum.html">Platinum</a>
-      <a href="./delivery-admin.html" style="text-decoration:underline;">Delivery Rules</a>
+      <a href="./delivery-admin.html" style="text-decoration:underline; opacity:1;">Delivery Rules</a>
     </div>
   </div>
 </header>
 
-<main>
-  <div class="grid">
-    <div class="card">
-      <h3>Default Rule</h3>
-      <label>Charge fee under ($)</label>
-      <input id="defMin" type="number">
-      <label>Delivery fee ($)</label>
-      <input id="defFee" type="number">
-      <div class="row">
-        <button class="btn btn-primary" id="saveDefault">Save</button>
-        <button class="btn btn-ghost" id="loadDefault">Reload</button>
+<main class="container-fluid px-4 py-4">
+
+  <!-- Status messages (restored) -->
+  <div id="statusArea" class="mb-3"></div>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Default Rule</h5>
+
+          <div class="mb-3">
+            <label for="defMin" class="form-label">Charge fee under ($)</label>
+            <input id="defMin" type="number" class="form-control" min="0" step="1" />
+          </div>
+
+          <div class="mb-3">
+            <label for="defFee" class="form-label">Delivery fee ($)</label>
+            <input id="defFee" type="number" class="form-control" min="0" step="1" />
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-dark" id="saveDefault">Save</button>
+            <button type="button" class="btn btn-outline-secondary" id="loadDefault">Reload</button>
+          </div>
+
+          <div class="mt-3 small muted">
+            Tip: This is your global rule (customer_id is NULL). The newest saved default rule will be used.
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="card">
-      <h3>Customer Override</h3>
-      <label>Customer</label>
-      <select id="cust"></select>
-      <label>Charge fee under ($)</label>
-      <input id="custMin" type="number">
-      <label>Delivery fee ($)</label>
-      <input id="custFee" type="number">
-      <div class="row">
-        <button class="btn btn-primary" id="saveCust">Save</button>
-        <button class="btn btn-danger" id="delCust">Delete</button>
+    <div class="col-12 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Customer Override</h5>
+
+          <div class="mb-3">
+            <label for="cust" class="form-label">Customer</label>
+            <select id="cust" class="form-select"></select>
+          </div>
+
+          <div class="mb-3">
+            <label for="custMin" class="form-label">Charge fee under ($)</label>
+            <input id="custMin" type="number" class="form-control" min="0" step="1" />
+          </div>
+
+          <div class="mb-3">
+            <label for="custFee" class="form-label">Delivery fee ($)</label>
+            <input id="custFee" type="number" class="form-control" min="0" step="1" />
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-dark" id="saveCust">Save</button>
+            <button type="button" class="btn btn-danger" id="delCust">Delete</button>
+          </div>
+
+          <div class="mt-3 small muted">
+            This overrides the default rule for a specific customer.
+          </div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="card">
-    <h3>Overrides</h3>
-    <table>
-      <thead>
-        <tr><th>Customer</th><th>Under</th><th>Fee</th></tr>
-      </thead>
-      <tbody id="list"></tbody>
-    </table>
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+            <h5 class="card-title mb-0">Overrides</h5>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="refreshList">Refresh list</button>
+          </div>
+
+          <div class="table-responsive mt-3">
+            <table class="table table-striped table-hover align-middle mb-0">
+              <thead>
+                <tr>
+                  <th style="width:40%;">Customer</th>
+                  <th style="width:20%;">Under ($)</th>
+                  <th style="width:20%;">Fee ($)</th>
+                  <th style="width:20%;">Customer ID</th>
+                </tr>
+              </thead>
+              <tbody id="list"></tbody>
+            </table>
+          </div>
+
+          <div class="mt-2 small muted">
+            Note: Customer ID is shown for debugging.
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </main>
+
+<!-- Bootstrap JS (restored) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script type="module">
   import { supabase } from "../supabaseClient.js";
   import "./admin-auth.js";
 
-  const $ = id => document.getElementById(id);
-  const money = v => isFinite(Number(v)) ? Number(v) : 0;
+  const $ = (id) => document.getElementById(id);
+
+  function money(v){
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function setBusy(btn, busy){
+    if(!btn) return;
+    btn.disabled = !!busy;
+    btn.dataset._oldText = btn.dataset._oldText || btn.innerText;
+    btn.innerText = busy ? "Saving..." : btn.dataset._oldText;
+  }
+
+  function showStatus(type, msg){
+    const area = $("statusArea");
+    if(!area) return;
+    area.innerHTML = `
+      <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+        <div>${msg}</div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>`;
+  }
 
   async function ensureAuth(){
-    const { data:{ user } } = await supabase.auth.getUser();
-    if(!user) return false;
-    return true;
+    const { data:{ user }, error } = await supabase.auth.getUser();
+    if(error){ console.error(error); }
+    return !!user;
   }
+
+  const customerMap = new Map(); // id -> label
 
   async function loadCustomers(){
     if(!(await ensureAuth())) return;
@@ -99,70 +177,237 @@
       .from("profiles")
       .select("id,email,full_name")
       .order("email");
-    if(error){ console.error(error); return; }
-    $("cust").innerHTML = '<option value="">Select</option>' +
-      data.map(c=>`<option value="${c.id}">${c.full_name || c.email}</option>`).join("");
+
+    if(error){ console.error(error); showStatus("danger", "Failed to load customers."); return; }
+
+    customerMap.clear();
+    data.forEach(c => customerMap.set(c.id, (c.full_name || c.email || c.id)));
+
+    $("cust").innerHTML =
+      '<option value="">Select</option>' +
+      data.map(c => `<option value="${c.id}">${(c.full_name || c.email || c.id)}</option>`).join("");
   }
 
   async function loadDefault(){
     if(!(await ensureAuth())) return;
-    const { data } = await supabase
+
+    const { data, error } = await supabase
       .from("delivery_rules")
       .select("*")
-      .is("customer_id",null)
-      .single();
+      .is("customer_id", null)
+      .order("updated_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if(error){
+      console.error("loadDefault error:", error);
+      showStatus("danger", "Failed to load default rule (check console).");
+      return;
+    }
+
     if(data){
-      $("defMin").value = data.min_subtotal;
-      $("defFee").value = data.fee;
+      $("defMin").value = data.min_subtotal ?? "";
+      $("defFee").value = data.fee ?? "";
+    } else {
+      $("defMin").value = "";
+      $("defFee").value = "";
     }
   }
 
   async function saveDefault(){
-    await supabase.from("delivery_rules").upsert({
-      customer_id:null,
-      min_subtotal: money($("defMin").value),
-      fee: money($("defFee").value),
-      is_active:true
-    });
-    loadList();
+    const btn = $("saveDefault");
+    setBusy(btn, true);
+
+    try{
+      if(!(await ensureAuth())) return;
+
+      const min_subtotal = money($("defMin").value);
+      const fee = money($("defFee").value);
+
+      const { data: newest, error: newestErr } = await supabase
+        .from("delivery_rules")
+        .select("id")
+        .is("customer_id", null)
+        .order("updated_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if(newestErr){
+        console.error("newest default lookup error:", newestErr);
+        showStatus("danger", "Save failed (lookup error).");
+        return;
+      }
+
+      let saveErr = null;
+
+      if(newest?.id){
+        const { error } = await supabase
+          .from("delivery_rules")
+          .update({ min_subtotal, fee, is_active: true, updated_at: new Date().toISOString() })
+          .eq("id", newest.id);
+        saveErr = error;
+      } else {
+        const { error } = await supabase
+          .from("delivery_rules")
+          .insert({ customer_id: null, min_subtotal, fee, is_active: true });
+        saveErr = error;
+      }
+
+      if(saveErr){
+        console.error("saveDefault error:", saveErr);
+        showStatus("danger", "Save failed (check console).");
+        return;
+      }
+
+      // Best-effort deactivate other default rules (so main site doesn't read old one)
+      await supabase
+        .from("delivery_rules")
+        .update({ is_active: false })
+        .is("customer_id", null)
+        .neq("id", newest?.id ?? -1);
+
+      showStatus("success", `Saved default rule: free delivery over <b>$${min_subtotal}</b>, fee <b>$${fee}</b>.`);
+      await loadDefault();
+      await loadList();
+    } finally {
+      setBusy(btn, false);
+    }
+  }
+
+  async function loadCustomerOverride(){
+    const cid = $("cust").value;
+    $("custMin").value = "";
+    $("custFee").value = "";
+    if(!cid) return;
+
+    const { data, error } = await supabase
+      .from("delivery_rules")
+      .select("*")
+      .eq("customer_id", cid)
+      .order("updated_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if(error){ console.error(error); return; }
+    if(data){
+      $("custMin").value = data.min_subtotal ?? "";
+      $("custFee").value = data.fee ?? "";
+    }
   }
 
   async function saveCust(){
-    await supabase.from("delivery_rules").upsert({
-      customer_id:$("cust").value,
-      min_subtotal: money($("custMin").value),
-      fee: money($("custFee").value),
-      is_active:true
-    });
-    loadList();
+    const btn = $("saveCust");
+    setBusy(btn, true);
+
+    try{
+      if(!(await ensureAuth())) return;
+
+      const cid = $("cust").value;
+      if(!cid){ showStatus("warning", "Select a customer first."); return; }
+
+      const min_subtotal = money($("custMin").value);
+      const fee = money($("custFee").value);
+
+      const { data: newest, error: newestErr } = await supabase
+        .from("delivery_rules")
+        .select("id")
+        .eq("customer_id", cid)
+        .order("updated_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if(newestErr){ console.error(newestErr); showStatus("danger", "Save failed (lookup error)."); return; }
+
+      let err = null;
+      if(newest?.id){
+        const { error } = await supabase
+          .from("delivery_rules")
+          .update({ min_subtotal, fee, is_active: true, updated_at: new Date().toISOString() })
+          .eq("id", newest.id);
+        err = error;
+      } else {
+        const { error } = await supabase
+          .from("delivery_rules")
+          .insert({ customer_id: cid, min_subtotal, fee, is_active: true });
+        err = error;
+      }
+
+      if(err){ console.error(err); showStatus("danger", "Save failed (check console)."); return; }
+
+      showStatus("success", `Saved override for <b>${customerMap.get(cid) || cid}</b>.`);
+      await loadList();
+    } finally {
+      setBusy(btn, false);
+    }
   }
 
   async function delCust(){
-    await supabase.from("delivery_rules")
-      .delete()
-      .eq("customer_id",$("cust").value);
-    loadList();
+    const btn = $("delCust");
+    setBusy(btn, true);
+
+    try{
+      if(!(await ensureAuth())) return;
+
+      const cid = $("cust").value;
+      if(!cid){ showStatus("warning", "Select a customer first."); return; }
+
+      const { error } = await supabase
+        .from("delivery_rules")
+        .delete()
+        .eq("customer_id", cid);
+
+      if(error){ console.error(error); showStatus("danger", "Delete failed (check console)."); return; }
+
+      showStatus("success", `Deleted override for <b>${customerMap.get(cid) || cid}</b>.`);
+      $("cust").value = "";
+      $("custMin").value = "";
+      $("custFee").value = "";
+      await loadList();
+    } finally {
+      setBusy(btn, false);
+    }
   }
 
   async function loadList(){
     if(!(await ensureAuth())) return;
-    const { data } = await supabase
+
+    const { data, error } = await supabase
       .from("delivery_rules")
-      .select("customer_id,min_subtotal,fee")
-      .not("customer_id","is",null);
-    $("list").innerHTML = data.map(r =>
-      `<tr><td>${r.customer_id}</td><td>${r.min_subtotal}</td><td>${r.fee}</td></tr>`
-    ).join("");
+      .select("customer_id,min_subtotal,fee,updated_at")
+      .not("customer_id","is",null)
+      .order("updated_at", { ascending: false })
+      .limit(200);
+
+    if(error){ console.error(error); showStatus("danger", "Failed to load overrides list."); return; }
+
+    $("list").innerHTML = (data || []).map(r => {
+      const label = customerMap.get(r.customer_id) || r.customer_id;
+      return `<tr>
+        <td>${label}</td>
+        <td>$${r.min_subtotal}</td>
+        <td>$${r.fee}</td>
+        <td class="mono">${r.customer_id}</td>
+      </tr>`;
+    }).join("");
   }
 
-  $("saveDefault").onclick = saveDefault;
-  $("loadDefault").onclick = loadDefault;
-  $("saveCust").onclick = saveCust;
-  $("delCust").onclick = delCust;
+  $("saveDefault").addEventListener("click", (e)=>{ e.preventDefault(); saveDefault(); });
+  $("loadDefault").addEventListener("click", (e)=>{ e.preventDefault(); loadDefault(); });
+  $("saveCust").addEventListener("click", (e)=>{ e.preventDefault(); saveCust(); });
+  $("delCust").addEventListener("click", (e)=>{ e.preventDefault(); delCust(); });
+  $("refreshList").addEventListener("click", (e)=>{ e.preventDefault(); loadList(); });
+  $("cust").addEventListener("change", loadCustomerOverride);
 
-  loadDefault();
-  loadCustomers();
-  loadList();
+  (async function init(){
+    if(!(await ensureAuth())) return;
+    await loadCustomers();
+    await loadDefault();
+    await loadList();
+  })();
 </script>
 
 </body>
