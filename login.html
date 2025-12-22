@@ -1450,6 +1450,20 @@
 
 
 <script>
+async function waitForGlobalClient(timeoutMs = 8000) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const sb =
+      window.supabaseClient ||
+      window.supabase ||
+      (window.Auth && window.Auth.supabaseClient) ||
+      (window.ShrinxaAuth && window.ShrinxaAuth.supabaseClient);
+
+    if (sb && sb.auth) return sb;
+    await new Promise(r => setTimeout(r, 50));
+  }
+  return null;
+}
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("login-form");
   const msg = document.getElementById("msg");
@@ -1472,46 +1486,42 @@ document.addEventListener("DOMContentLoaded", () => {
     const password = (passEl?.value || "").trim();
 
     try {
-      // Use existing auth helper if present, otherwise use the global Supabase client from auth.js
-      const sb =
-        window.supabaseClient ||
-        window.supabase ||
-        (window.Auth && window.Auth.supabaseClient) ||
-        (window.ShrinxaAuth && window.ShrinxaAuth.supabaseClient);
+      if (!window.ShrinxaAuth?.signIn) throw new Error("// Sign in
+let sb = null;
 
-      if (window.ShrinxaAuth?.signIn) {
-        await window.ShrinxaAuth.signIn(email, password);
-      } else if (sb?.auth?.signInWithPassword) {
-        const { error } = await sb.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-      } else {
-        throw new Error("Auth not loaded");
-      }
+if (window.ShrinxaAuth?.signIn) {
+  await window.ShrinxaAuth.signIn(email, password);
+} else {
+  sb = await waitForGlobalClient();
+  if (!sb) throw new Error("Auth not loaded (Supabase client not ready)");
+  const { error: signErr } = await sb.auth.signInWithPassword({ email, password });
+  if (signErr) throw signErr;
+}
 
-      if (sb) {
-        const { data: u } = await sb.auth.getUser();
-        const user = u?.user;
+// Always use global Supabase client for profile lookup + redirect
+sb = sb || await waitForGlobalClient();
+if (!sb) throw new Error("Supabase client not ready");
 
-        if (user) {
-          const { data: p } = await sb
-            .from("profiles")
-            .select("is_admin")
-            .eq("id", user.id)
-            .maybeSingle();
+const { data: userRes, error: userErr } = await sb.auth.getUser();
+if (userErr) throw userErr;
+const user = userRes?.user;
+if (!user) throw new Error("Login succeeded but no user session found");
 
-          if (p?.is_admin) {
-            window.location.href = "/admin/customers.html";
-            return;
-          }
-        }
-      }
+const { data: p, error: pErr } = await sb
+  .from("profiles")
+  .select("is_admin")
+  .eq("id", user.id)
+  .maybeSingle();
 
-      const params = new URLSearchParams(window.location.search);
-      const next = params.get("next");
-      window.location.href = next ? next : "index.html";
-    } catch (err) {
-      show(err?.message || "Invalid email or password", "err");
-    }
+if (pErr) throw pErr;
+
+if (p?.is_admin) {
+  window.location.href = "/admin/customers.html";
+  return;
+}
+
+window.location.href = "index.html";
+return;
   });
 });
 </script>
@@ -1588,11 +1598,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
 
   // Use the ONE Supabase client from auth.js
-  const sb =
-    window.supabaseClient ||
-    window.supabase ||
-    (window.Auth && window.Auth.supabaseClient) ||
-    (window.ShrinxaAuth && window.ShrinxaAuth.supabaseClient);
+  const sb = await waitForGlobalClient();
   if (!sb) return;
 
   // -------- Password Recovery Mode (from email link) --------
