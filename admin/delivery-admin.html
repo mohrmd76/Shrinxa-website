@@ -40,12 +40,6 @@
       </div>
       <div class="row" style="gap:14px;">
         <a href="./index.html">Admin Home</a>
-        <a href="./dashboard.html">Dashboard</a>
-        <a href="./orders.html">Orders</a>
-        <a href="./customers.html">Customers</a>
-        <a href="./products-admin.html">Products</a>
-        <a href="./platinum.html">Platinum</a>
-        <a href="./delivery-admin.html">Delivery Rules</a>
         <a href="../index.html">Website</a>
       </div>
     </div>
@@ -136,15 +130,45 @@
   <!-- Your existing auth.js should initialize window.supabaseClient -->
   <script src="../auth.js"></script>
 
-  <script>
-    // Bridge for different auth.js versions:
-    // Some builds set window.supabase instead of window.supabaseClient.
-    window.supabaseClient =
-      window.supabaseClient ||
-      window.supabase ||
-      window.sb ||
-      window.client ||
-      null;
+  <!-- Fallback: if auth.js is an ES module or doesn't attach client to window, create one here -->
+  <script type="module">
+    // Try to reuse an existing client first
+    window.supabaseClient = window.supabaseClient || window.supabase || window.sb || window.client || null;
+
+    // If still missing, try to build a client from commonly-used global vars
+    if (!window.supabaseClient) {
+      try {
+        const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+        const url =
+          window.SUPABASE_URL ||
+          window.supabaseUrl ||
+          localStorage.getItem("SUPABASE_URL") ||
+          localStorage.getItem("supabase_url") ||
+          "";
+
+        const key =
+          window.SUPABASE_ANON_KEY ||
+          window.supabaseAnonKey ||
+          localStorage.getItem("SUPABASE_ANON_KEY") ||
+          localStorage.getItem("supabase_anon_key") ||
+          "";
+
+        if (url && key) {
+          window.supabaseClient = createClient(url, key);
+        }
+      } catch (_) {}
+    }
+
+    // Final check
+    if (!window.supabaseClient) {
+      alert(
+        "Supabase client not found.
+
+Fix: open a working admin page (dashboard/customers) and copy the SUPABASE_URL and SUPABASE_ANON_KEY values into a global (window.SUPABASE_URL / window.SUPABASE_ANON_KEY) or store them in localStorage keys SUPABASE_URL and SUPABASE_ANON_KEY.
+
+Then reload."
+      );
+    }
   </script>
 
   <script>
@@ -160,7 +184,7 @@
 
     async function requireSupabase() {
       if (!window.supabaseClient) {
-        throw new Error("Supabase client not found. Check ../auth.js path, and that it initializes window.supabaseClient (or window.supabase).");
+        throw new Error("Supabase client not found. Make sure ../auth.js sets window.supabaseClient.");
       }
       return window.supabaseClient;
     }
