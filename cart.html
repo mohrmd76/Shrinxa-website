@@ -1962,7 +1962,7 @@ await loadDeliveryRule(sb);
      const DELIVERY_THRESHOLD = Number(DELIVERY_RULE.min_subtotal || 300);
 const DELIVERY_FEE = Number(DELIVERY_RULE.fee || 0);
         const HST_RATE = 0.13;
-        const deliveryFee = subtotal < DELIVERY_THRESHOLD ? DELIVERY_FEE : 0;
+        const deliveryFee = (subtotal > 0 && subtotal < DELIVERY_THRESHOLD) ? DELIVERY_FEE : 0;
         const taxableBase = subtotal + deliveryFee;
         const hst = taxableBase * HST_RATE;
         const total = taxableBase + hst;
