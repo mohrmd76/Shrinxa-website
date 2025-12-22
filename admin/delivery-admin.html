@@ -1,11 +1,6 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Delivery Rules - Admin</title>
-
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Delivery Rules - Admin</title>
@@ -15,211 +10,160 @@
     header .row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
     header a { color:#fff; text-decoration:none; }
     main { max-width: 1100px; margin: 18px auto; padding: 0 14px 30px; }
-    .card { background:#fff; border:1px solid #e6e6ef; border-radius:12px; padding:14px; box-shadow: 0 2px 10px rgba(0,0,0,.04); }
+    .card { background:#fff; border:1px solid #e6e6ef; border-radius:12px; padding:14px; }
     .grid { display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
     @media (max-width: 900px){ .grid { grid-template-columns: 1fr; } }
-    h2 { margin:0 0 10px 0; font-size: 18px; }
-    label { display:block; font-size: 13px; color:#444; margin-bottom:6px; }
-    input, select { width:100%; padding:10px 10px; border:1px solid #d8d8e6; border-radius:10px; background:#fff; font-size:14px; }
-    .row { display:flex; gap:10px; align-items:end; }
-    .row > div { flex:1; }
-    .btn { border:0; padding:10px 12px; border-radius:10px; cursor:pointer; font-weight:600; }
+    label { display:block; font-size:13px; margin-bottom:6px; }
+    input, select { width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; }
+    .row { display:flex; gap:10px; margin-top:10px; }
+    .btn { padding:10px 14px; border:0; border-radius:8px; cursor:pointer; font-weight:600; }
     .btn-primary { background:#111; color:#fff; }
     .btn-danger { background:#c0392b; color:#fff; }
-    .btn-ghost { background:#eee; color:#111; }
-    .muted { color:#666; font-size: 13px; }
-    .msg { margin-top:10px; font-size: 14px; }
-    .msg.ok { color:#0a7a2f; }
-    .msg.err { color:#b00020; }
-    table { width:100%; border-collapse: collapse; }
-    th, td { text-align:left; padding:10px; border-bottom:1px solid #eee; font-size: 14px; }
-    th { color:#333; font-size: 13px; text-transform: uppercase; letter-spacing:.03em; }
-    .badge { display:inline-block; padding:4px 8px; border-radius:999px; font-size: 12px; background:#f0f0f7; }
+    .btn-ghost { background:#eee; }
+    table { width:100%; border-collapse:collapse; margin-top:10px; }
+    th, td { padding:8px; border-bottom:1px solid #eee; font-size:14px; }
   </style>
-
 </head>
 <body>
 
-  <header>
+<header>
+  <div class="row">
+    <div><strong>Shrinxa Admin</strong></div>
     <div class="row">
-      <div>
-        <strong>Shrinxa Admin</strong> <span class="badge" style="margin-left:10px;">Delivery Rules</span>
-      </div>
-            <div class="row" style="gap:14px;">
-        <a href="./dashboard.html">Dashboard</a>
-        <a href="./orders.html">Orders</a>
-        <a href="./customers.html">Customers</a>
-        <a href="./products-admin.html">Products</a>
-        <a href="./platinum.html">Platinum</a>
-        <a href="./delivery-admin.html" style="text-decoration:underline;">Delivery Rules</a>
-      </div>
+      <a href="./dashboard.html">Dashboard</a>
+      <a href="./orders.html">Orders</a>
+      <a href="./customers.html">Customers</a>
+      <a href="./products-admin.html">Products</a>
+      <a href="./platinum.html">Platinum</a>
+      <a href="./delivery-admin.html" style="text-decoration:underline;">Delivery Rules</a>
     </div>
-  </header>
+  </div>
+</header>
 
-  <main>
-    <div id="pageMsg" class="msg" style="margin-bottom:12px;"></div>
-    <div class="grid">
-      <!-- Default Rule -->
-      <div class="card">
-        <h2>Default Delivery Rule</h2>
-        <p class="muted" style="margin-top:0;">
-          Applies to everyone unless a customer override exists.
-        </p>
-
-        <div class="row">
-          <div>
-            <label>Charge fee when subtotal is under ($)</label>
-            <input id="defaultMinSubtotal" type="number" step="0.01" min="0" />
-          </div>
-          <div>
-            <label>Delivery fee ($)</label>
-            <input id="defaultFee" type="number" step="0.01" min="0" />
-          </div>
-        </div>
-
-        <div class="row" style="margin-top:10px;">
-          <button class="btn btn-primary" id="btnSaveDefault">Save Default</button>
-          <button class="btn btn-ghost" id="btnReloadDefault">Reload</button>
-        </div>
-
-        <div id="defaultMsg" class="msg"></div>
-      </div>
-
-      <!-- Customer Override -->
-      <div class="card">
-        <h2>Customer Override</h2>
-        <p class="muted" style="margin-top:0;">
-          Set a special rule for a specific customer (overrides default).
-        </p>
-
-        <label>Select customer</label>
-        <select id="customerSelect"></select>
-
-        <div style="height:10px;"></div>
-
-        <div class="row">
-          <div>
-            <label>Charge fee when subtotal is under ($)</label>
-            <input id="custMinSubtotal" type="number" step="0.01" min="0" />
-          </div>
-          <div>
-            <label>Delivery fee ($)</label>
-            <input id="custFee" type="number" step="0.01" min="0" />
-          </div>
-        </div>
-
-        <div class="row" style="margin-top:10px;">
-          <button class="btn btn-primary" id="btnSaveCustomer">Save Override</button>
-          <button class="btn btn-danger" id="btnDeleteCustomer">Delete Override</button>
-        </div>
-
-        <div id="custMsg" class="msg"></div>
+<main>
+  <div class="grid">
+    <div class="card">
+      <h3>Default Rule</h3>
+      <label>Charge fee under ($)</label>
+      <input id="defMin" type="number">
+      <label>Delivery fee ($)</label>
+      <input id="defFee" type="number">
+      <div class="row">
+        <button class="btn btn-primary" id="saveDefault">Save</button>
+        <button class="btn btn-ghost" id="loadDefault">Reload</button>
       </div>
     </div>
 
-    <div class="card" style="margin-top:14px;">
-      <h2>Current Overrides</h2>
-      <p class="muted" style="margin-top:0;">Quick view of all customer-specific rules.</p>
-      <div style="overflow:auto;">
-        <table>
-          <thead>
-            <tr>
-              <th>Customer</th>
-              <th>Charge Under</th>
-              <th>Fee</th>
-              <th>Status</th>
-              <th>Updated</th>
-            </tr>
-          </thead>
-          <tbody id="overrideTbody">
-            <tr><td colspan="5" class="muted">Loading…</td></tr>
-          </tbody>
-        </table>
+    <div class="card">
+      <h3>Customer Override</h3>
+      <label>Customer</label>
+      <select id="cust"></select>
+      <label>Charge fee under ($)</label>
+      <input id="custMin" type="number">
+      <label>Delivery fee ($)</label>
+      <input id="custFee" type="number">
+      <div class="row">
+        <button class="btn btn-primary" id="saveCust">Save</button>
+        <button class="btn btn-danger" id="delCust">Delete</button>
       </div>
     </div>
-  </main>
+  </div>
 
-  
+  <div class="card">
+    <h3>Overrides</h3>
+    <table>
+      <thead>
+        <tr><th>Customer</th><th>Under</th><th>Fee</th></tr>
+      </thead>
+      <tbody id="list"></tbody>
+    </table>
+  </div>
+</main>
+
 <script type="module">
   import { supabase } from "../supabaseClient.js";
   import "./admin-auth.js";
 
   const $ = id => document.getElementById(id);
+  const money = v => isFinite(Number(v)) ? Number(v) : 0;
 
-  function money(n){ const v = Number(n||0); return isFinite(v)?v:0; }
+  async function ensureAuth(){
+    const { data:{ user } } = await supabase.auth.getUser();
+    if(!user) return false;
+    return true;
+  }
 
-  async function loadDefaultRule(){
+  async function loadCustomers(){
+    if(!(await ensureAuth())) return;
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id,email,full_name")
+      .order("email");
+    if(error){ console.error(error); return; }
+    $("cust").innerHTML = '<option value="">Select</option>' +
+      data.map(c=>`<option value="${c.id}">${c.full_name || c.email}</option>`).join("");
+  }
+
+  async function loadDefault(){
+    if(!(await ensureAuth())) return;
     const { data } = await supabase
       .from("delivery_rules")
       .select("*")
       .is("customer_id",null)
       .single();
     if(data){
-      $("defaultMinSubtotal").value = data.min_subtotal;
-      $("defaultFee").value = data.fee;
+      $("defMin").value = data.min_subtotal;
+      $("defFee").value = data.fee;
     }
   }
 
-  async function saveDefaultRule(){
+  async function saveDefault(){
     await supabase.from("delivery_rules").upsert({
       customer_id:null,
-      min_subtotal: money($("defaultMinSubtotal").value),
-      fee: money($("defaultFee").value),
+      min_subtotal: money($("defMin").value),
+      fee: money($("defFee").value),
       is_active:true
     });
-    loadOverridesTable();
+    loadList();
   }
 
-  async function loadCustomers(){
-    const { data } = await supabase
-      .from("profiles")
-      .select("id,email,full_name")
-      .order("email");
-    $("customerSelect").innerHTML =
-      `<option value="">-- choose customer --</option>` +
-      data.map(c=>`<option value="${c.id}">${c.full_name||c.email}</option>`).join("");
-  }
-
-  async function loadOverridesTable(){
-    const { data } = await supabase
-      .from("delivery_rules")
-      .select("customer_id,min_subtotal,fee,updated_at")
-      .not("customer_id","is",null)
-      .order("updated_at",{ascending:false});
-    $("overrideTbody").innerHTML = data.map(r=>
-      `<tr>
-        <td>${r.customer_id}</td>
-        <td>${r.min_subtotal}</td>
-        <td>${r.fee}</td>
-        <td>${new Date(r.updated_at).toLocaleString()}</td>
-      </tr>`).join("");
-  }
-
-  async function saveCustomerOverride(){
+  async function saveCust(){
     await supabase.from("delivery_rules").upsert({
-      customer_id:$("customerSelect").value,
-      min_subtotal: money($("custMinSubtotal").value),
+      customer_id:$("cust").value,
+      min_subtotal: money($("custMin").value),
       fee: money($("custFee").value),
       is_active:true
     });
-    loadOverridesTable();
+    loadList();
   }
 
-  async function deleteCustomerOverride(){
+  async function delCust(){
     await supabase.from("delivery_rules")
       .delete()
-      .eq("customer_id",$("customerSelect").value);
-    loadOverridesTable();
+      .eq("customer_id",$("cust").value);
+    loadList();
   }
 
-  $("btnSaveDefault").onclick = saveDefaultRule;
-  $("btnReloadDefault").onclick = loadDefaultRule;
-  $("btnSaveCustomer").onclick = saveCustomerOverride;
-  $("btnDeleteCustomer").onclick = deleteCustomerOverride;
+  async function loadList(){
+    if(!(await ensureAuth())) return;
+    const { data } = await supabase
+      .from("delivery_rules")
+      .select("customer_id,min_subtotal,fee")
+      .not("customer_id","is",null);
+    $("list").innerHTML = data.map(r =>
+      `<tr><td>${r.customer_id}</td><td>${r.min_subtotal}</td><td>${r.fee}</td></tr>`
+    ).join("");
+  }
 
-  loadDefaultRule();
+  $("saveDefault").onclick = saveDefault;
+  $("loadDefault").onclick = loadDefault;
+  $("saveCust").onclick = saveCust;
+  $("delCust").onclick = delCust;
+
+  loadDefault();
   loadCustomers();
-  loadOverridesTable();
+  loadList();
 </script>
+
 </body>
 </html>
