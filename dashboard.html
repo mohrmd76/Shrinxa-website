@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin – Dashboard</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Arial, sans-serif; margin: 18px; }
+    .wrap { max-width: 1200px; }
+    .nav { margin: 6px 0 14px; }
+    .nav a { margin-right: 10px; }
+    .status { padding:8px 10px; border:1px solid #ccc; display:inline-block; }
+    .controls { display:flex; gap:10px; align-items:end; flex-wrap:wrap; margin-top:10px; }
+    label { font-size: 12px; color:#333; display:flex; flex-direction:column; gap:4px; }
+    input, select { padding:6px 8px; border:1px solid #bbb; border-radius:6px; min-width: 170px; }
+    button { padding:7px 10px; border:1px solid #888; border-radius:8px; background:#f6f6f6; cursor:pointer; }
+    button:hover { background:#efefef; }
+    .btnrow { display:flex; gap:8px; flex-wrap:wrap; }
+    .grid { display:grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap:12px; margin-top:14px; }
+    .card { border:1px solid #e3e3e3; border-radius:14px; padding:12px; background:#fff; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+    .k { color:#666; font-size:12px; }
+    .v { font-size:22px; font-weight:700; margin-top:6px; }
+    .muted { color:#666; font-size:12px; }
+    .row { display:grid; grid-template-columns: 1.4fr 1fr; gap:12px; margin-top:12px; }
+    .row3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; margin-top:12px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border:1px solid #ddd; padding:8px; vertical-align: top; }
+    th { background:#fafafa; position: sticky; top: 0; z-index: 2; }
+    canvas { width: 100% !important; height: 320px !important; }
+    .clickrow tbody tr { cursor: pointer; }
+    .right { text-align:right; white-space:nowrap; }
+    @media (max-width: 1100px) {
+      .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .row3 { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 700px) {
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <h2>Dashboard</h2>
+
+    <div class="nav">
+      <a href="/admin/dashboard.html"><strong>Dashboard</strong></a> |
+      <a href="/admin/customers.html">Customers</a> |
+      <a href="/admin/platinum.html">Platinum</a> |
+      <a href="/admin/products-admin.html">Products</a> |
+      <a href="./delivery-admin.html">Delivery Rules</a> |
+      <a href="/admin/orders.html">Orders</a>
+    </div>
+
+    <div class="status" id="status">Loading…</div>
+
+    <div class="controls">
+      <label>
+        Preset
+        <select id="range">
+          <option value="today">Today</option>
+          <option value="week">This week</option>
+          <option value="month">This month</option>
+          <option value="7">Last 7 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+        </select>
+      </label>
+
+      <label>
+        Date from
+        <input id="from" type="date">
+      </label>
+
+      <label>
+        Date to
+        <input id="to" type="date">
+      </label>
+
+      <label>
+        Currency
+        <select id="currency">
+          <option value="">All</option>
+          <option value="CAD" selected>CAD</option>
+          <option value="USD">USD</option>
+        </select>
+      </label>
+
+      <div class="btnrow">
+        <button id="btnReload" type="button">Reload</button>
+        <button id="btnExportInvoices" type="button">Export Invoices CSV</button>
+        <button id="btnExportTopProducts" type="button">Export Top Products CSV</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="k">Orders (range)</div>
+        <div class="v" id="kpiOrders">—</div>
+      </div>
+      <div class="card">
+        <div class="k">Revenue (range)</div>
+        <div class="v" id="kpiRevenue">—</div>
+        <div class="muted" id="kpiRevenue2"></div>
+      </div>
+      <div class="card">
+        <div class="k">Paid revenue</div>
+        <div class="v" id="kpiPaidRev">—</div>
+      </div>
+      <div class="card">
+        <div class="k">Unpaid/Pending revenue</div>
+        <div class="v" id="kpiUnpaidRev">—</div>
+      </div>
+      <div class="card">
+        <div class="k">Paid orders</div>
+        <div class="v" id="kpiPaid">—</div>
+      </div>
+      <div class="card">
+        <div class="k">Avg order value</div>
+        <div class="v" id="kpiAov">—</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="card">
+        <div>
+          <div class="k">Revenue by day</div>
+          <div class="muted">Sum of invoice totals</div>
+        </div>
+        <canvas id="chartDaily"></canvas>
+      </div>
+
+      <div class="card">
+        <div class="k">Status breakdown</div>
+        <div class="muted">Count of invoices</div>
+        <canvas id="chartStatus"></canvas>
+      </div>
+    </div>
+
+    <div class="row3">
+      <div class="card clickrow">
+        <div class="k">Top customers (by revenue)</div>
+        <div class="muted">Tap a row to open Orders filtered</div>
+        <div style="overflow:auto; max-height: 360px; margin-top:10px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th class="right">Orders</th>
+                <th class="right">Revenue</th>
+              </tr>
+            </thead>
+            <tbody id="topCustomers"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card clickrow">
+        <div class="k">Top products (by revenue)</div>
+        <div class="muted">From invoice_items</div>
+        <div style="overflow:auto; max-height: 360px; margin-top:10px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th class="right">Qty</th>
+                <th class="right">Revenue</th>
+              </tr>
+            </thead>
+            <tbody id="topProducts"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card clickrow">
+        <div class="k">Recent orders</div>
+        <div class="muted">Tap a row to open invoice</div>
+        <div style="overflow:auto; max-height: 360px; margin-top:10px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Invoice</th>
+                <th>Customer</th>
+                <th>Status</th>
+                <th class="right">Total</th>
+              </tr>
+            </thead>
+            <tbody id="recentOrders"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase } from "../supabaseClient.js";
+
+    const statusEl = document.getElementById("status");
+    const rangeEl = document.getElementById("range");
+    const fromEl = document.getElementById("from");
+    const toEl = document.getElementById("to");
+    const currencyEl = document.getElementById("currency");
+
+    const btnReload = document.getElementById("btnReload");
+    const btnExportInvoices = document.getElementById("btnExportInvoices");
+    const btnExportTopProducts = document.getElementById("btnExportTopProducts");
+
+    const kpiOrders = document.getElementById("kpiOrders");
+    const kpiRevenue = document.getElementById("kpiRevenue");
+    const kpiRevenue2 = document.getElementById("kpiRevenue2");
+    const kpiPaid = document.getElementById("kpiPaid");
+    const kpiAov = document.getElementById("kpiAov");
+    const kpiPaidRev = document.getElementById("kpiPaidRev");
+    const kpiUnpaidRev = document.getElementById("kpiUnpaidRev");
+
+    const topCustomersTbody = document.getElementById("topCustomers");
+    const topProductsTbody = document.getElementById("topProducts");
+    const recentOrdersTbody = document.getElementById("recentOrders");
+
+    let dailyChart = null;
+    let statusChart = null;
+
+    let lastInvoices = [];
+    let lastTopProducts = [];
+
+    function show(msg) { statusEl.textContent = msg; }
+
+    function toISODate(d) {
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function money(v) {
+      const n = Number(v);
+      if (!Number.isFinite(n)) return "0.00";
+      return n.toFixed(2);
+    }
+
+    function normStatus(s) {
+      const v = String(s || "").trim().toLowerCase();
+      if (v === "paid") return "paid";
+      if (v === "cancelled" || v === "canceled") return "cancelled";
+      if (v === "pending") return "pending";
+      if (v === "unpaid") return "unpaid";
+      if (!v) return "(blank)";
+      return v;
+    }
+
+    async function requireAdmin() {
+      show("Checking login…");
+      const { data: { user }, error: userErr } = await supabase.auth.getUser();
+      if (userErr) throw new Error("getUser error: " + userErr.message);
+      if (!user) { location.href = "../login.html"; return null; }
+
+      show("Checking admin…");
+      const { data: me, error: meErr } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", user.id)
+        .single();
+      if (meErr) throw new Error("profiles check error: " + meErr.message);
+      if (!me?.is_admin) throw new Error("Access denied (not admin)");
+      return user;
+    }
+
+    function setPreset(preset) {
+      const now = new Date();
+      const start = new Date(now);
+      const end = new Date(now);
+
+      if (preset === "today") {
+        // start/end today
+      } else if (preset === "week") {
+        // Sunday=0 ... Saturday=6
+        const day = now.getDay();
+        start.setDate(now.getDate() - day);
+      } else if (preset === "month") {
+        start.setDate(1);
+      } else {
+        const days = Number(preset || 30);
+        start.setDate(now.getDate() - (days - 1));
+      }
+
+      start.setHours(0,0,0,0);
+      end.setHours(23,59,59,999);
+
+      fromEl.value = toISODate(start);
+      toEl.value = toISODate(end);
+    }
+
+    function buildDailyChart(labels, values) {
+      const ctx = document.getElementById("chartDaily");
+      if (dailyChart) dailyChart.destroy();
+      dailyChart = new Chart(ctx, {
+        type: "line",
+        data: { labels, datasets: [{ label: "Revenue", data: values }] },
+        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+      });
+    }
+
+    function buildStatusChart(labels, values) {
+      const ctx = document.getElementById("chartStatus");
+      if (statusChart) statusChart.destroy();
+      statusChart = new Chart(ctx, {
+        type: "doughnut",
+        data: { labels, datasets: [{ label: "Count", data: values }] },
+        options: { responsive: true, plugins: { legend: { position: "bottom" } } }
+      });
+    }
+
+    function downloadCsv(filename, rows) {
+      const esc = (v) => {
+        const s = String(v ?? "");
+        if (/[",\n]/.test(s)) return `"${s.replaceAll('"', '""')}"`;
+        return s;
+      };
+      const csv = rows.map(r => r.map(esc).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    async function fetchInvoiceItemsAggregates(invoiceIds) {
+      // chunk because PostgREST in() has URL length limits
+      const chunkSize = 200;
+      const agg = new Map(); // item_name -> {qty, revenue}
+
+      for (let i = 0; i < invoiceIds.length; i += chunkSize) {
+        const chunk = invoiceIds.slice(i, i + chunkSize);
+        const { data, error } = await supabase
+          .from("invoice_items")
+          .select("item_name, qty, line_total, invoice_id")
+          .in("invoice_id", chunk);
+
+        if (error) throw error;
+
+        for (const r of (data || [])) {
+          const name = String(r.item_name || "Item").trim();
+          const obj = agg.get(name) || { qty: 0, revenue: 0 };
+          obj.qty += Number(r.qty ?? 0);
+          obj.revenue += Number(r.line_total ?? 0);
+          agg.set(name, obj);
+        }
+      }
+
+      return Array.from(agg.entries())
+        .map(([product, v]) => ({ product, qty: v.qty, revenue: v.revenue }))
+        .sort((a,b) => b.revenue - a.revenue)
+        .slice(0, 25);
+    }
+
+    async function loadDashboard() {
+      topCustomersTbody.innerHTML = "";
+      topProductsTbody.innerHTML = "";
+      recentOrdersTbody.innerHTML = "";
+      show("Loading invoices…");
+
+      const curr = (currencyEl.value || "").trim();
+
+      const start = new Date((fromEl.value || "") + "T00:00:00");
+      const end = new Date((toEl.value || "") + "T23:59:59");
+
+      let q = supabase
+        .from("invoices")
+        .select("id, invoice_number, created_at, currency, total, status, bill_to_email, bill_to_name, bill_to_company")
+        .gte("created_at", start.toISOString())
+        .lte("created_at", end.toISOString())
+        .order("created_at", { ascending: false })
+        .limit(2000);
+
+      if (curr) q = q.eq("currency", curr);
+
+      const { data: invs, error } = await q;
+      if (error) { show("ERROR: " + error.message); return; }
+
+      const invoices = invs || [];
+      lastInvoices = invoices;
+
+      // KPIs
+      const revenue = invoices.reduce((s, r) => s + Number(r.total ?? 0), 0);
+
+      const paidInvoices = invoices.filter(r => normStatus(r.status) === "paid");
+      const paidRev = paidInvoices.reduce((s, r) => s + Number(r.total ?? 0), 0);
+      const unpaidRev = revenue - paidRev;
+
+      const paidCount = paidInvoices.length;
+      const aov = invoices.length ? (revenue / invoices.length) : 0;
+
+      kpiOrders.textContent = String(invoices.length);
+      kpiRevenue.textContent = money(revenue);
+      kpiRevenue2.textContent = curr ? curr : (invoices[0]?.currency || "CAD");
+      kpiPaid.textContent = String(paidCount);
+      kpiAov.textContent = money(aov);
+      kpiPaidRev.textContent = money(paidRev);
+      kpiUnpaidRev.textContent = money(unpaidRev);
+
+      // Daily revenue
+      const dayMap = new Map(); // YYYY-MM-DD -> revenue
+      const cursor = new Date(start);
+      cursor.setHours(0,0,0,0);
+      const endDay = new Date(end);
+      endDay.setHours(0,0,0,0);
+
+      while (cursor <= endDay) {
+        dayMap.set(toISODate(cursor), 0);
+        cursor.setDate(cursor.getDate() + 1);
+      }
+
+      for (const r of invoices) {
+        const k = toISODate(new Date(r.created_at));
+        if (dayMap.has(k)) dayMap.set(k, dayMap.get(k) + Number(r.total ?? 0));
+      }
+
+      const dayLabels = Array.from(dayMap.keys());
+      const dayValues = dayLabels.map(k => Number(dayMap.get(k) || 0));
+      buildDailyChart(dayLabels, dayValues);
+
+      // Status breakdown (fixed buckets)
+      const buckets = ["paid","unpaid","pending","cancelled","(blank)"];
+      const statusMap = new Map(buckets.map(b => [b, 0]));
+      for (const r of invoices) {
+        const s = normStatus(r.status);
+        statusMap.set(s, (statusMap.get(s) || 0) + 1);
+      }
+      const stLabels = buckets;
+      const stValues = stLabels.map(k => statusMap.get(k) || 0);
+      buildStatusChart(stLabels, stValues);
+
+      // Top customers
+      const custMap = new Map();
+      for (const r of invoices) {
+        const who = (r.bill_to_company || r.bill_to_email || r.bill_to_name || "Unknown").trim();
+        const obj = custMap.get(who) || { orders: 0, revenue: 0 };
+        obj.orders += 1;
+        obj.revenue += Number(r.total ?? 0);
+        custMap.set(who, obj);
+      }
+      const topCustomers = Array.from(custMap.entries())
+        .map(([customer,v]) => ({ customer, orders: v.orders, revenue: v.revenue }))
+        .sort((a,b) => b.revenue - a.revenue)
+        .slice(0, 25);
+
+      for (const r of topCustomers) {
+        const tr = document.createElement("tr");
+        tr.dataset.customer = r.customer;
+        tr.innerHTML = `
+          <td>${r.customer}</td>
+          <td class="right">${r.orders}</td>
+          <td class="right">${money(r.revenue)}</td>
+        `;
+        topCustomersTbody.appendChild(tr);
+      }
+
+      // Recent orders (15)
+      const recent = invoices.slice(0, 15);
+      for (const r of recent) {
+        const cust = (r.bill_to_company || r.bill_to_email || r.bill_to_name || "").trim();
+        const tr = document.createElement("tr");
+        tr.dataset.invoiceId = r.id;
+        tr.innerHTML = `
+          <td>${r.invoice_number || r.id}</td>
+          <td>${cust}</td>
+          <td>${normStatus(r.status)}</td>
+          <td class="right">${money(r.total)}</td>
+        `;
+        recentOrdersTbody.appendChild(tr);
+      }
+
+      // Top products
+      show("Loading invoice items…");
+      try {
+        const invoiceIds = invoices.map(r => r.id);
+        const topProducts = invoiceIds.length ? await fetchInvoiceItemsAggregates(invoiceIds) : [];
+        lastTopProducts = topProducts;
+
+        for (const p of topProducts) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${p.product}</td>
+            <td class="right">${p.qty}</td>
+            <td class="right">${money(p.revenue)}</td>
+          `;
+          topProductsTbody.appendChild(tr);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+
+      show("Done ✅");
+    }
+
+    // Click: open orders filtered by customer
+    topCustomersTbody.addEventListener("click", (e) => {
+      const tr = e.target?.closest?.("tr");
+      if (!tr) return;
+      const customer = tr.dataset.customer || "";
+      const from = fromEl.value || "";
+      const to = toEl.value || "";
+      const url = `/admin/orders.html?q=${encodeURIComponent(customer)}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+      window.location.href = url;
+    });
+
+    // Click: open invoice
+    recentOrdersTbody.addEventListener("click", (e) => {
+      const tr = e.target?.closest?.("tr");
+      if (!tr) return;
+      const id = tr.dataset.invoiceId || "";
+      if (!id) return;
+      window.open(`/invoice.html?id=${encodeURIComponent(id)}`, "_blank");
+    });
+
+    btnReload.addEventListener("click", loadDashboard);
+
+    btnExportInvoices.addEventListener("click", () => {
+      const rows = [
+        ["invoice_id","invoice_number","created_at","status","currency","total","bill_to_company","bill_to_name","bill_to_email"]
+      ];
+      for (const r of (lastInvoices || [])) {
+        rows.push([
+          r.id,
+          r.invoice_number || "",
+          r.created_at || "",
+          normStatus(r.status),
+          r.currency || "",
+          r.total ?? "",
+          r.bill_to_company || "",
+          r.bill_to_name || "",
+          r.bill_to_email || ""
+        ]);
+      }
+      downloadCsv("invoices.csv", rows);
+    });
+
+    btnExportTopProducts.addEventListener("click", () => {
+      const rows = [["product","qty","revenue"]];
+      for (const p of (lastTopProducts || [])) rows.push([p.product, p.qty, money(p.revenue)]);
+      downloadCsv("top_products.csv", rows);
+    });
+
+    // Preset change fills date inputs
+    rangeEl.addEventListener("change", () => {
+      setPreset(rangeEl.value);
+      loadDashboard();
+    });
+
+    // Initialize dates on load
+    (async () => {
+      await requireAdmin();
+      setPreset(rangeEl.value);
+      await loadDashboard();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Admin – Customers</title>
+</head>
+<body>
+  <h2>Customers</h2>
+
+  <div id="status" style="padding:8px;border:1px solid #ccc;display:inline-block;margin-bottom:10px;">
+    Loading…
+  </div>
+
+  <table border="1" cellpadding="6">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Email</th>
+        <th>Full Name</th>
+        <th>Company</th>
+        <th>Phone</th>
+        <th>Tier</th>
+        <th>Save Tier</th>
+        <th>Wholesale Qty</th>
+        <th>Save Qty</th>
+        <th>Admin</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <script type="module">
+    import { supabase } from "../supabaseClient.js";
+
+    const status = document.getElementById("status");
+    const tbody = document.getElementById("rows");
+
+    function show(msg) { status.textContent = msg; }
+
+    function tierSelect(current) {
+      const v = current || "standard";
+      return `
+        <select class="tierSel">
+          <option value="standard" ${v==="standard"?"selected":""}>standard</option>
+          <option value="gold" ${v==="gold"?"selected":""}>gold</option>
+          <option value="platinum" ${v==="platinum"?"selected":""}>platinum</option>
+        </select>
+      `;
+    }
+
+    function qtyInput(current) {
+      const v = Number.isFinite(Number(current)) ? Number(current) : 50;
+      return `<input class="qtyInp" type="number" min="1" step="1" value="${v}" style="width:90px;">`;
+    }
+
+    async function load() {
+      show("Checking login…");
+      const { data: { user }, error: userErr } = await supabase.auth.getUser();
+      if (userErr) throw new Error("getUser error: " + userErr.message);
+      if (!user) { location.href = "../login.html"; return; }
+
+      show("Checking admin…");
+      const { data: me, error: meErr } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", user.id)
+        .single();
+
+      if (meErr) throw new Error("profiles check error: " + meErr.message);
+      if (!me?.is_admin) throw new Error("Access denied (not admin)");
+
+      show("Loading customers…");
+      const { data: customers, error: custErr } = await supabase
+        .from("profiles")
+        .select("id, email, full_name, company_name, phone, tier, wholesale_qty_threshold, is_admin")
+        .order("created_at", { ascending: false });
+
+      if (custErr) throw new Error("customers query error: " + custErr.message);
+
+      tbody.innerHTML = "";
+      for (const c of (customers || [])) {
+        const tr = document.createElement("tr");
+        tr.dataset.id = c.id;
+
+        tr.innerHTML = `
+          <td>${c.id}</td>
+          <td>${c.email ?? ""}</td>
+          <td>${c.full_name ?? ""}</td>
+          <td>${c.company_name ?? ""}</td>
+          <td>${c.phone ?? ""}</td>
+          <td>${tierSelect(c.tier)}</td>
+          <td><button class="saveTierBtn">Save</button></td>
+          <td>${qtyInput(c.wholesale_qty_threshold)}</td>
+          <td><button class="saveQtyBtn">Save</button></td>
+          <td>${c.is_admin ? "YES" : "NO"}</td>
+        `;
+
+        tbody.appendChild(tr);
+      }
+
+      tbody.addEventListener("click", async (e) => {
+        const tierBtn = e.target?.closest?.(".saveTierBtn");
+        const qtyBtn = e.target?.closest?.(".saveQtyBtn");
+        if (!tierBtn && !qtyBtn) return;
+
+        const tr = e.target.closest("tr");
+        const id = tr.dataset.id;
+
+        if (tierBtn) {
+          const sel = tr.querySelector(".tierSel");
+          const newTier = sel.value;
+
+          show("Saving tier…");
+          const { error: upErr } = await supabase
+            .from("profiles")
+            .update({ tier: newTier })
+            .eq("id", id);
+
+          if (upErr) { show("ERROR: " + upErr.message); return; }
+          show("Tier saved ✅");
+          return;
+        }
+
+        if (qtyBtn) {
+          const inp = tr.querySelector(".qtyInp");
+          const newQty = parseInt(inp.value, 10);
+
+          if (!Number.isFinite(newQty) || newQty < 1) {
+            show("ERROR: wholesale qty must be 1 or more");
+            return;
+          }
+
+          show("Saving wholesale qty…");
+          const { error: upErr } = await supabase
+            .from("profiles")
+            .update({ wholesale_qty_threshold: newQty })
+            .eq("id", id);
+
+          if (upErr) { show("ERROR: " + upErr.message); return; }
+          show("Wholesale qty saved ✅");
+          return;
+        }
+      });
+
+      show(`Done. Rows: ${(customers || []).length}`);
+    }
+
+    load().catch(err => show("ERROR: " + err.message));
+  </script>
+
+<div style="margin-bottom:15px;">
+  <a href="/admin/customers.html">Customers</a> |
+  <a href="/admin/platinum.html">Platinum</a> |
+  <a href="/admin/products-admin.html">Products</a> |
+  <a href="/admin/dashboard.html">Dashboard</a> |
+  <a href="./delivery-admin.html">Delivery Rules</a> |
+  <a href="/admin/orders.html">orders</a>
+</div>
+
+</body>
+</html>

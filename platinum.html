@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Admin – Platinum Prices</title>
+</head>
+<body>
+  <h2>Platinum Prices (Per Customer)</h2>
+  <div id="status" style="padding:8px;border:1px solid #ccc;display:inline-block;margin-bottom:10px;">Loading…</div>
+
+  <div style="margin:10px 0;">
+    <label>Choose customer (platinum): </label>
+    <select id="customerSelect"></select>
+    <button id="loadBtn">Load</button>
+  </div>
+
+  <table border="1" cellpadding="6">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Retail</th>
+        <th>Wholesale</th>
+        <th>Save</th>
+        <th>Clear</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <script type="module">
+    import { supabase } from "../supabaseClient.js";
+
+    const status = document.getElementById("status");
+    const customerSelect = document.getElementById("customerSelect");
+    const loadBtn = document.getElementById("loadBtn");
+    const rows = document.getElementById("rows");
+
+    const show = (m) => status.textContent = m;
+
+    async function mustBeAdmin() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { location.href = "../login.html"; throw ""; }
+
+      const { data: me, error } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", user.id)
+        .single();
+
+      if (error || !me?.is_admin) { document.body.innerHTML = "Access denied"; throw ""; }
+      return user;
+    }
+
+    async function loadPlatinumCustomers() {
+      show("Loading platinum customers…");
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, email, full_name")
+        .eq("tier", "platinum")
+        .order("created_at", { ascending: false });
+
+      if (error) throw new Error(error.message);
+
+      customerSelect.innerHTML = `<option value="">-- select --</option>`;
+      for (const c of (data || [])) {
+        const label = c.email || c.full_name || c.id;
+        const opt = document.createElement("option");
+        opt.value = c.id;
+        opt.textContent = label;
+        customerSelect.appendChild(opt);
+      }
+    }
+
+    async function loadProductsAndPrices(customerId) {
+      if (!customerId) { show("Select a customer"); return; }
+
+      show("Loading products…");
+      const { data: products, error: pErr } = await supabase
+        .from("products")
+        .select("id, name")
+        .order("name");
+
+      if (pErr) throw new Error(pErr.message);
+
+      show("Loading customer platinum prices…");
+      const { data: prices, error: prErr } = await supabase
+        .from("platinum_prices")
+        .select("product_id, retail_price, wholesale_price")
+        .eq("customer_id", customerId);
+
+      if (prErr) throw new Error(prErr.message);
+
+      const map = new Map((prices || []).map(x => [x.product_id, x]));
+
+      rows.innerHTML = "";
+      for (const prod of (products || [])) {
+        const existing = map.get(prod.id);
+        const retail = existing?.retail_price ?? "";
+        const wholesale = existing?.wholesale_price ?? "";
+
+        const tr = document.createElement("tr");
+        tr.dataset.pid = prod.id;
+        tr.innerHTML = `
+          <td>${prod.name}</td>
+          <td><input class="ret" type="number" step="0.01" min="0" value="${retail}" style="width:110px"></td>
+          <td><input class="wh" type="number" step="0.01" min="0" value="${wholesale}" style="width:110px"></td>
+          <td><button class="saveBtn">Save</button></td>
+          <td><button class="clearBtn">Clear</button></td>
+        `;
+        rows.appendChild(tr);
+      }
+
+      show("Ready ✅");
+    }
+
+    rows.addEventListener("click", async (e) => {
+      const saveBtn = e.target.closest(".saveBtn");
+      const clearBtn = e.target.closest(".clearBtn");
+      if (!saveBtn && !clearBtn) return;
+
+      const customerId = customerSelect.value;
+      const tr = e.target.closest("tr");
+      const productId = tr.dataset.pid;
+
+      if (clearBtn) {
+        show("Clearing…");
+        const { error } = await supabase
+          .from("platinum_prices")
+          .delete()
+          .eq("customer_id", customerId)
+          .eq("product_id", productId);
+
+        if (error) { show("ERROR: " + error.message); return; }
+
+        tr.querySelector(".ret").value = "";
+        tr.querySelector(".wh").value = "";
+        show("Cleared ✅");
+        return;
+      }
+
+      const retail = Number(tr.querySelector(".ret").value || 0);
+      const wholesale = Number(tr.querySelector(".wh").value || 0);
+
+      show("Saving…");
+      const { error } = await supabase
+        .from("platinum_prices")
+        .upsert(
+          { customer_id: customerId, product_id: productId, retail_price: retail, wholesale_price: wholesale },
+          { onConflict: "customer_id,product_id" }
+        );
+
+      if (error) { show("ERROR: " + error.message); return; }
+      show("Saved ✅");
+    });
+
+    loadBtn.addEventListener("click", async () => {
+      await loadProductsAndPrices(customerSelect.value);
+    });
+
+    (async () => {
+      await mustBeAdmin();
+      await loadPlatinumCustomers();
+      show("Select a platinum customer");
+    })().catch(err => show("ERROR: " + (err?.message || err)));
+  </script>
+
+<div style="margin-bottom:15px;">
+  <a href="/admin/customers.html">Customers</a> |
+  <a href="/admin/platinum.html">Platinum</a> |
+  <a href="/admin/products-admin.html">Products</a> |
+  <a href="/admin/dashboard.html">Dashboard</a> |
+  <a href="./delivery-admin.html">Delivery Rules</a> |
+    <a href="/admin/orders.html">orders</a>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin – Orders</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Arial, sans-serif; margin: 18px; }
+    .topbar { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+    .nav { margin: 6px 0 14px; }
+    .nav a { margin-right: 10px; }
+    .status { padding:8px 10px; border:1px solid #ccc; display:inline-block; }
+    .filters { display:flex; gap:10px; align-items:end; flex-wrap:wrap; }
+    label { font-size: 12px; color:#333; display:flex; flex-direction:column; gap:4px; }
+    input, select { padding:6px 8px; border:1px solid #bbb; border-radius:6px; min-width: 170px; }
+    button { padding:7px 10px; border:1px solid #888; border-radius:8px; background:#f6f6f6; cursor:pointer; }
+    button:hover { background:#efefef; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border:1px solid #ddd; padding:8px; vertical-align: top; }
+    th { background:#fafafa; position: sticky; top: 0; z-index: 2; }
+    .wrap { max-width: 1200px; }
+    .muted { color:#666; font-size:12px; }
+    .pill { display:inline-block; padding:2px 8px; border:1px solid #ccc; border-radius:999px; font-size:12px; }
+    .right { text-align:right; white-space:nowrap; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+    .row-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    details summary { cursor:pointer; }
+    pre { white-space: pre-wrap; word-break: break-word; background:#f7f7f7; border:1px solid #e2e2e2; padding:10px; border-radius:10px; margin:8px 0 0; }
+  
+    select.stSel { padding:6px 8px; border:1px solid #bbb; border-radius:6px; background:#fff; }
+
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h2>Orders</h2>
+
+    <div class="nav">
+      <a href="/admin/customers.html">Customers</a> |
+      <a href="/admin/platinum.html">Platinum</a> |
+      <a href="/admin/products-admin.html">Products</a> |
+	<a href="/admin/dashboard.html">Dashboard</a> |
+      <a href="./delivery-admin.html">Delivery Rules</a> |
+      <a href="/admin/orders.html"><strong>Orders</strong></a>
+    </div>
+
+    <div class="topbar">
+      <div id="status" class="status">Loading…</div>
+      <div class="muted">Table used: <span class="mono">public.invoices</span> (if your table name is different, tell me and I will adjust)</div>
+    </div>
+
+    <div class="filters">
+      <label>
+        Search (invoice/email)
+        <input id="q" type="text" placeholder="INV-... or customer email">
+      </label>
+
+      <label>
+        Date from
+        <input id="from" type="date">
+      </label>
+
+      <label>
+        Date to
+        <input id="to" type="date">
+      </label>
+
+      <label>
+        Status (optional)
+        <select id="statusFilter">
+          <option value="">Any</option>
+          <option value="paid">paid</option>
+          <option value="unpaid">unpaid</option>
+          <option value="pending">pending</option>
+          <option value="cancelled">cancelled</option>
+        </select>
+      </label>
+
+      <button id="btnLoad" type="button">Load</button>
+      <button id="btnToday" type="button">Today</button>
+      <button id="btnClear" type="button">Clear</button>
+    </div>
+
+    <div style="margin-top:14px; overflow:auto; max-height: 70vh;">
+      <table>
+        <thead>
+          <tr>
+            <th style="min-width:190px;">Invoice</th>
+            <th style="min-width:220px;">Customer</th>
+            <th style="min-width:120px;">Created</th>
+            <th style="min-width:120px;">Status</th>
+            <th style="min-width:120px;" class="right">Total</th>
+            <th style="min-width:220px;">Actions / Details</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase } from "../supabaseClient.js";
+
+    // Actions config
+    // If your invoice page has a different path, change INVOICE_PAGE.
+    const INVOICE_PAGE = "/invoice.html"; // opens as /invoice.html?id=...
+    // Edge Function (optional): implement a function that resends invoice emails.
+    // Expected: supabase.functions.invoke(RESEND_FUNCTION, { body: { action: "resend", invoice_id } })
+    const RESEND_FUNCTION = "create-invoice";
+
+    const statusEl = document.getElementById("status");
+    const tbody = document.getElementById("rows");
+
+    const qEl = document.getElementById("q");
+    const fromEl = document.getElementById("from");
+    const toEl = document.getElementById("to");
+    const statusFilterEl = document.getElementById("statusFilter");
+
+    const btnLoad = document.getElementById("btnLoad");
+    const btnToday = document.getElementById("btnToday");
+    const btnClear = document.getElementById("btnClear");
+
+    function show(msg) { statusEl.textContent = msg; }
+
+    function fmtMoney(v) {
+      const n = Number(v);
+      if (!Number.isFinite(n)) return "";
+      return n.toFixed(2);
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return "";
+      try { return new Date(iso).toLocaleString(); } catch { return iso; }
+    }
+
+    async function requireAdmin() {
+      show("Checking login…");
+      const { data: { user }, error: userErr } = await supabase.auth.getUser();
+      if (userErr) throw new Error("getUser error: " + userErr.message);
+      if (!user) { location.href = "../login.html"; return null; }
+
+      show("Checking admin…");
+      const { data: me, error: meErr } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", user.id)
+        .single();
+      if (meErr) throw new Error("profiles check error: " + meErr.message);
+      if (!me?.is_admin) throw new Error("Access denied (not admin)");
+      return user;
+    }
+
+    function setToday() {
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth()+1).padStart(2,"0");
+      const dd = String(d.getDate()).padStart(2,"0");
+      const s = `${yyyy}-${mm}-${dd}`;
+      fromEl.value = s;
+      toEl.value = s;
+    }
+
+    function clearFilters() {
+      qEl.value = "";
+      fromEl.value = "";
+      toEl.value = "";
+      statusFilterEl.value = "";
+    }
+
+    async function loadOrders() {
+      tbody.innerHTML = "";
+      show("Loading orders…");
+
+      let query = supabase
+        .from("invoices")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(200);
+
+      const q = (qEl.value || "").trim();
+      const from = (fromEl.value || "").trim();
+      const to = (toEl.value || "").trim();
+      const st = (statusFilterEl.value || "").trim();
+
+      if (from) query = query.gte("created_at", from + "T00:00:00");
+      if (to) query = query.lte("created_at", to + "T23:59:59");
+      if (st) query = query.eq("status", st);
+
+      if (q) {
+        const pat = `%${q}%`;
+        query = query.or(
+          `invoice_number.ilike.${pat},number.ilike.${pat},bill_to_email.ilike.${pat},bill_to_name.ilike.${pat},bill_to_company.ilike.${pat}`
+        );
+      }
+
+      const { data, error } = await query;
+      if (error) {
+        show("ERROR: " + error.message);
+        return;
+      }
+
+      const rows = data || [];
+      for (const inv of rows) {
+        const invoiceNum = inv.invoice_number ?? inv.number ?? inv.id ?? "";
+        const customer = inv.bill_to_email ?? inv.bill_to_name ?? "";
+        const created = inv.created_at ?? inv.created ?? "";
+        const stv = inv.status ?? inv.payment_status ?? "";
+        const total = inv.total_amount ?? inv.total ?? inv.amount_total ?? inv.grand_total ?? "";
+        const company = inv.bill_to_company ?? "";
+        const phone = inv.bill_to_phone ?? "";
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>
+            <div class="mono">${invoiceNum}</div>
+            <div class="muted mono">${inv.id ?? ""}</div>
+          </td>
+          <td>
+            <div>${inv.bill_to_email ?? ""}</div><div class="muted">${inv.bill_to_name ?? ""}</div>
+            <div class="muted">${company}${company && phone ? " · " : ""}${phone}</div>
+          </td>
+          <td>${fmtDate(created)}</td>
+          <td>
+            <select class="stSel">
+              <option value="" ${!stv ? "selected" : ""}>(blank)</option>
+              <option value="paid" ${stv==="paid" ? "selected" : ""}>paid</option>
+              <option value="unpaid" ${stv==="unpaid" ? "selected" : ""}>unpaid</option>
+              <option value="pending" ${stv==="pending" ? "selected" : ""}>pending</option>
+              <option value="cancelled" ${stv==="cancelled" ? "selected" : ""}>cancelled</option>
+            </select>
+          </td>
+          <td class="right">${fmtMoney(total)}</td>
+          <td>
+            <div class="row-actions">
+              <button type="button" class="btnOpen" data-id="${inv.id}">Open</button>
+              <button type="button" class="btnResend" data-id="${inv.id}">Resend Email</button>
+              <button type="button" class="btnSaveStatus" data-id="${inv.id}">Save Status</button>
+              <button type="button" class="btnCopy" data-id="${inv.id}">Copy JSON</button>
+            </div>
+            <details>
+              <summary class="muted">details</summary>
+              <pre class="mono">${escapeHtml(JSON.stringify(inv, null, 2))}</pre>
+            </details>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      }
+
+      show(`Done. Rows: ${rows.length}`);
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    }
+
+    tbody.addEventListener("click", async (e) => {
+
+      
+      const openBtn = e.target?.closest?.(".btnOpen");
+      if (openBtn) {
+        const id = openBtn.getAttribute("data-id");
+        const url = `${INVOICE_PAGE}?id=${encodeURIComponent(id)}`;
+        window.open(url, "_blank");
+        return;
+      }
+
+      const resendBtn = e.target?.closest?.(".btnResend");
+      if (resendBtn) {
+        const id = resendBtn.getAttribute("data-id");
+        show("Resending invoice email…");
+        const { data, error } = await supabase.functions.invoke(RESEND_FUNCTION, {
+ 	 body: { action: "resend", invoice_id: id }
+	});
+
+        if (error) { show("ERROR: " + error.message); return; }
+        // If function returns { ok: true } or similar, still show success.
+        show("Resend requested ✅");
+        return;
+      }
+
+const saveBtn = e.target?.closest?.(".btnSaveStatus");
+      if (saveBtn) {
+        const id = saveBtn.getAttribute("data-id");
+        const tr = saveBtn.closest("tr");
+        const sel = tr?.querySelector?.(".stSel");
+        const newStatus = (sel?.value || "").trim();
+
+        show("Saving status…");
+        const { error: upErr } = await supabase
+          .from("invoices")
+          .update({ status: newStatus || null })
+          .eq("id", id);
+
+        if (upErr) { show("ERROR: " + upErr.message); return; }
+        show("Status saved ✅");
+        return;
+      }
+      const btn = e.target?.closest?.(".btnCopy");
+      if (!btn) return;
+      try {
+        const row = btn.closest("tr");
+        const pre = row.querySelector("details pre");
+        const txt = pre?.textContent || "";
+        await navigator.clipboard.writeText(txt);
+        show("Copied ✅");
+      } catch {
+        show("Unable to copy");
+      }
+    });
+
+    btnLoad.addEventListener("click", loadOrders);
+    btnToday.addEventListener("click", () => { setToday(); loadOrders(); });
+    btnClear.addEventListener("click", () => { clearFilters(); loadOrders(); });
+
+    (async () => {
+      await requireAdmin();
+      await loadOrders();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin – Products</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Arial, sans-serif; margin: 18px; }
+    .wrap { max-width: 1500px; }
+    .nav { margin: 6px 0 14px; }
+    .nav a { margin-right: 10px; }
+    .status { padding:8px 10px; border:1px solid #ccc; display:inline-block; }
+    .top { display:flex; gap:12px; align-items:end; flex-wrap:wrap; margin-top:12px; }
+    label { font-size: 12px; color:#333; display:flex; flex-direction:column; gap:4px; }
+    input, select, textarea { padding:6px 8px; border:1px solid #bbb; border-radius:8px; min-width: 170px; }
+    textarea { min-height: 90px; resize: vertical; }
+    button { padding:7px 10px; border:1px solid #888; border-radius:10px; background:#f6f6f6; cursor:pointer; }
+    button:hover { background:#efefef; }
+    .btnrow { display:flex; gap:8px; flex-wrap:wrap; }
+    table { border-collapse: separate; border-spacing: 0; width: 100%; margin-top: 14px; }
+    th, td { border:1px solid #ddd; padding:8px; vertical-align: top; }
+    th { background:#fafafa; position: sticky; top: 0; z-index: 2; }
+
+    /* Sticky first column (Product) */
+    th.sticky-col, td.sticky-col {
+      position: sticky;
+      left: 0;
+      background: #fff;
+      z-index: 3;
+      box-shadow: 2px 0 0 rgba(0,0,0,0.06);
+    }
+    thead th.sticky-col { z-index: 6; }
+
+    .right { text-align:right; white-space:nowrap; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+    .pill { display:inline-block; padding:2px 8px; border:1px solid #ccc; border-radius:999px; font-size:12px; }
+    .muted { color:#666; font-size:12px; }
+    .row-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    dialog { border:1px solid #ddd; border-radius:16px; padding:0; width: min(920px, 96vw); }
+    .dlgHead { padding:14px 14px 10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .dlgBody { padding:14px; }
+    .grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+    .grid3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; }
+    .dlgFoot { padding:12px 14px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px; }
+    .w100 { min-width: 0; width: 100%; }
+    .small { font-size: 12px; }
+    @media (max-width: 900px) {
+      .grid, .grid3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h2>Products</h2>
+
+    <div class="nav">
+      <a href="/admin/dashboard.html">Dashboard</a> |
+      <a href="/admin/customers.html">Customers</a> |
+      <a href="/admin/platinum.html">Platinum</a> |
+      <a href="/admin/products-admin.html"><strong>Products</strong></a> |
+      <a href="./delivery-admin.html">Delivery Rules</a> |
+      <a href="/admin/orders.html">Orders</a>
+    </div>
+
+    <div class="status" id="status">Loading…</div>
+
+    <div class="top">
+      <label>
+        Search
+        <input id="q" type="text" placeholder="name / description">
+      </label>
+
+      <label>
+        Active
+        <select id="activeFilter">
+          <option value="">All</option>
+          <option value="true" selected>Active</option>
+          <option value="false">Inactive</option>
+        </select>
+      </label>
+
+      <div class="btnrow">
+        <button id="btnLoad" type="button">Load</button>
+        <button id="btnNew" type="button">New Product</button>
+        <button id="btnExport" type="button">Export CSV</button>
+      </div>
+    </div>
+
+    <div class="muted small" style="margin-top:8px;">
+      Platinum prices are managed in <b>Platinum</b> page (no Platinum column here).
+    </div>
+
+    <div style="overflow:auto; max-height: 72vh; margin-top:10px;">
+      <table>
+        <thead>
+          <tr>
+            <th style="min-width:260px;" class="sticky-col">Product</th>
+            <th style="min-width:160px;">Category</th>
+            <th style="min-width:90px;">Active</th>
+            <th style="min-width:80px;">Sort</th>
+
+            <th style="min-width:130px;" class="right">Std Retail</th>
+            <th style="min-width:130px;" class="right">Std Wholesale</th>
+
+            <th style="min-width:130px;" class="right">Gold Retail</th>
+            <th style="min-width:130px;" class="right">Gold Wholesale</th>
+
+            <th style="min-width:320px;">Description</th>
+            <th style="min-width:260px;">Specification</th>
+            <th style="min-width:260px;">Features</th>
+            <th style="min-width:110px;" class="right">Rolls/Box</th>
+
+            <th style="min-width:220px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+
+    <dialog id="dlg">
+      <div class="dlgHead">
+        <div>
+          <div class="mono" id="dlgId"></div>
+          <div style="font-weight:700;" id="dlgTitle">Product</div>
+          <div class="muted">Table: <span class="mono">public.products</span></div>
+        </div>
+        <button id="btnClose" type="button">Close</button>
+      </div>
+
+      <div class="dlgBody">
+        <div class="grid">
+          <label class="w100">
+            Name
+            <input id="f_name" class="w100" type="text" placeholder="Product name">
+          </label>
+          <label class="w100">
+  Product image (upload)
+  <input id="f_image_file" class="w100" type="file" accept="image/*">
+</label>
+<div class="w100" style="display:flex; flex-direction:column; gap:6px;">
+  <label class="w100" style="min-width:0;">
+    Image URL (auto)
+    <input id="f_image" class="w100" type="text" placeholder="Upload an image to auto-fill" readonly>
+  </label>
+  <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+    <button id="btnUploadImg" type="button">Upload</button>
+    <span class="muted small" id="imgUploadStatus"></span>
+  </div>
+</div>
+        </div>
+
+        <div class="grid3" style="margin-top:12px;">
+          <label class="w100">
+            Active
+            <select id="f_active" class="w100">
+              <option value="true" selected>true</option>
+              <option value="false">false</option>
+            </select>
+          </label>
+          <label class="w100">
+            Sort order
+            <input id="f_sort" class="w100" type="number" step="1" placeholder="0">
+          </label>
+          <label class="w100">
+            Rolls / Box
+            <input id="f_rolls" class="w100" type="number" step="1" placeholder="0">
+          </label>
+        </div>
+
+        <div class="grid3" style="margin-top:12px;">
+          <label class="w100">
+            Currency
+            <input id="f_currency" class="w100" type="text" placeholder="CAD" value="CAD">
+          </label>
+          <label class="w100">
+            Category
+            <select id="f_category" class="w100">
+              <option value="">-- select --</option>
+              <option value="Stretch Wrap">Stretch Wrap</option>
+              <option value="Pre-Stretch Wrap">Pre-Stretch Wrap</option>
+              <option value="Tape Rolls">Tape Rolls</option>
+            </select>
+          </label>
+          <div></div>
+        </div>
+
+        <div class="grid" style="margin-top:12px;">
+          <label class="w100">
+            Std Retail price
+            <input id="f_std_retail" class="w100" type="number" step="0.01" placeholder="0.00">
+          </label>
+          <label class="w100">
+            Std Wholesale price
+            <input id="f_std_wholesale" class="w100" type="number" step="0.01" placeholder="0.00">
+          </label>
+        </div>
+
+        <div class="grid" style="margin-top:12px;">
+          <label class="w100">
+            Gold Retail price
+            <input id="f_gold_retail" class="w100" type="number" step="0.01" placeholder="0.00">
+          </label>
+          <label class="w100">
+            Gold Wholesale price
+            <input id="f_gold_wholesale" class="w100" type="number" step="0.01" placeholder="0.00">
+          </label>
+        </div>
+
+        <div class="grid" style="margin-top:12px;">
+          <label class="w100">
+            Description
+            <textarea id="f_desc" class="w100" placeholder="Description..."></textarea>
+          </label>
+          <label class="w100">
+            Specification
+            <textarea id="f_spec" class="w100" placeholder="Specification..."></textarea>
+          </label>
+        </div>
+        <div style="margin-top:12px;">
+          <label class="w100">
+            Features
+            <textarea id="f_features" class="w100" placeholder="Features..."></textarea>
+          </label>
+        </div>
+
+
+        <div class="muted small" style="margin-top:10px;">
+          Platinum custom prices are per-customer in <b>Platinum</b> page.
+        </div>
+      </div>
+
+      <div class="dlgFoot">
+        <button id="btnDelete" type="button">Delete</button>
+        <button id="btnSave" type="button">Save</button>
+      </div>
+    </dialog>
+  </div>
+
+  <script type="module">
+    import { supabase } from "../supabaseClient.js";
+
+    const statusEl = document.getElementById("status");
+    const tbody = document.getElementById("rows");
+
+    const qEl = document.getElementById("q");
+    const activeFilterEl = document.getElementById("activeFilter");
+    const btnLoad = document.getElementById("btnLoad");
+    const btnNew = document.getElementById("btnNew");
+    const btnExport = document.getElementById("btnExport");
+
+    const dlg = document.getElementById("dlg");
+    const dlgIdEl = document.getElementById("dlgId");
+    const dlgTitleEl = document.getElementById("dlgTitle");
+    const btnClose = document.getElementById("btnClose");
+    const btnSave = document.getElementById("btnSave");
+    const btnDelete = document.getElementById("btnDelete");
+
+    const f_name = document.getElementById("f_name");
+    const f_image = document.getElementById("f_image");
+    const f_image_file = document.getElementById("f_image_file");
+    const btnUploadImg = document.getElementById("btnUploadImg");
+    const imgUploadStatus = document.getElementById("imgUploadStatus");
+    const f_active = document.getElementById("f_active");
+    const f_sort = document.getElementById("f_sort");
+    const f_rolls = document.getElementById("f_rolls");
+    const f_currency = document.getElementById("f_currency");
+    const f_category = document.getElementById("f_category");
+
+    const f_std_retail = document.getElementById("f_std_retail");
+    const f_std_wholesale = document.getElementById("f_std_wholesale");
+    const f_gold_retail = document.getElementById("f_gold_retail");
+    const f_gold_wholesale = document.getElementById("f_gold_wholesale");
+
+    const f_desc = document.getElementById("f_desc");
+    const f_spec = document.getElementById("f_spec");
+    const f_features = document.getElementById("f_features");
+
+    let editing = null;
+
+    
+    // --- Import defaults from public products.html (catalog) ---
+    // We use this to auto-fill Std prices, Description, Specification, Features, and Rolls/Box
+    // when they are missing in the database.
+    let __CATALOG_CACHE = null;
+
+    function normName(s) {
+      return String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
+    }
+
+    function parseRollsPerBox(specText, metaText) {
+      const txt = `${specText || ""} ${metaText || ""}`;
+      const m = txt.match(/(\d+)\s*rolls?\s*\/\s*box/i) || txt.match(/(\d+)\s*rolls?\s*per\s*box/i);
+      if (m) return Number(m[1]) || null;
+      return null;
+    }
+
+    async function loadCatalogFromProductsHtml() {
+      if (__CATALOG_CACHE) return __CATALOG_CACHE;
+
+      const tryUrls = ["../products.html", "products.html"];
+      let html = null;
+
+      for (const url of tryUrls) {
+        try {
+          const r = await fetch(url, { cache: "no-cache" });
+          if (r.ok) { html = await r.text(); break; }
+        } catch (_) {}
+      }
+
+      if (!html) {
+        __CATALOG_CACHE = { byName: new Map(), byId: new Map() };
+        return __CATALOG_CACHE;
+      }
+
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      const cards = Array.from(doc.querySelectorAll("article.product-card, .product-card, [data-name], [data-id]"))
+        .filter(el => (el.querySelector && el.querySelector(".prod-desc, .prod-spec, .prod-features, .features, .spec, .desc")) || (el.hasAttribute && (el.hasAttribute("data-retail") || el.hasAttribute("data-wholesale"))));
+
+      const byName = new Map();
+      const byId = new Map();
+
+      const pickText = (el, sels) => {
+        for (const s of sels) {
+          const n = el.querySelector(s);
+          if (n && (n.textContent || "").trim()) return (n.textContent || "").trim();
+        }
+        return "";
+      };
+      const pickAttr = (el, attrs) => {
+        for (const a of attrs) {
+          const v = el.getAttribute(a);
+          if (v !== null && v !== undefined && String(v).trim() !== "") return String(v).trim();
+        }
+        return "";
+      };
+      const pickNumAttr = (el, attrs) => {
+        const v = pickAttr(el, attrs);
+        const n = Number(v);
+        return Number.isFinite(n) ? n : 0;
+      };
+
+      for (const card of cards) {
+        const pid = pickAttr(card, ["data-id","data-product-id","data-sku","data-pid"]) || "";
+        const name = pickAttr(card, ["data-name","data-title","data-product","data-product-name"]) || pickText(card, [".prod-name","h3","h2",".title",".product-title"]);
+        const spec = pickText(card, [".prod-spec",".spec",".product-spec",".product-specification","[data-field=\"prod-spec\"]"]);
+        const desc = pickText(card, [".prod-desc",".desc",".product-desc",".product-description","[data-field=\"prod-desc\"]"]);
+        let featuresArr = Array.from(card.querySelectorAll(".prod-features li, .features li, .product-features li")).map(li => (li.textContent || "").trim()).filter(Boolean);
+        if (!featuresArr.length) {
+          const ft = pickText(card, [".prod-features",".features",".product-features","[data-field=\"prod-features\"]"]);
+          if (ft) {
+            featuresArr = ft.split(/\r?\n|•|\u2022|\-|\*/).map(s => s.trim()).filter(Boolean);
+          }
+        }
+        const features = featuresArr.join("\n");
+
+        const stdRetail = pickNumAttr(card, ["data-retail","data-std-retail","data-retail-price","data-price-retail","data-standard-retail"]);
+        const stdWholesale = pickNumAttr(card, ["data-wholesale","data-std-wholesale","data-wholesale-price","data-price-wholesale","data-standard-wholesale"]);
+
+        const goldRetail = pickNumAttr(card, ["data-retail-gold","data-gold-retail","data-price-retail-gold","data-gold-retail-price"]);
+        const goldWholesale = pickNumAttr(card, ["data-wholesale-gold","data-gold-wholesale","data-price-wholesale-gold","data-gold-wholesale-price"]);
+
+        const meta1 = pickText(card, [".prod-meta span",".meta span",".prod-meta",".meta",".product-meta","[data-field=\"prod-meta\"]"]);
+        let rolls = parseRollsPerBox(spec, meta1);
+        if (!rolls) {
+          const rAttr = pickAttr(card, ["data-rolls","data-rolls-per-box","data-rolls-box","data-rolls_per_box"]); 
+          const rn = Number(rAttr);
+          if (Number.isFinite(rn) && rn > 0) rolls = rn;
+        }
+        if (!rolls) {
+          const rTxt = pickText(card, [".prod-rolls",".rolls",".rolls-per-box",".product-rolls"]);
+          const rn2 = parseRollsPerBox(rTxt, "");
+          if (rn2) rolls = rn2;
+        }
+
+        const payload = {
+          public_id: pid || null,
+          name,
+          spec,
+          desc,
+          features,
+          rolls_per_box: rolls,
+          std_retail: stdRetail,
+          std_wholesale: stdWholesale,
+          gold_retail: goldRetail,
+          gold_wholesale: goldWholesale,
+        };
+
+        if (pid) byId.set(String(pid), payload);
+        if (name) byName.set(normName(name), payload);
+      }
+
+      __CATALOG_CACHE = { byName, byId };
+      return __CATALOG_CACHE;
+    }
+
+    async function applyCatalogDefaultsAndPersist(rows) {
+      const catalog = await loadCatalogFromProductsHtml();
+      if (!catalog?.byName) return rows;
+
+      let updatedCount = 0;
+
+      for (const r of rows) {
+        const key = normName(r.name);
+        const cat = catalog.byName.get(key);
+        if (!cat) continue;
+
+        const patch = {};
+
+        // Standard prices
+        if ((Number(r.std_retail) || 0) === 0 && cat.std_retail) patch.retail_price = cat.std_retail;
+        if ((Number(r.std_wholesale) || 0) === 0 && cat.std_wholesale) patch.wholesale_price = cat.std_wholesale;
+
+        // Content fields
+        if (!String(r.description || "").trim() && cat.desc) patch.description = cat.desc;
+        if (!String(r.specification || "").trim() && cat.spec) patch.specification = cat.spec;
+        if (!String(r.features || "").trim() && cat.features) patch.features = cat.features;
+
+        // Rolls/box
+        if ((r.rolls_per_box === null || r.rolls_per_box === undefined || Number(r.rolls_per_box) === 0) && cat.rolls_per_box) {
+          patch.rolls_per_box = cat.rolls_per_box;
+        }
+
+        if (Object.keys(patch).length === 0) continue;
+
+        try {
+          // Persist into DB so admin page shows values next time too
+          const { error } = await supabase.from("products").update(patch).eq("id", r.id);
+          if (!error) {
+            updatedCount++;
+            // Update local row object so UI shows immediately
+            if (patch.retail_price !== undefined) r.std_retail = patch.retail_price;
+            if (patch.wholesale_price !== undefined) r.std_wholesale = patch.wholesale_price;
+            if (patch.description !== undefined) r.description = patch.description;
+            if (patch.specification !== undefined) r.specification = patch.specification;
+            if (patch.features !== undefined) r.features = patch.features;
+            if (patch.rolls_per_box !== undefined) r.rolls_per_box = patch.rolls_per_box;
+          }
+        } catch (_) {}
+      }
+
+      if (updatedCount) {
+        show(`Imported ${updatedCount} product(s) from products.html`);
+      }
+
+      return rows;
+    }
+
+function show(msg) { statusEl.textContent = msg; }
+
+    function n(v) {
+      const x = Number(v);
+      return Number.isFinite(x) ? x : null;
+    }
+
+    function money(v) {
+      const x = Number(v);
+      if (!Number.isFinite(x)) return "";
+      return x.toFixed(2);
+    }
+
+// --- Image upload (Supabase Storage: product-images) ---
+const IMAGE_BUCKET = "product-images";
+
+function safeSlug(s) {
+  return String(s || "product")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "") || "product";
+}
+
+async function uploadSelectedImage() {
+  const file = f_image_file?.files?.[0];
+  if (!file) throw new Error("Choose an image first.");
+
+  // Must be authenticated for storage insert policy
+  const { data: sess } = await supabase.auth.getSession();
+  if (!sess?.session?.user) throw new Error("Please sign in again, then upload.");
+
+  const name = (f_name.value || "").trim();
+  const ext = (file.name.split(".").pop() || "png").toLowerCase();
+  const path = `products/${safeSlug(name)}-${Date.now()}.${ext}`;
+
+  imgUploadStatus.textContent = "Uploading…";
+  const { error: upErr } = await supabase.storage
+    .from(IMAGE_BUCKET)
+    .upload(path, file, { upsert: true, contentType: file.type });
+
+  if (upErr) throw upErr;
+
+  const { data: pub } = supabase.storage.from(IMAGE_BUCKET).getPublicUrl(path);
+  const url = pub?.publicUrl;
+  if (!url) throw new Error("Could not generate public URL.");
+
+  // Auto-fill image_url field
+  f_image.value = url;
+  imgUploadStatus.textContent = "Uploaded ✅";
+  return url;
+}
+
+btnUploadImg?.addEventListener("click", async () => {
+  try {
+    btnUploadImg.disabled = true;
+    await uploadSelectedImage();
+  } catch (e) {
+    imgUploadStatus.textContent = "";
+    alert(e?.message || String(e));
+  } finally {
+    btnUploadImg.disabled = false;
+  }
+});
+
+
+    async function requireAdmin() {
+      show("Checking login…");
+      const { data: { user }, error: userErr } = await supabase.auth.getUser();
+      if (userErr) throw new Error("getUser error: " + userErr.message);
+      if (!user) { location.href = "../login.html"; return null; }
+
+      show("Checking admin…");
+      const { data: me, error: meErr } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", user.id)
+        .single();
+      if (meErr) throw new Error("profiles check error: " + meErr.message);
+      if (!me?.is_admin) throw new Error("Access denied (not admin)");
+      return user;
+    }
+
+    function rowField(r, names, fallback = null) {
+      for (const k of names) if (r && r[k] !== undefined && r[k] !== null) return r[k];
+      return fallback;
+    }
+
+    function normalizeRow(r) {
+      return {
+        id: r.id,
+        name: rowField(r, ["name","product_name","title"], ""),
+        is_active: rowField(r, ["is_active","active","enabled"], true),
+        sort_order: rowField(r, ["sort_order","sort","display_order"], 0),
+        currency: rowField(r, ["currency"], "CAD"),
+
+        
+
+        category: rowField(r, ["category","product_category","cat"], ""),std_retail: rowField(r, ["retail_price","price_retail","retail","standard_retail_price","std_retail_price","std_retail","std_retail_amount"], 0),
+        std_wholesale: rowField(r, ["wholesale_price","price_wholesale","wholesale","standard_wholesale_price","std_wholesale_price","std_wholesale","std_wholesale_amount"], 0),
+
+        gold_retail: rowField(r, ["gold_retail_price","gold_retail","price_gold_retail","gold_price_retail","gold_price"], null),
+        gold_wholesale: rowField(r, ["gold_wholesale_price","gold_wholesale","price_gold_wholesale","gold_price_wholesale","gold_wholesale"], null),
+
+        description: rowField(r, ["prod_desc","description","desc","product_description"], ""),
+        specification: rowField(r, ["prod_spec","specification","specs","product_specification"], ""),
+        features: rowField(r, ["prod_features","features","feature","product_features"], ""),
+        rolls_per_box: rowField(r, ["rolls_per_box","rolls_box","rolls_per_case","rolls_case"], null),
+        image_url: rowField(r, ["image_url","image","photo_url","img_url"], ""),
+
+        _raw: r
+      };
+    }
+
+    function buildSearchOr(query) {
+      const pat = `%${query}%`;
+      return `name.ilike.${pat},description.ilike.${pat},specification.ilike.${pat},features.ilike.${pat},category.ilike.${pat}`;
+    }
+    async function loadProducts() {
+      tbody.innerHTML = "";
+      show("Loading products…");
+
+      let q = supabase
+        .from("products")
+        .select("*")
+        .order("sort_order", { ascending: true, nullsFirst: true })
+        .order("name", { ascending: true })
+        .limit(2000);
+
+      const activeFilter = (activeFilterEl.value || "").trim();
+      if (activeFilter === "true") q = q.eq("is_active", true);
+      if (activeFilter === "false") q = q.eq("is_active", false);
+
+      const search = (qEl.value || "").trim();
+      if (search) q = q.or(buildSearchOr(search));
+
+      const { data, error } = await q;
+      if (error) { show("ERROR: " + error.message); return; }
+
+      let rows = (data || []).map(normalizeRow);
+      rows = await applyCatalogDefaultsAndPersist(rows);
+
+      for (const r of rows) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="sticky-col">
+            <div style="font-weight:700;">${r.name || ""}</div>
+            <div class="muted mono">${r.id || ""}</div>
+          </td>
+          <td>${r.category || ""}</td>
+          <td>${r.is_active ? `<span class="pill">active</span>` : `<span class="pill">inactive</span>`}</td>
+          <td class="right">${r.sort_order ?? ""}</td>
+
+          <td class="right">${money(r.std_retail)} ${r.currency || ""}</td>
+          <td class="right">${money(r.std_wholesale)} ${r.currency || ""}</td>
+
+          <td class="right">${r.gold_retail === null ? "" : money(r.gold_retail) + " " + (r.currency||"")}</td>
+          <td class="right">${r.gold_wholesale === null ? "" : money(r.gold_wholesale) + " " + (r.currency||"")}</td>
+
+          <td>${(r.description || "").replaceAll("\n","<br/>")}</td>
+          <td>${(r.specification || "").replaceAll("\n","<br/>")}</td>
+          <td>${(r.features || "").replaceAll("\n","<br/>")}</td>
+          <td class="right">${r.rolls_per_box ?? ""}</td>
+
+          <td>
+            <div class="row-actions">
+              <button type="button" class="btnEdit" data-id="${r.id}">Edit</button>
+              <button type="button" class="btnToggle" data-id="${r.id}" data-active="${r.is_active ? "true" : "false"}">${r.is_active ? "Deactivate" : "Activate"}</button>
+            </div>
+          </td>
+        `;
+        tr.dataset.raw = JSON.stringify(r._raw);
+        tbody.appendChild(tr);
+      }
+
+      show(`Done ✅ Products: ${rows.length}`);
+    }
+
+    function openDialog(row) {
+      editing = row;
+      const r = row ? normalizeRow(row) : {
+        id: "",
+        name: "",
+        is_active: true,
+        sort_order: 0,
+        rolls_per_box: null,
+        currency: "CAD",
+        category: "",
+        std_retail: 0,
+        std_wholesale: 0,
+        gold_retail: null,
+        gold_wholesale: null,
+        description: "",
+        specification: "",
+        features: "",
+        image_url: ""
+      };
+
+      dlgIdEl.textContent = r.id ? ("ID: " + r.id) : "New product";
+      dlgTitleEl.textContent = r.name || "Product";
+
+      f_name.value = r.name || "";
+      f_image.value = r.image_url || "";
+      if (f_image_file) f_image_file.value = "";
+      if (imgUploadStatus) imgUploadStatus.textContent = "";
+      f_active.value = String(!!r.is_active);
+      f_sort.value = r.sort_order ?? 0;
+      f_rolls.value = r.rolls_per_box ?? "";
+      f_currency.value = r.currency || "CAD";
+      f_category.value = r.category || "";
+
+      f_std_retail.value = r.std_retail ?? 0;
+      f_std_wholesale.value = r.std_wholesale ?? 0;
+      f_gold_retail.value = r.gold_retail ?? "";
+      f_gold_wholesale.value = r.gold_wholesale ?? "";
+
+      f_desc.value = r.description || "";
+      f_spec.value = r.specification || "";
+      f_features.value = r.features || "";
+
+      btnDelete.style.display = r.id ? "inline-block" : "none";
+      dlg.showModal();
+    }
+
+    function closeDialog() {
+      dlg.close();
+      editing = null;
+    }
+
+    async function saveDialog() {
+      show("Saving…");
+
+      const payload = {
+        name: String(f_name.value || "").trim(),
+        is_active: String(f_active.value) === "true",
+        sort_order: Number(f_sort.value || 0),
+        currency: String(f_currency.value || "CAD").trim() || "CAD",
+
+        category: f_category.value || null,
+
+        retail_price: n(f_std_retail.value) ?? 0,
+        wholesale_price: n(f_std_wholesale.value) ?? 0,
+
+        gold_retail_price: f_gold_retail.value === "" ? null : n(f_gold_retail.value),
+        gold_wholesale_price: f_gold_wholesale.value === "" ? null : n(f_gold_wholesale.value),
+
+        description: String(f_desc.value || ""),
+        specification: String(f_spec.value || ""),
+        features: String(f_features.value || ""),
+        rolls_per_box: f_rolls.value === "" ? null : Number(f_rolls.value),
+        image_url: String(f_image.value || "").trim() || null,
+      };
+
+      if (!payload.name) { show("ERROR: Name required"); return; }
+
+      if (editing?.id) {
+        const { error } = await supabase
+          .from("products")
+          .update(payload)
+          .eq("id", editing.id);
+        if (error) { show("ERROR: " + error.message); return; }
+      } else {
+        const { error } = await supabase
+          .from("products")
+          .insert(payload);
+        if (error) { show("ERROR: " + error.message); return; }
+      }
+
+      closeDialog();
+      await loadProducts();
+      show("Saved ✅");
+    }
+
+    async function deleteDialog() {
+      if (!editing?.id) return;
+      show("Deleting…");
+
+      const { error } = await supabase
+        .from("products")
+        .delete()
+        .eq("id", editing.id);
+
+      if (error) { show("ERROR: " + error.message); return; }
+      closeDialog();
+      await loadProducts();
+      show("Deleted ✅");
+    }
+
+    async function toggleActive(id, currentActive) {
+      show("Saving…");
+      const { error } = await supabase
+        .from("products")
+        .update({ is_active: !currentActive })
+        .eq("id", id);
+      if (error) { show("ERROR: " + error.message); return; }
+      await loadProducts();
+      show("Saved ✅");
+    }
+
+    function downloadCsv(filename, rows) {
+      const esc = (v) => {
+        const s = String(v ?? "");
+        if (/[",\n]/.test(s)) return `"${s.replaceAll('"', '""')}"`;
+        return s;
+      };
+      const csv = rows.map(r => r.map(esc).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportCsvFromTable() {
+      const rows = [
+        ["id","name","category","is_active","sort_order","currency","retail_price","wholesale_price","gold_retail_price","gold_wholesale_price","description","specification","features","rolls_per_box","image_url"]
+      ];
+      const trs = Array.from(tbody.querySelectorAll("tr"));
+      for (const tr of trs) {
+        const raw = JSON.parse(tr.dataset.raw || "{}");
+        const r = normalizeRow(raw);
+        rows.push([
+          r.id,
+          r.name,
+          r.category || "",
+          r.is_active ? "true" : "false",
+          r.sort_order ?? "",
+          r.currency || "",
+          r.std_retail ?? "",
+          r.std_wholesale ?? "",
+          r.gold_retail ?? "",
+          r.gold_wholesale ?? "",
+          r.description ?? "",
+          r.specification ?? "",
+          r.features ?? "",
+          r.rolls_per_box ?? "",
+          r.image_url ?? ""
+        ]);
+      }
+      downloadCsv("products_admin_export.csv", rows);
+    }
+
+    tbody.addEventListener("click", async (e) => {
+      const editBtn = e.target?.closest?.(".btnEdit");
+      if (editBtn) {
+        const tr = editBtn.closest("tr");
+        const raw = JSON.parse(tr.dataset.raw || "{}");
+        openDialog(raw);
+        return;
+      }
+
+      const toggleBtn = e.target?.closest?.(".btnToggle");
+      if (toggleBtn) {
+        const id = toggleBtn.getAttribute("data-id");
+        const currentActive = toggleBtn.getAttribute("data-active") === "true";
+        await toggleActive(id, currentActive);
+        return;
+      }
+    });
+
+    btnLoad.addEventListener("click", loadProducts);
+    btnNew.addEventListener("click", () => openDialog(null));
+    btnExport.addEventListener("click", exportCsvFromTable);
+
+    btnClose.addEventListener("click", closeDialog);
+    btnSave.addEventListener("click", saveDialog);
+    btnDelete.addEventListener("click", deleteDialog);
+
+    (async () => {
+      await requireAdmin();
+      await loadProducts();
+    })();
+  </script>
+</body>
+</html>
