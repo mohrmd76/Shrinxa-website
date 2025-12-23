@@ -1613,7 +1613,30 @@ let DELIVERY_RULE = { min_subtotal: 300, fee: 30 }; // fallback
 
 async function loadDeliveryRule(sb){
   try{
-    const { data, error } = await sb
+    // get logged-in user
+    const { data: u } = await sb.auth.getUser();
+    const uid = u?.user?.id || null;
+
+    // 1) try customer override first
+    if (uid) {
+      const { data: cust } = await sb
+        .from("delivery_rules")
+        .select("min_subtotal,fee")
+        .eq("customer_id", uid)
+        .eq("is_active", true)
+        .order("updated_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (cust) {
+        DELIVERY_RULE = cust;
+        return;
+      }
+    }
+
+    // 2) fallback to default rule
+    const { data: def } = await sb
       .from("delivery_rules")
       .select("min_subtotal,fee")
       .is("customer_id", null)
@@ -1623,7 +1646,7 @@ async function loadDeliveryRule(sb){
       .limit(1)
       .maybeSingle();
 
-    if (!error && data) DELIVERY_RULE = data;
+    if (def) DELIVERY_RULE = def;
   } catch (_) {}
 }
 
