@@ -1325,7 +1325,9 @@
 <main>
 <section class="page-section" data-page="products" id="products">
 <h2>Product catalogue</h2>
-<p class="section-lede">All items below come directly from the official Shrinxa catalogue. Use the filters to see only Stretch Wrap, Pre-Stretch, or Tape rolls. The cart is a simulator and applies 13% HST on the subtotal.</p><div class="pricing-note">Pricing tiers: retail applies from 1–49 boxes per item. Wholesale pricing starts from 50 boxes and above for a given product line. Orders under $300 are estimated at a $30 GTA delivery charge; orders $300+ qualify for free delivery.</div>
+<p class="section-lede">All items below come directly from the official Shrinxa catalogue. Use the filters to see only Stretch Wrap, Pre-Stretch, or Tape rolls. The cart is a simulator and applies 13% HST on the subtotal.</p><div class="pricing-note" id="pricingNote">Pricing tiers: retail applies from 1–49 boxes per item. Wholesale pricing starts from 50 boxes and above for a given product line. Orders under $300 are estimated at a $30 GTA delivery charge; orders $300+ qualify for free delivery.</div>
+
+
 <div class="filters-row">
 <button class="pill" data-filter="all">All products</button>
 <button class="pill" data-filter="Stretch Wrap">Stretch Wrap</button>
@@ -1643,6 +1645,111 @@ async function initAuthUI() {
 document.addEventListener("DOMContentLoaded", () => {
   initAuthUI();
 });
+<script>
+async function updatePricingNote() {
+  const el = document.getElementById("pricingNote");
+  if (!el) return;
+
+  // defaults
+  let wholesaleTh = 50;
+  let deliveryThreshold = 300;
+  let deliveryFee = 30;
+
+  try {
+    const sb = await getSupabaseClient();
+    if (!sb?.auth || !sb?.from) {
+      el.textContent =
+        `Pricing tiers: retail applies from 1–${wholesaleTh - 1} boxes per item. ` +
+        `Wholesale pricing starts from ${wholesaleTh} boxes and above for a given product line. ` +
+        `Orders under $${deliveryThreshold} are estimated at a $${deliveryFee} GTA delivery charge; ` +
+        `orders $${deliveryThreshold}+ qualify for free delivery.`;
+      return;
+    }
+
+    // get logged in user (if any)
+    let userId = null;
+    if (sb.auth.getUser) {
+      const { data } = await sb.auth.getUser();
+      userId = data?.user?.id || null;
+    } else if (sb.auth.getSession) {
+      const { data } = await sb.auth.getSession();
+      userId = data?.session?.user?.id || null;
+    }
+
+    // 1) wholesale threshold: from profiles if logged in
+    if (userId) {
+      const { data: p } = await sb
+        .from("profiles")
+        .select("wholesale_qty_threshold")
+        .eq("id", userId)
+        .maybeSingle();
+
+      const v = Number(p?.wholesale_qty_threshold);
+      if (Number.isFinite(v) && v > 0) wholesaleTh = v;
+    }
+
+    // 2) delivery rule: customer override first, else default
+    let rule = null;
+
+    if (userId) {
+      const { data: custRule } = await sb
+        .from("delivery_rules")
+        .select("min_subtotal,fee")
+        .eq("customer_id", userId)
+        .eq("is_active", true)
+        .order("updated_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (custRule) rule = custRule;
+    }
+
+    if (!rule) {
+      const { data: defRule } = await sb
+        .from("delivery_rules")
+        .select("min_subtotal,fee")
+        .is("customer_id", null)
+        .eq("is_active", true)
+        .order("updated_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (defRule) rule = defRule;
+    }
+
+    deliveryThreshold = Number(rule?.min_subtotal ?? deliveryThreshold);
+    deliveryFee = Number(rule?.fee ?? deliveryFee);
+
+    // render
+    el.textContent =
+      `Pricing tiers: retail applies from 1–${Math.max(1, wholesaleTh - 1)} boxes per item. ` +
+      `Wholesale pricing starts from ${wholesaleTh} boxes and above for a given product line. ` +
+      `Orders under $${deliveryThreshold} are estimated at a $${deliveryFee} GTA delivery charge; ` +
+      `orders $${deliveryThreshold}+ qualify for free delivery.`;
+  } catch (_) {
+    // keep defaults silently
+    el.textContent =
+      `Pricing tiers: retail applies from 1–${wholesaleTh - 1} boxes per item. ` +
+      `Wholesale pricing starts from ${wholesaleTh} boxes and above for a given product line. ` +
+      `Orders under $${deliveryThreshold} are estimated at a $${deliveryFee} GTA delivery charge; ` +
+      `orders $${deliveryThreshold}+ qualify for free delivery.`;
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  updatePricingNote();
+
+  // also update when login/logout happens
+  (async () => {
+    const sb = await getSupabaseClient();
+    if (sb?.auth?.onAuthStateChange) {
+      sb.auth.onAuthStateChange(() => updatePricingNote());
+    }
+  })();
+});
+</script>
 
 
   // Ensure pricing runs AFTER auth is ready (critical for Platinum)
