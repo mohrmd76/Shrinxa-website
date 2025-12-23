@@ -1976,6 +1976,18 @@ await loadDeliveryRule(sb);
 
 
         const { data: items, error } = await sb.from("cart_items").select("*").eq("cart_id", cartId);
+// ✅ IMPORTANT: persist final unit prices so invoice matches cart
+await Promise.all((items || []).map(async (row) => {
+  const finalUnit = pickUnitPrice(row); // uses WHOLESALE_THRESHOLD (5 for this customer)
+  if (!row?.id) return;
+  await sb
+    .from("cart_items")
+    .update({ unit_price: finalUnit })
+    .eq("id", row.id)
+    .eq("cart_id", cartId);
+}));
+
+
         if (error) throw error;
         if (!items || items.length === 0) { if (checkoutMsg) checkoutMsg.textContent = "Your cart is empty."; return; }
 
