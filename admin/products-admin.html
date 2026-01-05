@@ -685,15 +685,8 @@ btnUploadImg?.addEventListener("click", async () => {
 
         category: f_category.value || null,
 
-        // Main columns (new schema)
         retail_price: n(f_std_retail.value) ?? 0,
         wholesale_price: n(f_std_wholesale.value) ?? 0,
-
-        // Backward-compat columns (older frontend pages may read these)
-        standard_retail_price: n(f_std_retail.value) ?? 0,
-        standard_wholesale_price: n(f_std_wholesale.value) ?? 0,
-        std_retail_price: n(f_std_retail.value) ?? 0,
-        std_wholesale_price: n(f_std_wholesale.value) ?? 0,
 
         gold_retail_price: f_gold_retail.value === "" ? null : n(f_gold_retail.value),
         gold_wholesale_price: f_gold_wholesale.value === "" ? null : n(f_gold_wholesale.value),
@@ -702,20 +695,10 @@ btnUploadImg?.addEventListener("click", async () => {
         specification: String(f_spec.value || ""),
         features: String(f_features.value || ""),
         rolls_per_box: f_rolls.value === "" ? null : Number(f_rolls.value),
-
-        // Store image in multiple commonly-used columns so Cart/older pages always find it
         image_url: String(f_image.value || "").trim() || null,
-        img_url: String(f_image.value || "").trim() || null,
-        image: String(f_image.value || "").trim() || null,
       };
 
       if (!payload.name) { show("ERROR: Name required"); return; }
-
-      // Prevent accidental 0-price products (these cause $0 in cart/checkout)
-      if ((payload.retail_price ?? 0) <= 0) {
-        show("ERROR: Std Retail price must be > 0");
-        return;
-      }
 
       if (editing?.id) {
         const { error } = await supabase
