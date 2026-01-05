@@ -235,7 +235,7 @@
               <button type="button" class="btnOpen" data-id="${inv.id}">Open</button>
               <button type="button" class="btnResend" data-id="${inv.id}">Resend Email</button>
               <button type="button" class="btnSaveStatus" data-id="${inv.id}">Save Status</button>
-              <button type="button" class="btnCopy" data-id="${inv.id}">Copy JSON</button>
+              <button type="button" class="btnCancel" data-id="${inv.id}">Cancel Order</button>
             </div>
             <details>
               <summary class="muted">details</summary>
@@ -298,16 +298,58 @@ const saveBtn = e.target?.closest?.(".btnSaveStatus");
         show("Status saved ✅");
         return;
       }
-      const btn = e.target?.closest?.(".btnCopy");
-      if (!btn) return;
+      const cancelBtn = e.target?.closest?.(".btnCancel");
+      if (!cancelBtn) return;
+
+      const id = cancelBtn.getAttribute("data-id");
+      const row = cancelBtn.closest("tr");
+      const sel = row?.querySelector?.(".stSel");
+      const currentStatus = (sel?.value || "").trim().toLowerCase();
+
+      // Safety: don't allow cancelling paid orders from the UI.
+      if (currentStatus === "paid") {
+        alert("This order is PAID. If you need a refund, do not cancel/delete it here.");
+        show("Cancelled blocked (paid order).");
+        return;
+      }
+
+      const invoiceLabel = row?.querySelector?.("td .mono")?.textContent?.trim() || id;
+
+      const ok = confirm(
+        `Cancel + delete this order?\n\nInvoice: ${invoiceLabel}\n\nThis will remove it from Admin list and the customer's purchase history.`
+      );
+      if (!ok) return;
+
       try {
-        const row = btn.closest("tr");
-        const pre = row.querySelector("details pre");
-        const txt = pre?.textContent || "";
-        await navigator.clipboard.writeText(txt);
-        show("Copied ✅");
-      } catch {
-        show("Unable to copy");
+        show("Cancelling…");
+
+        // 1) Mark as cancelled (helps if delete fails due to RLS/policies)
+        const { error: upErr } = await supabase
+          .from("invoices")
+          .update({ status: "cancelled" })
+          .eq("id", id);
+
+        if (upErr) {
+          show("ERROR (update): " + upErr.message);
+          return;
+        }
+
+        // 2) Delete invoice row
+        const { error: delErr } = await supabase
+          .from("invoices")
+          .delete()
+          .eq("id", id);
+
+        if (delErr) {
+          show("ERROR (delete): " + delErr.message);
+          return;
+        }
+
+        // Remove from UI immediately
+        row?.remove?.();
+        show("Order cancelled + deleted ✅");
+      } catch (err) {
+        show("ERROR: " + (err?.message || String(err)));
       }
     });
 
