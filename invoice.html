@@ -184,6 +184,17 @@
       color: var(--ink);
     }
     .terms b{ font-weight: 700; }
+/* Special Pay-Later disclaimer (highlighted) */
+.terms-disclaimer{
+  display:block;
+  margin: 10px 0 6px;
+  padding: 10px 12px;
+  border: 2px solid #0b3c8a;
+  background: #f0f6ff;
+  color: #0b3c8a;
+  font-weight: 800;
+  border-radius: 10px;
+}
     .footerline{
       margin-top: 14px;
       display:flex;
@@ -234,7 +245,7 @@
         <div class="brand-box">
                     <div class="invoice-title">Invoice</div>
           <div class="brand">
-            <div class="name" id="sellerName">Shrinxa Packaging</div>
+            <div class="name" id="sellerName">Shrinxa Inc.</div>
             <div class="tag" id="sellerTag">Premium Packaging Solutions</div>
             <div class="muted" id="sellerEmail">info@shrinxa.com</div>
           </div>
@@ -304,7 +315,9 @@
       <div class="terms">
         <b>Terms &amp; Conditions :</b><br>
         <span id="termsText">
-          <span class="terms-main">Please send payment within 30 days of receiving this invoice.</span><br>
+          
+          <span class="terms-disclaimer">This invoice is issued for order confirmation only. Payment is due upon delivery or before dispatch. Taxes apply only to completed sales.</span><br>
+<span class="terms-main">Payment is due upon delivery or before dispatch unless otherwise agreed.</span><br>
           <span class="thank-you">Thank you for your business with us.</span>
         </span>
       </div>
