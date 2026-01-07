@@ -1976,6 +1976,23 @@ await loadDeliveryRule(sb);
 
 
         const { data: items, error } = await sb.from("cart_items").select("*").eq("cart_id", cartId);
+await Promise.all(items.map(async (row) => {
+  if (!row.product_id) return;
+
+  const { data: p } = await sb
+    .from("products")
+    .select("specification")
+    .eq("id", row.product_id)
+    .single();
+
+  if (p?.specification) {
+    await sb
+      .from("cart_items")
+      .update({ specification: p.specification })
+      .eq("id", row.id);
+  }
+}));
+
 // ✅ IMPORTANT: persist final unit prices so invoice matches cart
 await Promise.all((items || []).map(async (row) => {
   const finalUnit = pickUnitPrice(row); // uses WHOLESALE_THRESHOLD (5 for this customer)

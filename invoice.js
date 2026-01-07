@@ -93,10 +93,10 @@ function renderInvoice(inv, items) {
   setHtml("billTo", billLines.map(s => `<div>${escapeHtml(s)}</div>`).join(""));
 
   // Payment block
-  const payLines = [
-    inv.payment_method || "Pay on delivery",
-    inv.payment_terms || "Payment due on delivery",
-  ].filter(Boolean);
+ const payLines = [
+  "Payment Method:",
+  "Pay Later (On Delivery)",
+].filter(Boolean);
 
   setHtml("paymentBlock", payLines.map(s => `<div>${escapeHtml(s)}</div>`).join(""));
 
@@ -138,7 +138,7 @@ function renderInvoice(inv, items) {
 
   if (inv.terms_text) setHtml("termsText", escapeHtml(inv.terms_text).replace(/\n/g, "<br>"));
 
-  setText("generatedAt", new Date().toLocaleString());
+  setText("generatedAt", `Generated on: ${new Date().toLocaleString()}`);
   setText("pageHint", `Invoice #: ${inv.invoice_number || inv.number || ""}`);
 }
 
