@@ -718,20 +718,29 @@ btnUploadImg?.addEventListener("click", async () => {
       show("Saved ✅");
     }
 
-    async function deleteDialog() {
-      if (!editing?.id) return;
-      show("Deleting…");
+ async function deleteDialog() {
+  if (!editing?.id) return;
+  show("Deleting…");
 
-      const { error } = await supabase
-        .from("products")
-        .delete()
-        .eq("id", editing.id);
+  const patch = {
+    is_deleted: true,
+    deleted_at: new Date().toISOString(),
+    is_active: false,
+    qb_sync_status: "pending",
+    qb_sync_error: null,
+  };
 
-      if (error) { show("ERROR: " + error.message); return; }
-      closeDialog();
-      await loadProducts();
-      show("Deleted ✅");
-    }
+  const { error } = await supabase
+    .from("products")
+    .update(patch)
+    .eq("id", editing.id);
+
+  if (error) { show("ERROR: " + error.message); return; }
+  closeDialog();
+  await loadProducts();
+  show("Deleted ✅");
+}
+
 
     async function toggleActive(id, currentActive) {
       show("Saving…");
