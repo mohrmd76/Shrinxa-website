@@ -718,27 +718,30 @@ btnUploadImg?.addEventListener("click", async () => {
       show("Saved ✅");
     }
 
- async function deleteDialog() {
+async function deleteDialog() {
   if (!editing?.id) return;
-  show("Deleting…");
 
-  const patch = {
-    is_deleted: true,
-    deleted_at: new Date().toISOString(),
-    is_active: false,
-    qb_sync_status: "pending",
-    qb_sync_error: null,
-  };
+  const name = String(f_name.value || "").trim().toLowerCase();
+
+  // Safety: ONLY allow hard delete for test products
+  const isTest = name.startsWith("test") || name.startsWith("qb_") || name.includes("trigger-test");
+  if (!isTest) {
+    alert("Hard delete is only allowed for TEST products (name must start with test or qb_).");
+    return;
+  }
+
+  show("Deleting permanently…");
 
   const { error } = await supabase
     .from("products")
-    .update(patch)
+    .delete()
     .eq("id", editing.id);
 
   if (error) { show("ERROR: " + error.message); return; }
+
   closeDialog();
   await loadProducts();
-  show("Deleted ✅");
+  show("Deleted permanently ✅");
 }
 
 
