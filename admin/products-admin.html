@@ -723,12 +723,11 @@ async function deleteDialog() {
 
   const name = String(f_name.value || "").trim().toLowerCase();
 
-  // Safety: ONLY allow hard delete for test products
-  const isTest = name.startsWith("test") || name.startsWith("qb_") || name.includes("trigger-test");
-  if (!isTest) {
-    alert("Hard delete is only allowed for TEST products (name must start with test or qb_).");
-    return;
-  }
+ // Safety: only allow hard delete if product is inactive
+if (String(f_active.value) === "true") {
+  alert("Disable the product first (set Active = false), then delete.");
+  return;
+}
 
   show("Deleting permanently…");
 
