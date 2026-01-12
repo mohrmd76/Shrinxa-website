@@ -162,7 +162,7 @@ if (termsBtn) {
   const days = parseInt(inp.value, 10);
 
   if (!Number.isFinite(days) || days < 2) {
-    show("ERROR: payment terms must be 2 business days or more");
+   show("ERROR: payment terms must be 2 calendar days or more");
     return;
   }
 
