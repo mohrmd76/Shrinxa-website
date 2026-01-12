@@ -291,7 +291,7 @@ const saveBtn = e.target?.closest?.(".btnSaveStatus");
         show("Saving status…");
         const { error: upErr } = await supabase
           .from("invoices")
-          .update({ status: newStatus || null })
+         .update({ payment_method: newStatus || null })
           .eq("id", id);
 
         if (upErr) { show("ERROR: " + upErr.message); return; }
