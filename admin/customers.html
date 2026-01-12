@@ -98,7 +98,7 @@
   <input
     class="termsInp"
     type="number"
-    min="1"
+    min="2"
     step="1"
     value="${Number.isFinite(Number(c.payment_terms_days)) ? Number(c.payment_terms_days) : 2}"
     style="width:90px;"
@@ -161,8 +161,8 @@ if (termsBtn) {
   const inp = tr.querySelector(".termsInp");
   const days = parseInt(inp.value, 10);
 
-  if (!Number.isFinite(days) || days < 1) {
-    show("ERROR: payment terms must be 1 day or more");
+  if (!Number.isFinite(days) || days < 2) {
+    show("ERROR: payment terms must be 2 business days or more");
     return;
   }
 
