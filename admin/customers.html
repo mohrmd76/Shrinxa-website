@@ -23,6 +23,8 @@
         <th>Save Tier</th>
         <th>Wholesale Qty</th>
         <th>Save Qty</th>
+	<th>Payment Terms (Days)</th>
+	<th>Save Terms</th>
         <th>Admin</th>
       </tr>
     </thead>
@@ -72,7 +74,7 @@
       show("Loading customers…");
       const { data: customers, error: custErr } = await supabase
         .from("profiles")
-        .select("id, email, full_name, company_name, phone, tier, wholesale_qty_threshold, is_admin")
+	.select("id, email, full_name, company_name, phone, tier, wholesale_qty_threshold, payment_terms_days, is_admin")
         .order("created_at", { ascending: false });
 
       if (custErr) throw new Error("customers query error: " + custErr.message);
@@ -92,6 +94,17 @@
           <td><button class="saveTierBtn">Save</button></td>
           <td>${qtyInput(c.wholesale_qty_threshold)}</td>
           <td><button class="saveQtyBtn">Save</button></td>
+<td>
+  <input
+    class="termsInp"
+    type="number"
+    min="1"
+    step="1"
+    value="${Number.isFinite(Number(c.payment_terms_days)) ? Number(c.payment_terms_days) : 2}"
+    style="width:90px;"
+  >
+</td>
+	<td><button class="saveTermsBtn">Save</button></td>
           <td>${c.is_admin ? "YES" : "NO"}</td>
         `;
 
@@ -100,8 +113,10 @@
 
       tbody.addEventListener("click", async (e) => {
         const tierBtn = e.target?.closest?.(".saveTierBtn");
-        const qtyBtn = e.target?.closest?.(".saveQtyBtn");
-        if (!tierBtn && !qtyBtn) return;
+	const qtyBtn = e.target?.closest?.(".saveQtyBtn");
+	const termsBtn = e.target?.closest?.(".saveTermsBtn");
+	if (!tierBtn && !qtyBtn && !termsBtn) return;
+
 
         const tr = e.target.closest("tr");
         const id = tr.dataset.id;
@@ -130,6 +145,7 @@
             return;
           }
 
+
           show("Saving wholesale qty…");
           const { error: upErr } = await supabase
             .from("profiles")
@@ -140,6 +156,27 @@
           show("Wholesale qty saved ✅");
           return;
         }
+
+if (termsBtn) {
+  const inp = tr.querySelector(".termsInp");
+  const days = parseInt(inp.value, 10);
+
+  if (!Number.isFinite(days) || days < 1) {
+    show("ERROR: payment terms must be 1 day or more");
+    return;
+  }
+
+  show("Saving payment terms…");
+  const { error: upErr } = await supabase
+    .from("profiles")
+    .update({ payment_terms_days: days })
+    .eq("id", id);
+
+  if (upErr) { show("ERROR: " + upErr.message); return; }
+  show("Payment terms saved ✅");
+  return;
+}
+
       });
 
       show(`Done. Rows: ${(customers || []).length}`);
