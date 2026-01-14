@@ -173,7 +173,7 @@
 
       let query = supabase
         .from("invoices")
-        .select("*")
+        .select("*, qb_invoice_id, qb_sync_error")
         .order("created_at", { ascending: false })
         .limit(200);
 
