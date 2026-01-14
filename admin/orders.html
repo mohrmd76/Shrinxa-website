@@ -90,9 +90,9 @@
             <th style="min-width:120px;">Created</th>
             <th style="min-width:120px;">Status</th>
             <th style="min-width:120px;" class="right">Total</th>
-            <th style="min-width:120px;">QB Sync</th>
             <th style="min-width:220px;">Actions / Details</th>
-          </tr>
+            <th style="min-width:120px;">QB Sync</th> 
+	 </tr>
         </thead>
         <tbody id="rows"></tbody>
       </table>
@@ -243,6 +243,10 @@
               <pre class="mono">${escapeHtml(JSON.stringify(inv, null, 2))}</pre>
             </details>
           </td>
+<td>
+  ${inv.qb_invoice_id ? "✅ Synced" : (inv.qb_sync_error ? "❌ Error" : "—")}
+</td>
+
         `;
         tbody.appendChild(tr);
       }
