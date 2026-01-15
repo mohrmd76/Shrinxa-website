@@ -104,9 +104,8 @@ setHtml("paymentBlock", payLines.map(s => `<div>${escapeHtml(s)}</div>`).join(""
 const disclaimer = document.getElementById("payLaterDisclaimer");
 if (disclaimer) disclaimer.style.display = isPaid ? "none" : "block";
 // Hide only the terms text, keep the thank-you line visible
-const termsBlock = document.getElementById("termsBlock");
-if (termsBlock) termsBlock.style.display = isPaid ? "none" : "block";
-
+const termsTitle = document.getElementById("termsTitle");
+if (termsTitle) termsTitle.style.display = isPaid ? "none" : "inline";
 
 
   // Items
