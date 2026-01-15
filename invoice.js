@@ -103,7 +103,8 @@ setHtml("paymentBlock", payLines.map(s => `<div>${escapeHtml(s)}</div>`).join(""
 
 const disclaimer = document.getElementById("payLaterDisclaimer");
 if (disclaimer) disclaimer.style.display = isPaid ? "none" : "block";
-
+const termsBlock = document.getElementById("termsBlock");
+if (termsBlock) termsBlock.style.display = isPaid ? "none" : "block";
 
   // Items
   const tb = $("itemsTbody");
