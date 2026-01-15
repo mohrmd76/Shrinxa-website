@@ -92,13 +92,18 @@ function renderInvoice(inv, items) {
 
   setHtml("billTo", billLines.map(s => `<div>${escapeHtml(s)}</div>`).join(""));
 
-  // Payment block
- const payLines = [
-  "Payment Method:",
-  "Pay Later (On Delivery)",
-].filter(Boolean);
+ // Payment block
+const isPaid = String(inv.payment_status || "").toLowerCase() === "paid";
 
-  setHtml("paymentBlock", payLines.map(s => `<div>${escapeHtml(s)}</div>`).join(""));
+const payLines = isPaid
+  ? ["Payment Method:", "Paid"]
+  : ["Payment Method:", "Pay Later (On Delivery)"];
+
+setHtml("paymentBlock", payLines.map(s => `<div>${escapeHtml(s)}</div>`).join(""));
+
+const disclaimer = document.getElementById("payLaterDisclaimer");
+if (disclaimer) disclaimer.style.display = isPaid ? "none" : "block";
+
 
   // Items
   const tb = $("itemsTbody");
