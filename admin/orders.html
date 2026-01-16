@@ -300,7 +300,13 @@ if (saveBtn) {
   // 1) Update invoice in DB
   const { error: upErr } = await supabase
     .from("invoices")
-    .update({ payment_status: newStatus || null, qb_sync_error: null })
+	.update({
+  status: newStatus || null,
+  payment_status: newStatus || null,
+  qb_sync_error: null
+})
+
+
     .eq("id", id);
 
   if (upErr) { show("ERROR: " + upErr.message); return; }
