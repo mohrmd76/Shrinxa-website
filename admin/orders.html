@@ -222,7 +222,7 @@
           </td>
           <td>${fmtDate(created)}</td>
           <td>
-            <select class="stSel">
+            <select class="stSel" data-prev="${stv}">
               <option value="" ${!stv ? "selected" : ""}>(blank)</option>
               <option value="paid" ${stv==="paid" ? "selected" : ""}>paid</option>
               <option value="unpaid" ${stv==="unpaid" ? "selected" : ""}>unpaid</option>
@@ -286,23 +286,54 @@
         return;
       }
 
-const saveBtn = e.target?.closest?.(".btnSaveStatus");
-      if (saveBtn) {
-        const id = saveBtn.getAttribute("data-id");
-        const tr = saveBtn.closest("tr");
-        const sel = tr?.querySelector?.(".stSel");
-        const newStatus = (sel?.value || "").trim();
+	const saveBtn = e.target?.closest?.(".btnSaveStatus");
+if (saveBtn) {
+  const id = saveBtn.getAttribute("data-id");
+  const tr = saveBtn.closest("tr");
+  const sel = tr?.querySelector?.(".stSel");
 
-        show("Saving status…");
-        const { error: upErr } = await supabase
-          .from("invoices")
-         .update({ payment_status: newStatus || null, qb_sync_error: null })
-          .eq("id", id);
+  const prevStatus = (sel?.dataset?.prev || "").trim().toLowerCase();
+  const newStatus = (sel?.value || "").trim().toLowerCase();
 
-        if (upErr) { show("ERROR: " + upErr.message); return; }
-        show("Status saved ✅");
-        return;
+  show("Saving status…");
+
+  // 1) Update invoice in DB
+  const { error: upErr } = await supabase
+    .from("invoices")
+    .update({ payment_status: newStatus || null, qb_sync_error: null })
+    .eq("id", id);
+
+  if (upErr) { show("ERROR: " + upErr.message); return; }
+
+  // 2) If it JUST became paid, trigger paid email directly (no DB webhook needed)
+  if (newStatus === "paid" && prevStatus !== "paid") {
+    const resp = await fetch(
+      "https://fgrjojxwevllnjdixiyd.supabase.co/functions/v1/paid-email-webhook",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-sync-secret": "shrinxa_paid_email_9f3a1c7b8d6e4f2a9c0d",
+        },
+        body: JSON.stringify({ invoice_id: id, mode: "paid" }),
       }
+    );
+
+    if (!resp.ok) {
+      const txt = await resp.text().catch(() => "");
+      show(`Saved, but paid email failed: ${resp.status} ${txt}`);
+      // Keep prev as-is so you can retry by pressing Save again
+      return;
+    }
+  }
+
+  // update prev status so we don't duplicate
+  if (sel) sel.dataset.prev = newStatus;
+
+  show("Status saved ✅");
+  return;
+}
+
       const cancelBtn = e.target?.closest?.(".btnCancel");
       if (!cancelBtn) return;
 
