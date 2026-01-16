@@ -319,9 +319,11 @@ if (saveBtn) {
   {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
-      "x-sync-secret": "shrinxa_paid_email_9f3a1c7b8d6e4f2a9c0d",
-    },
+  "Content-Type": "application/json",
+  "x-sync-secret": "shrinxa_paid_email_9f3a1c7b8d6e4f2a9c0d",
+  "Authorization": `Bearer ${supabase.auth.session()?.access_token}`,
+},
+
     body: JSON.stringify({ invoice_id: id, mode: "paid" }),
     keepalive: true,
   }
