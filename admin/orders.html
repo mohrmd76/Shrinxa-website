@@ -328,7 +328,7 @@ if (saveBtn) {
 );
 
 const txt = await resp.text().catch(() => "");
-show(`Paid email call: ${resp.status} ${txt}`);
+show(`Status saved ✅ | Paid email call: ${resp.status} ${txt}`);
 
   }
 
@@ -336,7 +336,8 @@ show(`Paid email call: ${resp.status} ${txt}`);
   // update prev status so we don't duplicate
   if (sel) sel.dataset.prev = newStatus;
 
-  show("Status saved ✅");
+  
+
   return;
 }
 
