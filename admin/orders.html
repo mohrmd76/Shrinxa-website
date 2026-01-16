@@ -314,20 +314,21 @@ if (saveBtn) {
 	  // 2) If it JUST became paid, trigger paid email in background (NO await)
   if (newStatus === "paid") {
 
-   const { data, error } = await supabase.functions.invoke(
-  "paid-email-webhook",
+   await fetch(
+  "https://fgrjojxwevllnjdixiyd.supabase.co/functions/v1/paid-email-webhook",
   {
-    body: { invoice_id: id, mode: "paid" },
+    method: "POST",
     headers: {
-      "x-sync-secret": "shrinxa_paid_email_9f3a1c7b8d6e4f2a9c0d",
+      "Content-Type": "application/json",
+      "x-sync-secret": "shrinxa_paid_email_9f3a1c7b8d6e4f2a9c0d"
     },
+    body: JSON.stringify({
+      invoice_id: id,
+      mode: "paid"
+    })
   }
 );
 
-if (error) {
-  show("Paid email error: " + error.message);
-  return;
-}
 
 show("Status saved ✅ | Paid email sent");
 
