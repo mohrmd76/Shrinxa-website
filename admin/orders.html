@@ -305,9 +305,9 @@ if (saveBtn) {
 
   if (upErr) { show("ERROR: " + upErr.message); return; }
 
-  // 2) If it JUST became paid, trigger paid email directly (no DB webhook needed)
+	  // 2) If it JUST became paid, trigger paid email in background (NO await)
   if (newStatus === "paid" && prevStatus !== "paid") {
-    const resp = await fetch(
+    fetch(
       "https://fgrjojxwevllnjdixiyd.supabase.co/functions/v1/paid-email-webhook",
       {
         method: "POST",
@@ -317,15 +317,9 @@ if (saveBtn) {
         },
         body: JSON.stringify({ invoice_id: id, mode: "paid" }),
       }
-    );
-
-    if (!resp.ok) {
-      const txt = await resp.text().catch(() => "");
-      show(`Saved, but paid email failed: ${resp.status} ${txt}`);
-      // Keep prev as-is so you can retry by pressing Save again
-      return;
-    }
+    ).catch(() => {});
   }
+
 
   // update prev status so we don't duplicate
   if (sel) sel.dataset.prev = newStatus;
