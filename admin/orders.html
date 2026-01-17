@@ -314,14 +314,16 @@ if (saveBtn) {
 	  // 2) If it JUST became paid, trigger paid email in background (NO await)
   if (newStatus === "paid") {
 
-const resp = await fetch(
+const resp = fetch(
   "https://fgrjojxwevllnjdixiyd.supabase.co/functions/v1/paid-email-webhook",
   {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "x-sync-secret": "shrinxa_paid_email_9f3a1c7b8d6e4f2a9c0d",
-	    },
+	"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZncmpvanh3ZXZsbG5qZGl4aXlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0ODU4MjgsImV4cCI6MjA4MTA2MTgyOH0.DfqCgNf_GpnaMqFbePxCrwNcRJbptiS9fzdSwpj6lbQ",
+  "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZncmpvanh3ZXZsbG5qZGl4aXlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0ODU4MjgsImV4cCI6MjA4MTA2MTgyOH0.DfqCgNf_GpnaMqFbePxCrwNcRJbptiS9fzdSwpj6lbQ",
+    },
     body: JSON.stringify({
       invoice_id: id,
       mode: "paid"
@@ -329,8 +331,8 @@ const resp = await fetch(
   }
 );
 
-const txt = await resp.text().catch(() => "");
-show(`Status saved ✅ | Paid email call: ${resp.status} ${txt}`);
+show("Status saved ✅ | Paid email sending…");
+
 
 
   }
