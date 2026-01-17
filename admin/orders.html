@@ -314,7 +314,7 @@ if (saveBtn) {
 	  // 2) If it JUST became paid, trigger paid email in background (NO await)
   if (newStatus === "paid") {
 
-   await fetch(
+const resp = await fetch(
   "https://fgrjojxwevllnjdixiyd.supabase.co/functions/v1/paid-email-webhook",
   {
     method: "POST",
@@ -329,11 +329,9 @@ if (saveBtn) {
   }
 );
 
-
-show("Status saved ✅ | Paid email sent");
-
 const txt = await resp.text().catch(() => "");
 show(`Status saved ✅ | Paid email call: ${resp.status} ${txt}`);
+
 
   }
 
