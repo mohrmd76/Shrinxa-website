@@ -115,10 +115,12 @@ if (adminEmailEl) adminEmailEl.textContent = user.email || "";
       if (!customerId) { show("Select a customer"); return; }
 
       show("Loading products…");
-      const { data: products, error: pErr } = await supabase
-        .from("products")
-        .select("id, name")
-        .order("name");
+  const { data: products, error: pErr } = await supabase
+  .from("products")
+  .select("id, name")
+  .eq("is_active", true)
+  .is("deleted_at", null)
+  .order("name");
 
       if (pErr) throw new Error(pErr.message);
 
