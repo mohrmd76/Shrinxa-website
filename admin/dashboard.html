@@ -335,6 +335,21 @@ logoutBtn?.addEventListener("click", async () => {
       });
     }
 
+function buildStatusChart(labels, values) {
+  const ctx = document.getElementById("chartStatus");
+  if (!ctx) return;
+
+  if (statusChart) statusChart.destroy();
+  statusChart = new Chart(ctx, {
+    type: "doughnut",
+    data: { labels, datasets: [{ data: values }] },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: "bottom" } }
+    }
+  });
+}
+
   function buildProductsChart(rows) {
   const ctx = document.getElementById("chartProducts");
   if (!ctx) return;
