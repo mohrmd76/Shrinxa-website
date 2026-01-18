@@ -6,7 +6,7 @@
   <title>Admin – Products</title>
   <style>
     body { font-family: system-ui, -apple-system, Segoe UI, Arial, sans-serif; margin: 18px; }
-    .wrap { max-width: 1500px; }
+    .wrap { max-width: none; width: 100%; }
     .nav { margin: 6px 0 14px; }
     .nav a { margin-right: 10px; }
     .status { padding:8px 10px; border:1px solid #ccc; display:inline-block; }
@@ -20,6 +20,7 @@
     table { border-collapse: separate; border-spacing: 0; width: 100%; margin-top: 14px; }
     th, td { border:1px solid #ddd; padding:8px; vertical-align: top; }
     th { background:#fafafa; position: sticky; top: 0; z-index: 2; }
+    table { width: 100%; table-layout: fixed; }
 
     /* Sticky first column (Product) */
     th.sticky-col, td.sticky-col {
@@ -30,12 +31,20 @@
       box-shadow: 2px 0 0 rgba(0,0,0,0.06);
     }
     thead th.sticky-col { z-index: 6; }
+	.nowrap { white-space: nowrap; }
 
     .right { text-align:right; white-space:nowrap; }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
     .pill { display:inline-block; padding:2px 8px; border:1px solid #ccc; border-radius:999px; font-size:12px; }
     .muted { color:#666; font-size:12px; }
-    .row-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    
+.row-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
     dialog { border:1px solid #ddd; border-radius:16px; padding:0; width: min(920px, 96vw); }
     .dlgHead { padding:14px 14px 10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; gap:10px; }
     .dlgBody { padding:14px; }
@@ -90,14 +99,14 @@
       Platinum prices are managed in <b>Platinum</b> page (no Platinum column here).
     </div>
 
-    <div style="overflow:auto; max-height: 72vh; margin-top:10px;">
+	<div style="overflow:auto; width:100%; margin-top:10px;">
       <table>
         <thead>
           <tr>
             <th style="min-width:260px;" class="sticky-col">Product</th>
             <th style="min-width:160px;">Category</th>
-            <th style="min-width:90px;">Active</th>
-            <th style="min-width:80px;">Sort</th>
+            <th style="width:80px;">Active</th>
+	    <th style="width:70px;">Sort</th>
 
             <th style="min-width:130px;" class="right">Std Retail</th>
             <th style="min-width:130px;" class="right">Std Wholesale</th>
@@ -108,9 +117,9 @@
             <th style="min-width:320px;">Description</th>
             <th style="min-width:260px;">Specification</th>
             <th style="min-width:260px;">Features</th>
-            <th style="min-width:110px;" class="right">Rolls/Box</th>
+            <th style="width:90px;" class="nowrap">Rolls/Box</th>
 
-            <th style="min-width:220px;">Actions</th>
+            <th style="width:140px;">Actions</th>
           </tr>
         </thead>
         <tbody id="rows"></tbody>
@@ -607,7 +616,7 @@ btnUploadImg?.addEventListener("click", async () => {
           <td>${(r.description || "").replaceAll("\n","<br/>")}</td>
           <td>${(r.specification || "").replaceAll("\n","<br/>")}</td>
           <td>${(r.features || "").replaceAll("\n","<br/>")}</td>
-          <td class="right">${r.rolls_per_box ?? ""}</td>
+          <td class="right nowrap">${r.rolls_per_box ?? ""}</td>
 
           <td>
             <div class="row-actions">
