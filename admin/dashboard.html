@@ -8,7 +8,7 @@
 
   <style>
     body { font-family: system-ui, -apple-system, Segoe UI, Arial, sans-serif; margin: 0; }
-    .wrap { max-width: 1200px; }
+   .wrap { max-width: 100%; padding: 18px; }
     .nav { margin: 6px 0 14px; }
     .nav a { margin-right: 10px; }
     .status { padding:8px 10px; border:1px solid #ccc; display:inline-block; }
@@ -186,6 +186,8 @@ header a:hover { opacity:1; text-decoration:underline; }
                 <th>Product</th>
                 <th class="right">Qty</th>
                 <th class="right">Revenue</th>
+		<th class="right">Total Cost</th>
+		<th class="right">Total Profit</th>
               </tr>
             </thead>
             <tbody id="topProducts"></tbody>
@@ -362,28 +364,37 @@ logoutBtn?.addEventListener("click", async () => {
     async function fetchInvoiceItemsAggregates(invoiceIds) {
       // chunk because PostgREST in() has URL length limits
       const chunkSize = 200;
-      const agg = new Map(); // item_name -> {qty, revenue}
+      const agg = new Map(); // item_name -> {qty, revenue, cost}
 
       for (let i = 0; i < invoiceIds.length; i += chunkSize) {
         const chunk = invoiceIds.slice(i, i + chunkSize);
         const { data, error } = await supabase
           .from("invoice_items")
-          .select("item_name, qty, line_total, invoice_id")
+	.select("item_name, qty, line_total, unit_cost, invoice_id")
           .in("invoice_id", chunk);
 
         if (error) throw error;
 
         for (const r of (data || [])) {
           const name = String(r.item_name || "Item").trim();
-          const obj = agg.get(name) || { qty: 0, revenue: 0 };
-          obj.qty += Number(r.qty ?? 0);
-          obj.revenue += Number(r.line_total ?? 0);
+        const obj = agg.get(name) || { qty: 0, revenue: 0, cost: 0 };
+	const q = Number(r.qty ?? 0);
+	obj.qty += q;
+	obj.revenue += Number(r.line_total ?? 0);
+	obj.cost += Number(r.unit_cost ?? 0) * q;
           agg.set(name, obj);
         }
       }
 
       return Array.from(agg.entries())
-        .map(([product, v]) => ({ product, qty: v.qty, revenue: v.revenue }))
+        .map(([product, v]) => ({
+  product,
+  qty: v.qty,
+  revenue: v.revenue,
+  cost: v.cost,
+  profit: v.revenue - v.cost
+}))
+
         .sort((a,b) => b.revenue - a.revenue)
         .slice(0, 25);
     }
@@ -514,11 +525,14 @@ logoutBtn?.addEventListener("click", async () => {
 
         for (const p of topProducts) {
           const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${p.product}</td>
-            <td class="right">${p.qty}</td>
-            <td class="right">${money(p.revenue)}</td>
-          `;
+         tr.innerHTML = `
+  	 <td>${p.product}</td>
+ 	 <td class="right">${p.qty}</td>
+ 	 <td class="right">${money(p.revenue)}</td>
+ 	 <td class="right">${money(p.cost)}</td>
+	  <td class="right">${money(p.profit)}</td>
+	`;
+
           topProductsTbody.appendChild(tr);
         }
       } catch (e) {
