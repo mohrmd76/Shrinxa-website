@@ -9,7 +9,7 @@ async function loadInventory() {
   // Only active + not deleted products
   const { data, error } = await supabase
     .from("products")
-    .select("id, name, specification, stock_on_hand, cost_product, cost_import, cost_total, deleted_at, is_active")
+    .select("id, name, specification, stock_on_hand, low_stock_threshold, cost_product, cost_import, cost_total, deleted_at, is_active")
     .eq("is_active", true)
     .is("deleted_at", null)
     .order("name", { ascending: true });
@@ -32,9 +32,11 @@ async function loadInventory() {
 </td>
 
       <td><input data-field="stock_on_hand" data-id="${p.id}" type="number" step="1" value="${num(p.stock_on_hand)}" style="width:110px"></td>
+	<td><input data-field="low_stock_threshold" data-id="${p.id}" type="number" step="1" value="${num(p.low_stock_threshold)}" style="width:110px"></td>
       <td><input data-field="cost_product" data-id="${p.id}" type="number" step="0.0001" value="${num4(p.cost_product)}" style="width:140px"></td>
       <td><input data-field="cost_import" data-id="${p.id}" type="number" step="0.0001" value="${num4(p.cost_import)}" style="width:140px"></td>
       <td><input type="number" step="0.0001" value="${num4(p.cost_total)}" style="width:140px" disabled></td>
+	<td><input type="number" step="0.0001" value="${num4(costPerBox(p.cost_total, p.specification))}" style="width:160px" disabled></td>
     `;
 
     tbody.appendChild(tr);
@@ -98,6 +100,20 @@ function num(v) {
 function num4(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n.toFixed(4) : "0.0000";
+}
+
+function rollsPerBox(spec) {
+  const s = String(spec || "");
+  // matches "4 rolls/box" or "1 roll/box"
+  const m = s.match(/(\d+)\s*rolls?\/box/i);
+  return m ? parseInt(m[1], 10) : 1;
+}
+
+function costPerBox(costTotal, spec) {
+  const r = rollsPerBox(spec);
+  const c = Number(costTotal);
+  if (!Number.isFinite(c)) return 0;
+  return c * (Number.isFinite(r) ? r : 1);
 }
 
 // Run
