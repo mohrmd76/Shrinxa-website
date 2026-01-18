@@ -9,7 +9,7 @@ async function loadInventory() {
   // Only active + not deleted products
   const { data, error } = await supabase
     .from("products")
-    .select("id, name, stock_on_hand, cost_product, cost_import, cost_total, deleted_at, active")
+    .select("id, name, specification, stock_on_hand, cost_product, cost_import, cost_total, deleted_at, is_active")
     .eq("is_active", true)
     .is("deleted_at", null)
     .order("name", { ascending: true });
@@ -24,7 +24,13 @@ async function loadInventory() {
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
-      <td>${escapeHtml(p.name || "")}</td>
+      <td>
+  <div><strong>${escapeHtml(p.name || "")}</strong></div>
+  <div style="font-size:12px;color:#666;">
+    ${escapeHtml(p.specification || "")}
+  </div>
+</td>
+
       <td><input data-field="stock_on_hand" data-id="${p.id}" type="number" step="1" value="${num(p.stock_on_hand)}" style="width:110px"></td>
       <td><input data-field="cost_product" data-id="${p.id}" type="number" step="0.0001" value="${num4(p.cost_product)}" style="width:140px"></td>
       <td><input data-field="cost_import" data-id="${p.id}" type="number" step="0.0001" value="${num4(p.cost_import)}" style="width:140px"></td>
