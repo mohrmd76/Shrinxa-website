@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Inventory Management</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../admin.css" />
+</head>
+
+<body>
+  <!-- Admin Auth Gate -->
+  <div id="loading">Checking access...</div>
+  <div id="denied" class="hidden">Access denied</div>
+
+  <div id="admin" class="hidden">
+    <header>
+      <h1>Inventory</h1>
+      <div>
+        <span id="adminEmail"></span>
+        <button id="logoutBtn">Logout</button>
+      </div>
+    </header>
+
+    <main>
+      <table id="inventoryTable" border="1" cellpadding="6">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Stock</th>
+            <th>Cost / Roll</th>
+            <th>Import / Roll</th>
+            <th>Total Cost</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </main>
+  </div>
+
+  <script src="../supabaseClient.js"></script>
+  <script src="./admin-auth.js"></script>
+<script type="module" src="./inventory.js"></script>
+</body>
+</html>
