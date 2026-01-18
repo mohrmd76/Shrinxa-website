@@ -28,6 +28,11 @@
       <a href="./delivery-admin.html">Delivery Rules</a>
       <a href="./inventory.html">Inventory</a>
     </div>
+<div class="ms-auto d-flex align-items-center gap-2">
+  <span id="adminEmail" class="text-white small"></span>
+  <button id="logoutBtn" class="btn btn-sm btn-outline-light">Logout</button>
+</div>
+
   </div>
 </header>
 
@@ -59,6 +64,14 @@
 
   <script type="module">
     import { supabase } from "../supabaseClient.js";
+// header: email + logout
+const adminEmailEl = document.getElementById("adminEmail");
+const logoutBtn = document.getElementById("logoutBtn");
+
+logoutBtn?.addEventListener("click", async () => {
+  await supabase.auth.signOut();
+  window.location.href = "../login.html";
+});
 
     const status = document.getElementById("status");
     const tbody = document.getElementById("rows");
@@ -80,12 +93,60 @@
       const v = Number.isFinite(Number(current)) ? Number(current) : 50;
       return `<input class="qtyInp" type="number" min="1" step="1" value="${v}" style="width:90px;">`;
     }
+ tbody.addEventListener("click", async (e) => {
+  const tierBtn = e.target?.closest?.(".saveTierBtn");
+  const qtyBtn = e.target?.closest?.(".saveQtyBtn");
+  const termsBtn = e.target?.closest?.(".saveTermsBtn");
+  if (!tierBtn && !qtyBtn && !termsBtn) return;
+
+  const tr = e.target.closest("tr");
+  const id = tr.dataset.id;
+
+  if (tierBtn) {
+    const sel = tr.querySelector(".tierSel");
+    const newTier = sel.value;
+
+    show("Saving tier…");
+    const { error } = await supabase.from("profiles").update({ tier: newTier }).eq("id", id);
+    if (error) return show("ERROR: " + error.message);
+    show("Tier saved ✅");
+  }
+
+  if (qtyBtn) {
+    const inp = tr.querySelector(".qtyInp");
+    const newQty = parseInt(inp.value, 10);
+    if (!Number.isFinite(newQty) || newQty < 1) return show("ERROR: invalid qty");
+
+    show("Saving wholesale qty…");
+    const { error } = await supabase
+      .from("profiles")
+      .update({ wholesale_qty_threshold: newQty })
+      .eq("id", id);
+    if (error) return show("ERROR: " + error.message);
+    show("Wholesale qty saved ✅");
+  }
+
+  if (termsBtn) {
+    const inp = tr.querySelector(".termsInp");
+    const days = parseInt(inp.value, 10);
+    if (!Number.isFinite(days) || days < 2) return show("ERROR: invalid days");
+
+    show("Saving payment terms…");
+    const { error } = await supabase
+      .from("profiles")
+      .update({ payment_terms_days: days })
+      .eq("id", id);
+    if (error) return show("ERROR: " + error.message);
+    show("Payment terms saved ✅");
+  }
+});
 
     async function load() {
       show("Checking login…");
       const { data: { user }, error: userErr } = await supabase.auth.getUser();
       if (userErr) throw new Error("getUser error: " + userErr.message);
       if (!user) { location.href = "../login.html"; return; }
+	if (adminEmailEl) adminEmailEl.textContent = user.email || "";
 
       show("Checking admin…");
       const { data: me, error: meErr } = await supabase
@@ -137,73 +198,8 @@
         tbody.appendChild(tr);
       }
 
-      tbody.addEventListener("click", async (e) => {
-        const tierBtn = e.target?.closest?.(".saveTierBtn");
-	const qtyBtn = e.target?.closest?.(".saveQtyBtn");
-	const termsBtn = e.target?.closest?.(".saveTermsBtn");
-	if (!tierBtn && !qtyBtn && !termsBtn) return;
+   
 
-
-        const tr = e.target.closest("tr");
-        const id = tr.dataset.id;
-
-        if (tierBtn) {
-          const sel = tr.querySelector(".tierSel");
-          const newTier = sel.value;
-
-          show("Saving tier…");
-          const { error: upErr } = await supabase
-            .from("profiles")
-            .update({ tier: newTier })
-            .eq("id", id);
-
-          if (upErr) { show("ERROR: " + upErr.message); return; }
-          show("Tier saved ✅");
-          return;
-        }
-
-        if (qtyBtn) {
-          const inp = tr.querySelector(".qtyInp");
-          const newQty = parseInt(inp.value, 10);
-
-          if (!Number.isFinite(newQty) || newQty < 1) {
-            show("ERROR: wholesale qty must be 1 or more");
-            return;
-          }
-
-
-          show("Saving wholesale qty…");
-          const { error: upErr } = await supabase
-            .from("profiles")
-            .update({ wholesale_qty_threshold: newQty })
-            .eq("id", id);
-
-          if (upErr) { show("ERROR: " + upErr.message); return; }
-          show("Wholesale qty saved ✅");
-          return;
-        }
-
-if (termsBtn) {
-  const inp = tr.querySelector(".termsInp");
-  const days = parseInt(inp.value, 10);
-
-  if (!Number.isFinite(days) || days < 2) {
-   show("ERROR: payment terms must be 2 calendar days or more");
-    return;
-  }
-
-  show("Saving payment terms…");
-  const { error: upErr } = await supabase
-    .from("profiles")
-    .update({ payment_terms_days: days })
-    .eq("id", id);
-
-  if (upErr) { show("ERROR: " + upErr.message); return; }
-  show("Payment terms saved ✅");
-  return;
-}
-
-      });
 
       show(`Done. Rows: ${(customers || []).length}`);
     }
