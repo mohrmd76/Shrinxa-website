@@ -109,7 +109,8 @@ header a:hover { opacity:1; text-decoration:underline; }
             <th style="min-width:120px;">Created</th>
             <th style="min-width:120px;">Status</th>
             <th style="min-width:120px;" class="right">Total</th>
-            <th style="min-width:220px;">Actions / Details</th>
+	<th style="min-width:120px;" class="right">Profit</th>
+	<th style="min-width:220px;">Actions / Details</th>
             <th style="min-width:120px;">QB Sync</th> 
 	 </tr>
         </thead>
@@ -258,6 +259,7 @@ if (adminEmailEl) adminEmailEl.textContent = user.email || "";
             </select>
           </td>
           <td class="right">${fmtMoney(total)}</td>
+	<td class="right">${fmtMoney(inv.invoice_profit)}</td>
           <td>
             <div class="row-actions">
               <button type="button" class="btnOpen" data-id="${inv.id}">Open</button>
