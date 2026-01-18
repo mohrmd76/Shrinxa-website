@@ -177,8 +177,9 @@ header a:hover { opacity:1; text-decoration:underline; }
       </div>
 
       <div class="card clickrow">
-        <div class="k">Top products (by revenue)</div>
+        <div class="k">All Products (by revenue)</div>
         <div class="muted">From invoice_items</div>
+	<canvas id="chartProducts"></canvas>
         <div style="overflow:auto; max-height: 360px; margin-top:10px;">
           <table>
             <thead>
@@ -250,6 +251,7 @@ logoutBtn?.addEventListener("click", async () => {
 
     let dailyChart = null;
     let statusChart = null;
+	let productsChart = null;
 
     let lastInvoices = [];
     let lastTopProducts = [];
@@ -333,15 +335,29 @@ logoutBtn?.addEventListener("click", async () => {
       });
     }
 
-    function buildStatusChart(labels, values) {
-      const ctx = document.getElementById("chartStatus");
-      if (statusChart) statusChart.destroy();
-      statusChart = new Chart(ctx, {
-        type: "doughnut",
-        data: { labels, datasets: [{ label: "Count", data: values }] },
-        options: { responsive: true, plugins: { legend: { position: "bottom" } } }
-      });
+  function buildProductsChart(rows) {
+  const ctx = document.getElementById("chartProducts");
+  if (!ctx) return;
+
+  // Keep chart readable: top 12 by revenue
+  const top = (rows || []).slice().sort((a,b) => (b.revenue||0) - (a.revenue||0)).slice(0, 12);
+
+  const labels = top.map(r => r.product);
+  const values = top.map(r => Number(r.revenue || 0));
+
+  if (productsChart) productsChart.destroy();
+  productsChart = new Chart(ctx, {
+    type: "bar",
+    data: { labels, datasets: [{ label: "Revenue", data: values }] },
+    options: {
+      responsive: true,
+      indexAxis: "y",
+      scales: { x: { beginAtZero: true } },
+      plugins: { legend: { display: false } }
     }
+  });
+}
+
 
     function downloadCsv(filename, rows) {
       const esc = (v) => {
@@ -360,6 +376,17 @@ logoutBtn?.addEventListener("click", async () => {
       a.remove();
       URL.revokeObjectURL(url);
     }
+	async function fetchActiveProducts() {
+  const { data, error } = await supabase
+    .from("products")
+    .select("name")
+    .eq("is_active", true)
+    .is("deleted_at", null)
+    .order("name", { ascending: true });
+
+  if (error) throw error;
+  return (data || []).map(r => String(r.name || "").trim()).filter(Boolean);
+}
 
     async function fetchInvoiceItemsAggregates(invoiceIds) {
       // chunk because PostgREST in() has URL length limits
@@ -516,28 +543,44 @@ logoutBtn?.addEventListener("click", async () => {
         recentOrdersTbody.appendChild(tr);
       }
 
-      // Top products
-      show("Loading invoice items…");
-      try {
-        const invoiceIds = invoices.map(r => r.id);
-        const topProducts = invoiceIds.length ? await fetchInvoiceItemsAggregates(invoiceIds) : [];
-        lastTopProducts = topProducts;
+      // All products (active) + sales
+show("Loading product performance…");
+try {
+  const invoiceIds = invoices.map(r => r.id);
 
-        for (const p of topProducts) {
-          const tr = document.createElement("tr");
-         tr.innerHTML = `
-  	 <td>${p.product}</td>
- 	 <td class="right">${p.qty}</td>
- 	 <td class="right">${money(p.revenue)}</td>
- 	 <td class="right">${money(p.cost)}</td>
-	  <td class="right">${money(p.profit)}</td>
-	`;
+  const [activeNames, soldAgg] = await Promise.all([
+    fetchActiveProducts(),
+    invoiceIds.length ? fetchInvoiceItemsAggregates(invoiceIds) : Promise.resolve([])
+  ]);
 
-          topProductsTbody.appendChild(tr);
-        }
-      } catch (e) {
-        console.error(e);
-      }
+  const soldMap = new Map(soldAgg.map(p => [p.product, p]));
+
+  const allRows = activeNames.map(name => {
+    const s = soldMap.get(name);
+    return s || { product: name, qty: 0, revenue: 0, cost: 0, profit: 0 };
+  });
+
+  // sort by revenue desc (so sold items appear on top)
+  allRows.sort((a,b) => b.revenue - a.revenue);
+
+  lastTopProducts = allRows;
+buildProductsChart(lastTopProducts);
+
+  for (const p of allRows) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${p.product}</td>
+      <td class="right">${p.qty}</td>
+      <td class="right">${money(p.revenue)}</td>
+      <td class="right">${money(p.cost)}</td>
+      <td class="right">${money(p.profit)}</td>
+    `;
+    topProductsTbody.appendChild(tr);
+  }
+} catch (e) {
+  console.error(e);
+}
+
 
       show("Done ✅");
     }
@@ -585,10 +628,19 @@ logoutBtn?.addEventListener("click", async () => {
     });
 
     btnExportTopProducts.addEventListener("click", () => {
-      const rows = [["product","qty","revenue"]];
-      for (const p of (lastTopProducts || [])) rows.push([p.product, p.qty, money(p.revenue)]);
-      downloadCsv("top_products.csv", rows);
-    });
+  const rows = [["product","qty","revenue","total_cost","total_profit"]];
+  for (const p of (lastTopProducts || [])) {
+    rows.push([
+      p.product,
+      p.qty,
+      money(p.revenue),
+      money(p.cost),
+      money(p.profit),
+    ]);
+  }
+  downloadCsv("all_products.csv", rows);
+});
+
 
     // Preset change fills date inputs
     rangeEl.addEventListener("change", () => {
