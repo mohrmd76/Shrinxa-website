@@ -10,7 +10,7 @@ async function loadInventory() {
   const { data, error } = await supabase
     .from("products")
     .select("id, name, stock_on_hand, cost_product, cost_import, cost_total, deleted_at, active")
-    .eq("active", true)
+    .eq("is_active", true)
     .is("deleted_at", null)
     .order("name", { ascending: true });
 
