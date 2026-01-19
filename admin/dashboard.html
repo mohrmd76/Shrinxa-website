@@ -189,6 +189,7 @@ header a:hover { opacity:1; text-decoration:underline; }
                 <th class="right">Revenue</th>
 		<th class="right">Total Cost</th>
 		<th class="right">Total Profit</th>
+		<th class="right">Profit %</th>
               </tr>
             </thead>
             <tbody id="topProducts"></tbody>
@@ -589,6 +590,7 @@ buildProductsChart(lastTopProducts);
       <td class="right">${money(p.revenue)}</td>
       <td class="right">${money(p.cost)}</td>
       <td class="right">${money(p.profit)}</td>
+	<td class="right">${profitPct}</td>
     `;
     topProductsTbody.appendChild(tr);
   }
@@ -643,7 +645,7 @@ buildProductsChart(lastTopProducts);
     });
 
     btnExportTopProducts.addEventListener("click", () => {
-  const rows = [["product","qty","revenue","total_cost","total_profit"]];
+  const rows = [["product","qty","revenue","total_cost","total_profit","profit_pct"]];
   for (const p of (lastTopProducts || [])) {
     rows.push([
       p.product,
@@ -651,6 +653,7 @@ buildProductsChart(lastTopProducts);
       money(p.revenue),
       money(p.cost),
       money(p.profit),
+	p.revenue > 0 ? ((p.profit / p.revenue) * 100).toFixed(1) : "0.0"
     ]);
   }
   downloadCsv("all_products.csv", rows);
