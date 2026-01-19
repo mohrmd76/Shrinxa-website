@@ -416,7 +416,7 @@ function buildStatusChart(labels, values) {
         const chunk = invoiceIds.slice(i, i + chunkSize);
         const { data, error } = await supabase
           .from("invoice_items")
-	.select("item_name, qty, line_total, unit_cost, invoice_id")
+	.select("item_name, qty, line_total, line_profit, invoice_id")
           .in("invoice_id", chunk);
 
         if (error) throw error;
@@ -427,7 +427,7 @@ function buildStatusChart(labels, values) {
 	const q = Number(r.qty ?? 0);
 	obj.qty += q;
 	obj.revenue += Number(r.line_total ?? 0);
-	obj.cost += Number(r.unit_cost ?? 0) * q;
+	obj.cost += Number(r.line_total ?? 0) - Number(r.line_profit ?? 0);
           agg.set(name, obj);
         }
       }
