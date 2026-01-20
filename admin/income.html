@@ -141,21 +141,15 @@
 
         <label>
           Category
-          <select id="expCategory">
-            <option value="rent">rent</option>
-            <option value="gas">gas</option>
-            <option value="utilities">utilities</option>
-            <option value="phones">phones</option>
-            <option value="maintenance">maintenance</option>
-            <option value="media_ads">media_ads</option>
-            <option value="gifts">gifts</option>
-            <option value="commissions">commissions</option>
-            <option value="bills">bills</option>
-            <option value="insurance">insurance</option>
-            <option value="vehicle_payments">vehicle_payments</option>
-            <option value="other" selected>other</option>
-          </select>
+         <select id="expCategory"></select>
         </label>
+
+<label>
+  New Category
+  <input id="newCategoryName" type="text" placeholder="e.g. parking">
+</label>
+
+<button id="btnAddCategory" type="button">Add Category</button>
 
         <label>
           Amount
@@ -302,15 +296,37 @@ const btnExportYearlyWide = document.getElementById("btnExportYearlyWide");
   const btnClearExpense = document.getElementById("btnClearExpense");
   const btnDeleteExpense = document.getElementById("btnDeleteExpense");
 
+const newCategoryName = document.getElementById("newCategoryName");
+const btnAddCategory = document.getElementById("btnAddCategory");
+
+btnAddCategory.addEventListener("click", async () => {
+  const name = (newCategoryName.value || "").trim();
+  if (!name) return;
+
+  try {
+    show("Adding category…");
+
+    const { error } = await supabase
+      .from("expense_categories")
+      .insert({ name });
+
+    if (error) throw error;
+
+    newCategoryName.value = "";
+    await loadExpenseCategories();
+    show("Category added ✅");
+  } catch (e) {
+    console.error(e);
+    show("ERROR: " + (e?.message || String(e)));
+  }
+});
+
+
   let lastExpenses = [];
   let lastMonthly = [];
 let lastMonthlyByCat = [];
 let lastYearly = [];
 
-const EXP_CATS = [
-  "rent","gas","utilities","phones","maintenance","media_ads",
-  "gifts","commissions","bills","insurance","vehicle_payments","other"
-];
 
 
   function show(msg) { statusEl.textContent = msg; }
@@ -407,6 +423,25 @@ const EXP_CATS = [
     expReceipt.value = "";
     expNotes.value = "";
   }
+async function loadExpenseCategories() {
+  const sel = document.getElementById("expCategory");
+  if (!sel) return;
+
+  const { data, error } = await supabase
+    .from("expense_categories")
+    .select("name")
+    .order("name", { ascending: true });
+
+  if (error) throw error;
+
+  sel.innerHTML = "";
+  for (const r of (data || [])) {
+    const opt = document.createElement("option");
+    opt.value = r.name;
+    opt.textContent = r.name;
+    sel.appendChild(opt);
+  }
+}
 
   async function loadExpensesRange(startDate, endDate, curr) {
     let q = supabase
@@ -687,12 +722,13 @@ async function loadMonthlyByCategory(curr) {
     loadAll();
   });
 
-  (async () => {
-    await requireAdmin();
-    setPreset(rangeEl.value);
-    clearForm();
-    await loadAll();
-  })();
+(async () => {
+  await requireAdmin();
+  setPreset(rangeEl.value);
+  clearForm();
+  await loadExpenseCategories();
+  await loadAll();
+})();
 
 /* ===============================
    EXPORT: MONTHLY EXPENSES (BY CATEGORY)
