@@ -99,7 +99,10 @@
     <div class="btnrow">
       <button id="btnReload" type="button">Reload</button>
       <button id="btnExportExpenses" type="button">Export Expenses CSV</button>
-      <button id="btnExportMonthly" type="button">Export Monthly CSV</button>
+      <button id="btnExportMonthlyWide" type="button">Export Monthly Breakdown CSV</button>
+	<button id="btnExportMonthlyByCat" type="button">Export Monthly Expenses by Category CSV</button>
+	<button id="btnExportYearlyWide" type="button">Export Yearly Breakdown CSV</button>
+
     </div>
   </div>
 
@@ -268,11 +271,14 @@
   const fromEl = document.getElementById("from");
   const toEl = document.getElementById("to");
   const currencyEl = document.getElementById("currency");
-
+const deliveryField = "delivery";
   const btnReload = document.getElementById("btnReload");
   const btnExportExpenses = document.getElementById("btnExportExpenses");
-  const btnExportMonthly = document.getElementById("btnExportMonthly");
+const btnExportMonthlyWide = document.getElementById("btnExportMonthlyWide");
+const btnExportMonthlyByCat = document.getElementById("btnExportMonthlyByCat");
+const btnExportYearlyWide = document.getElementById("btnExportYearlyWide");
 
+ 
   const kpiInvoiceProfit = document.getElementById("kpiInvoiceProfit");
   const kpiDeliveryIncome = document.getElementById("kpiDeliveryIncome");
   const kpiExpenses = document.getElementById("kpiExpenses");
@@ -298,6 +304,14 @@
 
   let lastExpenses = [];
   let lastMonthly = [];
+let lastMonthlyByCat = [];
+let lastYearly = [];
+
+const EXP_CATS = [
+  "rent","gas","utilities","phones","maintenance","media_ads",
+  "gifts","commissions","bills","insurance","vehicle_payments","other"
+];
+
 
   function show(msg) { statusEl.textContent = msg; }
 
@@ -422,6 +436,19 @@
     if (error) throw error;
     return data || [];
   }
+async function loadMonthlyByCategory(curr) {
+  let q = supabase
+    .from("v_monthly_expenses_by_category")
+    .select("month_start, currency, category, amount")
+    .order("month_start", { ascending: false })
+    .limit(5000);
+
+  if (curr) q = q.eq("currency", curr);
+
+  const { data, error } = await q;
+  if (error) throw error;
+  return data || [];
+}
 
   async function loadYearly(curr) {
     let q = supabase
@@ -497,7 +524,7 @@
     async function fetchInvoiceProfitAndDelivery(startISO, endISO, curr) {
     let q = supabase
       .from("invoices")
-      .select("invoice_profit, delivery, currency, created_at")
+     .select(`invoice_profit, ${deliveryField}, currency, created_at`)
       .gte("created_at", startISO)
       .lte("created_at", endISO)
       .limit(5000);
@@ -513,7 +540,7 @@
 
     for (const r of (data || [])) {
       invProfit += Number(r.invoice_profit ?? 0);
-      deliveryIncome += Number(r.delivery ?? 0);
+      deliveryIncome += Number(r[deliveryField] ?? 0);
     }
 
 
@@ -535,15 +562,20 @@
     expensesTbody.innerHTML = "";
 
     try {
-      const [monthly, yearly, expenses, invAgg] = await Promise.all([
+         const [monthly, monthlyByCat, yearly, expenses, invAgg] = await Promise.all([
         loadMonthly(curr),
+        loadMonthlyByCategory(curr),
         loadYearly(curr),
         loadExpensesRange(fromEl.value, toEl.value, curr),
         fetchInvoiceProfitAndDelivery(startISO, endISO, curr),
       ]);
 
+
       lastMonthly = monthly;
+      lastMonthlyByCat = monthlyByCat;
+      lastYearly = yearly;
       lastExpenses = expenses;
+
 
       renderMonthly(monthly, from, to);
       renderYearly(yearly);
@@ -649,20 +681,6 @@
     downloadCsv("expenses.csv", rows);
   });
 
-  btnExportMonthly.addEventListener("click", () => {
-    const rows = [["month_start","currency","invoice_profit","delivery_income","expenses_total","net_profit"]];
-    for (const r of (lastMonthly || [])) {
-      rows.push([
-        r.month_start || "",
-        r.currency || "",
-        money(r.invoice_profit),
-        money(r.delivery_income),
-        money(r.expenses_total),
-        money(r.net_profit),
-      ]);
-    }
-    downloadCsv("monthly_financials.csv", rows);
-  });
 
   rangeEl.addEventListener("change", () => {
     setPreset(rangeEl.value);
@@ -675,7 +693,139 @@
     clearForm();
     await loadAll();
   })();
-</script>
 
+/* ===============================
+   EXPORT: MONTHLY EXPENSES (BY CATEGORY)
+   =============================== */
+document.getElementById("btnExportMonthlyByCat").addEventListener("click", () => {
+  const rows = [
+    ["month_start","currency","category","amount"]
+  ];
+
+  (lastMonthlyByCat || []).forEach(r => {
+    rows.push([
+      r.month_start,
+      r.currency,
+      r.category,
+      Number(r.amount || 0).toFixed(2)
+    ]);
+  });
+
+  downloadCsv("monthly_expenses_by_category.csv", rows);
+});
+
+
+/* ===============================
+   EXPORT: MONTHLY FULL FINANCIALS
+   =============================== */
+
+document.getElementById("btnExportMonthlyWide").addEventListener("click", () => {
+  const CATS = [
+    "rent","gas","utilities","phones","maintenance","media_ads",
+    "gifts","commissions","bills","insurance","vehicle_payments","other"
+  ];
+
+  const header = [
+    "month","currency",
+    "invoice_profit","delivery_income","expenses","net_profit",
+    ...CATS
+  ];
+
+  const rows = [header];
+  const map = {};
+
+  (lastMonthly || []).forEach(m => {
+    const key = m.month_start + m.currency;
+    map[key] = {
+      month: m.month_start,
+      currency: m.currency,
+      invoice_profit: Number(m.invoice_profit || 0),
+      delivery_income: Number(m.delivery_income || 0),
+      expenses: Number(m.expenses_total || 0),
+      net_profit: Number(m.net_profit || 0)
+    };
+    CATS.forEach(c => map[key][c] = 0);
+  });
+
+  (lastMonthlyByCat || []).forEach(e => {
+    const key = e.month_start + e.currency;
+    if (!map[key]) return;
+    const cat = CATS.includes(e.category) ? e.category : "other";
+    map[key][cat] += Number(e.amount || 0);
+  });
+
+  Object.values(map).forEach(r => {
+    rows.push([
+      r.month,
+      r.currency,
+      r.invoice_profit.toFixed(2),
+      r.delivery_income.toFixed(2),
+      r.expenses.toFixed(2),
+      r.net_profit.toFixed(2),
+      ...CATS.map(c => r[c].toFixed(2))
+    ]);
+  });
+
+  downloadCsv("monthly_financials_full.csv", rows);
+});
+
+
+
+/* ===============================
+   EXPORT: YEARLY FULL FINANCIALS
+   =============================== */
+
+document.getElementById("btnExportYearlyWide").addEventListener("click", () => {
+  const CATS = [
+    "rent","gas","utilities","phones","maintenance","media_ads",
+    "gifts","commissions","bills","insurance","vehicle_payments","other"
+  ];
+
+  const header = [
+    "year","currency",
+    "invoice_profit","delivery_income","expenses","net_profit",
+    ...CATS
+  ];
+
+  const rows = [header];
+  const map = {};
+
+  (lastYearly || []).forEach(y => {
+    const key = y.year_start + y.currency;
+    map[key] = {
+      year: y.year_start,
+      currency: y.currency,
+      invoice_profit: Number(y.invoice_profit || 0),
+      delivery_income: Number(y.delivery_income || 0),
+      expenses: Number(y.expenses_total || 0),
+      net_profit: Number(y.net_profit || 0)
+    };
+    CATS.forEach(c => map[key][c] = 0);
+  });
+
+  (lastMonthlyByCat || []).forEach(m => {
+    const year = m.month_start.substring(0,4) + "-01-01";
+    const key = year + m.currency;
+    if (!map[key]) return;
+    const cat = CATS.includes(m.category) ? m.category : "other";
+    map[key][cat] += Number(m.amount || 0);
+  });
+
+  Object.values(map).forEach(r => {
+    rows.push([
+      r.year,
+      r.currency,
+      r.invoice_profit.toFixed(2),
+      r.delivery_income.toFixed(2),
+      r.expenses.toFixed(2),
+      r.net_profit.toFixed(2),
+      ...CATS.map(c => r[c].toFixed(2))
+    ]);
+  });
+
+  downloadCsv("yearly_financials_full.csv", rows);
+});
+
+</script>
 </body>
 </html>
