@@ -587,6 +587,7 @@ async function loadMonthlyByCategory(curr) {
     let q = supabase
       .from("invoices")
      .select(`invoice_profit, ${deliveryField}, currency, created_at`)
+	      .eq("status", "paid")
       .gte("created_at", startISO)
       .lte("created_at", endISO)
       .limit(5000);
