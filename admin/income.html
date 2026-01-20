@@ -608,29 +608,32 @@ async function loadMonthlyByCategory(curr) {
     async function fetchInvoiceProfitAndDelivery(startISO, endISO, curr) {
     let q = supabase
       .from("invoices")
-     .select(`invoice_profit, ${deliveryField}, currency, created_at`)
+     .select(`invoice_profit, ${deliveryField}, subtotal, total, currency, created_at`)
 	      .eq("status", "paid")
       .gte("created_at", startISO)
       .lte("created_at", endISO)
       .limit(5000);
-
 
     if (curr) q = q.eq("currency", curr);
 
     const { data, error } = await q;
     if (error) throw error;
 
-	    let invProfit = 0;
+    let invProfit = 0;
     let deliveryIncome = 0;
+    let subtotalSum = 0;
+    let totalSum = 0;
 
     for (const r of (data || [])) {
       invProfit += Number(r.invoice_profit ?? 0);
       deliveryIncome += Number(r[deliveryField] ?? 0);
+      subtotalSum += Number(r.subtotal ?? 0);
+      totalSum += Number(r.total ?? 0);
     }
 
-
-    return { invProfit, deliveryIncome };
+    return { invProfit, deliveryIncome, subtotalSum, totalSum };
   }
+
 
   async function loadAll() {
     show("Loading…");
@@ -667,6 +670,20 @@ async function loadMonthlyByCategory(curr) {
       renderExpenses(expenses);
 
       const expenseTotal = expenses.reduce((s, r) => s + Number(r.amount ?? 0), 0);
+
+
+const revenue = Number(invAgg.totalSum || 0);                 // ✅ Revenue = invoices.total
+const cogs = Number(invAgg.subtotalSum || 0) - Number(invAgg.invProfit || 0); // ✅ COGS = subtotal - profit
+
+kpiRevenue.textContent = money(revenue);
+kpiCOGS.textContent = money(cogs);
+kpiInvoiceProfit.textContent = money(invAgg.invProfit);
+kpiDeliveryIncome.textContent = money(invAgg.deliveryIncome);
+kpiExpenses.textContent = money(expenseTotal);
+
+// keep Net Profit as: profit + delivery - expenses (your current model)
+kpiNetProfit.textContent = money(invAgg.invProfit + invAgg.deliveryIncome - expenseTotal);
+
 
      const revenue = invAgg.invProfit + invAgg.deliveryIncome;
 const cogs = revenue - invAgg.invProfit;
