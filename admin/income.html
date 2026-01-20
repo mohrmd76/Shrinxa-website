@@ -110,7 +110,7 @@
       <div class="muted" id="kpiCurrency1"></div>
     </div>
     <div class="card">
-      <div class="k">Delivery Income (pass-through)</div>
+    <div class="k">Delivery Income</div>
       <div class="v" id="kpiDeliveryIncome">—</div>
     </div>
     <div class="card">
@@ -494,28 +494,28 @@
     // For profit + delivery, we query invoices directly for exact range.
   }
 
-  async function fetchInvoiceProfitAndDelivery(startISO, endISO, curr) {
+    async function fetchInvoiceProfitAndDelivery(startISO, endISO, curr) {
     let q = supabase
       .from("invoices")
-      .select("invoice_profit, shipping_amount, shipping_mode, currency, created_at")
+      .select("invoice_profit, delivery, currency, created_at")
       .gte("created_at", startISO)
       .lte("created_at", endISO)
       .limit(5000);
+
 
     if (curr) q = q.eq("currency", curr);
 
     const { data, error } = await q;
     if (error) throw error;
 
-    let invProfit = 0;
+	    let invProfit = 0;
     let deliveryIncome = 0;
 
     for (const r of (data || [])) {
       invProfit += Number(r.invoice_profit ?? 0);
-      if ((r.shipping_mode || "") === "pass_through") {
-        deliveryIncome += Number(r.shipping_amount ?? 0);
-      }
+      deliveryIncome += Number(r.delivery ?? 0);
     }
+
 
     return { invProfit, deliveryIncome };
   }
