@@ -149,7 +149,8 @@
   <input id="newCategoryName" type="text" placeholder="e.g. parking">
 </label>
 
-<button id="btnAddCategory" type="button">Add Category</button>
+<button id="btnDeleteCategory" type="button" style="border-color:#c33;">Delete Category</button>
+
 
         <label>
           Amount
@@ -298,6 +299,8 @@ const btnExportYearlyWide = document.getElementById("btnExportYearlyWide");
 
 const newCategoryName = document.getElementById("newCategoryName");
 const btnAddCategory = document.getElementById("btnAddCategory");
+const btnDeleteCategory = document.getElementById("btnDeleteCategory");
+
 
 btnAddCategory.addEventListener("click", async () => {
   const name = (newCategoryName.value || "").trim();
@@ -315,6 +318,28 @@ btnAddCategory.addEventListener("click", async () => {
     newCategoryName.value = "";
     await loadExpenseCategories();
     show("Category added ✅");
+  } catch (e) {
+    console.error(e);
+    show("ERROR: " + (e?.message || String(e)));
+  }
+});
+
+btnDeleteCategory.addEventListener("click", async () => {
+  const name = (expCategory.value || "").trim();
+  if (!name) return;
+
+  try {
+    show("Deleting category…");
+
+    const { error } = await supabase
+      .from("expense_categories")
+      .delete()
+      .eq("name", name);
+
+    if (error) throw error;
+
+    await loadExpenseCategories();
+    show("Category deleted ✅");
   } catch (e) {
     console.error(e);
     show("ERROR: " + (e?.message || String(e)));
