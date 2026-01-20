@@ -506,7 +506,9 @@ async function loadExpenseCategories() {
   async function loadMonthly(curr) {
     let q = supabase
       .from("v_monthly_financials")
-      .select("month_start, currency, invoice_profit, delivery_income, expenses_total, net_profit")
+      
+.select("month_start, currency, invoice_profit, delivery_income, expenses_total, net_profit, revenue_total, subtotal_total")
+
       .order("month_start", { ascending: false })
       .limit(240);
 
@@ -532,7 +534,9 @@ async function loadMonthlyByCategory(curr) {
   async function loadYearly(curr) {
     let q = supabase
       .from("v_yearly_financials")
-      .select("year_start, currency, invoice_profit, delivery_income, expenses_total, net_profit")
+
+.select("year_start, currency, invoice_profit, delivery_income, expenses_total, net_profit, revenue_total, subtotal_total")
+
       .order("year_start", { ascending: false })
       .limit(25);
 
@@ -571,13 +575,14 @@ async function loadMonthlyByCategory(curr) {
       const tr = document.createElement("tr");
      tr.innerHTML = `
   <td>${r.month_start}</td>
-  <td class="right">${money(r.invoice_profit + r.delivery_income)}</td>
-  <td class="right">${money((r.invoice_profit + r.delivery_income) - r.invoice_profit)}</td>
+  <td class="right">${money(r.revenue_total)}</td>
+  <td class="right">${money(r.subtotal_total - r.invoice_profit)}</td>
   <td class="right">${money(r.invoice_profit)}</td>
   <td class="right">${money(r.delivery_income)}</td>
   <td class="right">${money(r.expenses_total)}</td>
   <td class="right">${money(r.net_profit)}</td>
 `;
+
 
       monthlyTbody.appendChild(tr);
     }
@@ -587,15 +592,17 @@ async function loadMonthlyByCategory(curr) {
     yearlyTbody.innerHTML = "";
     for (const r of rows) {
       const tr = document.createElement("tr");
+
       tr.innerHTML = `
          <td>${r.year_start}</td>
-  <td class="right">${money(r.invoice_profit + r.delivery_income)}</td>
-  <td class="right">${money((r.invoice_profit + r.delivery_income) - r.invoice_profit)}</td>
+  <td class="right">${money(r.revenue_total)}</td>
+  <td class="right">${money(r.subtotal_total - r.invoice_profit)}</td>
   <td class="right">${money(r.invoice_profit)}</td>
   <td class="right">${money(r.delivery_income)}</td>
   <td class="right">${money(r.expenses_total)}</td>
   <td class="right">${money(r.net_profit)}</td>
 `;
+
       yearlyTbody.appendChild(tr);
     }
   }
@@ -672,28 +679,20 @@ async function loadMonthlyByCategory(curr) {
       const expenseTotal = expenses.reduce((s, r) => s + Number(r.amount ?? 0), 0);
 
 
-const revenue = Number(invAgg.totalSum || 0);                 // ✅ Revenue = invoices.total
-const cogs = Number(invAgg.subtotalSum || 0) - Number(invAgg.invProfit || 0); // ✅ COGS = subtotal - profit
+const revenue = Number(invAgg.totalSum || 0);
+const cogs = Number(invAgg.subtotalSum || 0) - Number(invAgg.invProfit || 0);
 
 kpiRevenue.textContent = money(revenue);
 kpiCOGS.textContent = money(cogs);
 kpiInvoiceProfit.textContent = money(invAgg.invProfit);
 kpiDeliveryIncome.textContent = money(invAgg.deliveryIncome);
 kpiExpenses.textContent = money(expenseTotal);
-
-// keep Net Profit as: profit + delivery - expenses (your current model)
 kpiNetProfit.textContent = money(invAgg.invProfit + invAgg.deliveryIncome - expenseTotal);
 
 
-     const revenue = invAgg.invProfit + invAgg.deliveryIncome;
-const cogs = revenue - invAgg.invProfit;
 
-kpiRevenue.textContent = money(revenue);
-kpiCOGS.textContent = money(cogs);
-kpiInvoiceProfit.textContent = money(invAgg.invProfit);
-kpiDeliveryIncome.textContent = money(invAgg.deliveryIncome);
-kpiExpenses.textContent = money(expenseTotal);
-kpiNetProfit.textContent = money(revenue - expenseTotal);
+
+     
       kpiCurrency1.textContent = curr ? curr : "All currencies";
 
       show("Done ✅");
@@ -846,14 +845,18 @@ const header = [
 
   (lastMonthly || []).forEach(m => {
     const key = m.month_start + m.currency;
-    map[key] = {
-      month: m.month_start,
-      currency: m.currency,
-      invoice_profit: Number(m.invoice_profit || 0),
-      delivery_income: Number(m.delivery_income || 0),
-      expenses: Number(m.expenses_total || 0),
-      net_profit: Number(m.net_profit || 0)
-    };
+map[key] = {
+  month: m.month_start,
+  currency: m.currency,
+  invoice_profit: Number(m.invoice_profit || 0),
+  delivery_income: Number(m.delivery_income || 0),
+  expenses: Number(m.expenses_total || 0),
+  net_profit: Number(m.net_profit || 0),
+  revenue_total: Number(m.revenue_total || 0),
+  subtotal_total: Number(m.subtotal_total || 0)
+};
+    
+
     CATS.forEach(c => map[key][c] = 0);
   });
 
@@ -865,19 +868,19 @@ const header = [
   });
 
 Object.values(map).forEach(r => {
-  const revenue = r.invoice_profit + r.delivery_income;
-  const cogs = revenue - r.invoice_profit;
+  const revenue = Number(r.revenue_total || 0);
+  const cogs = Number(r.subtotal_total || 0) - Number(r.invoice_profit || 0);
 
   rows.push([
     r.month,
     r.currency,
     revenue.toFixed(2),
     cogs.toFixed(2),
-    r.invoice_profit.toFixed(2),
-    r.delivery_income.toFixed(2),
-    r.expenses.toFixed(2),
-    r.net_profit.toFixed(2),
-    ...CATS.map(c => r[c].toFixed(2))
+    Number(r.invoice_profit || 0).toFixed(2),
+    Number(r.delivery_income || 0).toFixed(2),
+    Number(r.expenses || 0).toFixed(2),
+    Number(r.net_profit || 0).toFixed(2),
+    ...CATS.map(c => Number(r[c] || 0).toFixed(2))
   ]);
 });
 
@@ -911,14 +914,18 @@ document.getElementById("btnExportYearlyWide").addEventListener("click", () => {
 
   (lastYearly || []).forEach(y => {
     const key = y.year_start + y.currency;
-    map[key] = {
-      year: y.year_start,
-      currency: y.currency,
-      invoice_profit: Number(y.invoice_profit || 0),
-      delivery_income: Number(y.delivery_income || 0),
-      expenses: Number(y.expenses_total || 0),
-      net_profit: Number(y.net_profit || 0)
-    };
+map[key] = {
+  year: y.year_start,
+  currency: y.currency,
+  invoice_profit: Number(y.invoice_profit || 0),
+  delivery_income: Number(y.delivery_income || 0),
+  expenses: Number(y.expenses_total || 0),
+  net_profit: Number(y.net_profit || 0),
+  revenue_total: Number(y.revenue_total || 0),
+  subtotal_total: Number(y.subtotal_total || 0)
+};
+   
+
     CATS.forEach(c => map[key][c] = 0);
   });
 
@@ -931,19 +938,19 @@ document.getElementById("btnExportYearlyWide").addEventListener("click", () => {
   });
 
 Object.values(map).forEach(r => {
-  const revenue = r.invoice_profit + r.delivery_income;
-  const cogs = revenue - r.invoice_profit;
+  const revenue = Number(r.revenue_total || 0);
+  const cogs = Number(r.subtotal_total || 0) - Number(r.invoice_profit || 0);
 
   rows.push([
     r.year,
     r.currency,
     revenue.toFixed(2),
     cogs.toFixed(2),
-    r.invoice_profit.toFixed(2),
-    r.delivery_income.toFixed(2),
-    r.expenses.toFixed(2),
-    r.net_profit.toFixed(2),
-    ...CATS.map(c => r[c].toFixed(2))
+    Number(r.invoice_profit || 0).toFixed(2),
+    Number(r.delivery_income || 0).toFixed(2),
+    Number(r.expenses || 0).toFixed(2),
+    Number(r.net_profit || 0).toFixed(2),
+    ...CATS.map(c => Number(r[c] || 0).toFixed(2))
   ]);
 });
 
