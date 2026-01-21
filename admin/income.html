@@ -17,7 +17,7 @@
     textarea { min-width: 260px; }
     button { padding:7px 10px; border:1px solid #888; border-radius:8px; background:#f6f6f6; cursor:pointer; }
     button:hover { background:#efefef; }
-    .grid { display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:12px; margin-top:14px; }
+    .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-top:14px; }
     .card { border:1px solid #e3e3e3; border-radius:14px; padding:12px; background:#fff; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
     .k { color:#666; font-size:12px; }
     .v { font-size:22px; font-weight:700; margin-top:6px; }
@@ -100,17 +100,17 @@
       <button id="btnReload" type="button">Reload</button>
       <button id="btnExportExpenses" type="button">Export Expenses CSV</button>
       <button id="btnExportMonthlyWide" type="button">Export Monthly Breakdown CSV</button>
-	<button id="btnExportMonthlyByCat" type="button">Export Monthly Expenses by Category CSV</button>
-	<button id="btnExportYearlyWide" type="button">Export Yearly Breakdown CSV</button>
+		<button id="btnExportMonthlyByCat" type="button">Export Monthly Expenses by Category CSV</button>
+		<button id="btnExportYearlyWide" type="button">Export Yearly Breakdown CSV</button>
 
     </div>
   </div>
 
   <div class="grid">
-	<div class="card">
-  <div class="k">Revenue</div>
-  <div class="v" id="kpiRevenue">—</div>
-</div>
+		<div class="card">
+	  <div class="k">Revenue</div>
+	  <div class="v" id="kpiRevenue">—</div>
+	</div>
 
 <div class="card">
   <div class="k">COGS</div>
@@ -132,6 +132,15 @@
     <div class="card">
       <div class="k">Net Profit</div>
       <div class="v" id="kpiNetProfit">—</div>
+    </div>
+    <!-- Analytics / Charts CTA -->
+    <div class="card" style="text-align:center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+      <div class="k">Analytics & Insights</div>
+      <a href="./income-analytics.html" target="_blank" style="margin-top: 8px;">
+        <button type="button" style="padding:8px 16px; font-size:13px;">
+          📊 Open Analytics
+        </button>
+      </a>
     </div>
   </div>
 
@@ -203,46 +212,30 @@
       </div>
     </div>
 
-<!-- Analytics / Charts CTA -->
-<div class="card" style="text-align:center; margin-bottom:12px;">
-  <div class="k">Analytics & Insights</div>
-  <div class="muted" style="margin-bottom:10px;">
-    Visual trends, margins, category breakdowns
-  </div>
-  <a href="./income-analytics.html" target="_blank">
-    <button type="button" style="padding:12px 20px; font-size:14px;">
-      📊 Open Analytics Dashboard
-    </button>
-  </a>
-</div>
+    <div class="d-flex flex-column gap-3">
+      <div class="card">
+        <div class="k">Monthly Summary</div>
+        <div class="muted">From v_monthly_financials</div>
+        <div style="overflow:auto; max-height: 420px; margin-top:10px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Month</th>
+               <th class="right">Revenue</th>
+  <th class="right">COGS</th>
+  <th class="right">Invoice Profit</th>
+  <th class="right">Delivery Income</th>
+  <th class="right">Expenses</th>
+  <th class="right">Net Profit</th>
 
-
-    <div class="card">
-      <div class="k">Monthly Summary</div>
-      <div class="muted">From v_monthly_financials</div>
-      <div style="overflow:auto; max-height: 420px; margin-top:10px;">
-        <table>
-          <thead>
-            <tr>
-              <th>Month</th>
-             <th class="right">Revenue</th>
-<th class="right">COGS</th>
-<th class="right">Invoice Profit</th>
-<th class="right">Delivery Income</th>
-<th class="right">Expenses</th>
-<th class="right">Net Profit</th>
-
-            </tr>
-          </thead>
-          <tbody id="monthlyTbody"></tbody>
-        </table>
+              </tr>
+            </thead>
+            <tbody id="monthlyTbody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
-
-
-
- 
 
   <!-- Row: Expenses + Yearly Summary -->
   <div class="row" style="margin-top:12px;">
@@ -287,10 +280,6 @@
       </div>
     </div>
   </div>
-
- 
-
-
 
 <script type="module">
   import { supabase } from "../supabaseClient.js";
@@ -636,7 +625,7 @@ async function loadMonthlyByCategory(curr) {
     let q = supabase
       .from("invoices")
      .select(`invoice_profit, ${deliveryField}, subtotal, total, currency, created_at`)
-	      .eq("status", "paid")
+		      .eq("status", "paid")
       .gte("created_at", startISO)
       .lte("created_at", endISO)
       .limit(5000);
