@@ -107,7 +107,7 @@
 
     .controls{
       display:grid;
-      grid-template-columns: repeat(12, minmax(0,1fr));
+      grid-template-columns: repeat(14, minmax(0,1fr));
       gap:10px;
       align-items:end;
     }
@@ -286,6 +286,11 @@
           <div class="v" id="kpiExpenses">—</div>
           <div class="s">Selected range</div>
         </div>
+        <div class="kpi" id="kpiDeliveryCard">
+          <div class="k">Delivery</div>
+          <div class="v" id="kpiDelivery">—</div>
+          <div class="s">Delivery income</div>
+        </div>
         <div class="kpi" id="kpiNetCard">
           <div class="k">Net Profit</div>
           <div class="v" id="kpiNet">—</div>
@@ -440,9 +445,11 @@ const kpiRevenue = document.getElementById("kpiRevenue");
 const kpiCOGS = document.getElementById("kpiCOGS");
 const kpiInvProfit = document.getElementById("kpiInvProfit");
 const kpiExpenses = document.getElementById("kpiExpenses");
+const kpiDelivery = document.getElementById("kpiDelivery");
 const kpiNet = document.getElementById("kpiNet");
 const kpiMargin = document.getElementById("kpiMargin");
 
+const kpiDeliveryCard = document.getElementById("kpiDeliveryCard");
 const kpiNetCard = document.getElementById("kpiNetCard");
 const kpiMarginCard = document.getElementById("kpiMarginCard");
 
@@ -520,7 +527,7 @@ applyPreset();
 async function loadMonthlyFinancials(from, to, curr){
   const { data, error } = await supabase
     .from("v_monthly_financials")
-    .select("month_start, currency, revenue_total, subtotal_total, invoice_profit, expenses_total, net_profit")
+    .select("month_start, currency, revenue_total, subtotal_total, invoice_profit, delivery_income, expenses_total, net_profit")
     .eq("currency", curr)
     .gte("month_start", from)
     .lte("month_start", to)
@@ -793,8 +800,11 @@ async function loadAll(){
   const invProfitSeries = monthly.map(r => Number(r.invoice_profit || 0));
   const invProfitTotal = sum(invProfitSeries);
 
+  const deliverySeries = monthly.map(r => Number(r.delivery_income || 0));
+  const deliveryTotal = sum(deliverySeries);
+
   const expenseTotal = expenses.reduce((s,r)=> s + Number(r.amount||0), 0);
-  const netTotal = invProfitTotal - expenseTotal;
+  const netTotal = invProfitTotal + deliveryTotal - expenseTotal;
 
   const margin = revenueTotal > 0 ? (invProfitTotal / revenueTotal) * 100 : 0;
 
@@ -802,6 +812,7 @@ async function loadAll(){
   setKpi(kpiCOGS, money(cogsTotal));
   setKpi(kpiInvProfit, money(invProfitTotal));
   setKpi(kpiExpenses, money(expenseTotal));
+  setKpi(kpiDelivery, money(deliveryTotal));
   setKpi(kpiNet, money(netTotal));
   setKpi(kpiMargin, `${pct(margin)}%`);
 
@@ -815,7 +826,7 @@ async function loadAll(){
   else if (margin >= 20) kpiMarginCard.classList.add("warn");
   else kpiMarginCard.classList.add("bad");
 
-  renderWaterfall(revenueTotal, cogsTotal, invProfitTotal, expenseTotal, netTotal);
+  renderWaterfall(revenueTotal, cogsTotal, invProfitTotal + deliveryTotal, expenseTotal, netTotal);
 
   // Expenses by category
   const catMap = new Map();
