@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Income Analytics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+      background:#f6f7f9;
+      color:#111;
+    }
+    .wrap{max-width:1200px;margin:24px auto;padding:0 16px;}
+    h1{font-size:22px;margin:0 0 6px;}
+    h3{margin:0 0 6px;font-size:16px;}
+    .muted{color:#666;font-size:13px;}
+    .card{
+      background:#fff;border-radius:12px;padding:16px;
+      box-shadow:0 1px 4px rgba(0,0,0,0.06);
+      margin-bottom:16px;
+    }
+    .top-actions{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+    .back-link{font-size:14px;text-decoration:none;color:#0b3c8a;font-weight:600;}
+    .status{
+      display:inline-block;
+      padding:8px 10px;
+      border:1px solid #ddd;
+      border-radius:10px;
+      background:#fff;
+      font-size:13px;
+      color:#333;
+    }
+    .controls{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+      gap:12px;
+      align-items:end;
+    }
+    label{font-size:12px;font-weight:600;display:block;margin-bottom:4px;}
+    input,select,button{
+      width:100%;
+      padding:8px 10px;
+      font-size:14px;
+      border-radius:8px;
+      border:1px solid #ccc;
+      background:#fff;
+    }
+    button.primary{
+      background:#0b3c8a;color:#fff;border:none;cursor:pointer;
+    }
+    button.primary:hover{opacity:.95;}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+    .chart-box{height:360px;margin-top:10px;}
+    table{width:100%;border-collapse:collapse;}
+    th,td{padding:10px 8px;border-bottom:1px solid #eee;font-size:14px;}
+    th{text-align:left;color:#222;}
+    td.right, th.right{text-align:right;white-space:nowrap;}
+    .pill{
+      display:inline-block;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid #ddd;
+      font-size:12px;
+      color:#444;
+      background:#fafafa;
+      margin-left:8px;
+    }
+    @media (max-width: 900px){.grid-2{grid-template-columns:1fr;}}
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="top-actions">
+      <div>
+        <h1>Income Analytics</h1>
+        <div class="muted">
+          Advanced financial insights
+          <span class="pill" id="whoami">checking…</span>
+        </div>
+      </div>
+      <a href="./income.html" class="back-link">← Back to Income</a>
+    </div>
+
+    <div class="status" id="status">Loading…</div>
+
+    <!-- Controls -->
+    <div class="card">
+      <div class="controls">
+        <div>
+          <label>Date from</label>
+          <input type="date" id="fromDate">
+        </div>
+        <div>
+          <label>Date to</label>
+          <input type="date" id="toDate">
+        </div>
+        <div>
+          <label>Currency</label>
+          <select id="currency">
+            <option value="CAD">CAD</option>
+            <option value="USD">USD</option>
+          </select>
+        </div>
+        <div>
+          <button id="reload" class="primary">Reload Analytics</button>
+        </div>
+      </div>
+      <div class="muted" style="margin-top:10px;">
+        Revenue is invoice <b>total</b>. COGS is derived from invoice-item <b>product_cost</b>. Paid invoices only.
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid-2">
+      <div class="card">
+        <h3>Revenue · COGS · Net Profit</h3>
+        <div class="muted">Monthly trend (paid only) + optional refunds deduction (if refunds exist)</div>
+        <div class="chart-box">
+          <canvas id="chartRevenue"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Expenses by Category</h3>
+        <div class="muted">Selected range</div>
+        <div class="chart-box">
+          <canvas id="chartExpenses"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Product Profit -->
+    <div class="card">
+      <h3>Product Profit & Margins</h3>
+      <div class="muted">Top 10 by profit + full table</div>
+
+      <div class="chart-box">
+        <canvas id="chartProducts"></canvas>
+      </div>
+
+      <div style="overflow:auto; margin-top:12px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th class="right">Revenue</th>
+              <th class="right">COGS</th>
+              <th class="right">Profit</th>
+              <th class="right">Margin %</th>
+            </tr>
+          </thead>
+          <tbody id="productProfitTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+import { supabase } from "../supabaseClient.js";
+
+/* =============================
+   UI helpers
+   ============================= */
+const statusEl = document.getElementById("status");
+const whoEl = document.getElementById("whoami");
+
+function show(msg){ statusEl.textContent = msg; }
+function money(n){
+  const x = Number(n || 0);
+  if (!Number.isFinite(x)) return "0.00";
+  return x.toFixed(2);
+}
+function destroy(c){ try{ if(c) c.destroy(); }catch{} return null; }
+
+/* =============================
+   Elements
+   ============================= */
+const fromEl = document.getElementById("fromDate");
+const toEl = document.getElementById("toDate");
+const currEl = document.getElementById("currency");
+const reloadBtn = document.getElementById("reload");
+
+const chartRevenueEl = document.getElementById("chartRevenue");
+const chartExpensesEl = document.getElementById("chartExpenses");
+const chartProductsEl = document.getElementById("chartProducts");
+const productProfitTbody = document.getElementById("productProfitTbody");
+
+let chartRevenue = null;
+let chartExpenses = null;
+let chartProducts = null;
+
+/* =============================
+   Auth (ADMIN)
+   ============================= */
+async function requireAdmin(){
+  show("Checking login…");
+  const { data: { user }, error: uErr } = await supabase.auth.getUser();
+  if (uErr) throw uErr;
+  if (!user){ location.href = "../login.html"; return null; }
+
+  whoEl.textContent = user.email || "admin";
+
+  show("Checking admin…");
+  const { data: me, error: pErr } = await supabase
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single();
+
+  if (pErr) throw pErr;
+  if (!me?.is_admin) throw new Error("Access denied (not admin)");
+  whoEl.textContent = (user.email || "admin") + " (admin)";
+  return user;
+}
+
+/* =============================
+   Defaults
+   ============================= */
+function setDefaultDates(){
+  const today = new Date();
+  const to = new Date(today);
+  const from = new Date(today);
+  from.setMonth(from.getMonth() - 6);
+
+  const toISO = to.toISOString().slice(0,10);
+  const fromISO = from.toISOString().slice(0,10);
+
+  toEl.value = toISO;
+  fromEl.value = fromISO;
+}
+setDefaultDates();
+
+/* =============================
+   Data loaders
+   ============================= */
+
+async function loadMonthlyFinancials(from, to, curr){
+  // month_start is month-bucket; filter by buckets
+  const { data, error } = await supabase
+    .from("v_monthly_financials")
+    .select("month_start, currency, revenue_total, subtotal_total, invoice_profit, expenses_total, net_profit")
+    .eq("currency", curr)
+    .gte("month_start", from)
+    .lte("month_start", to)
+    .order("month_start", { ascending: true });
+
+  if (error) throw error;
+  return data || [];
+}
+
+async function loadRefundMonthly(from, to, curr){
+  // Optional: if your system uses status='refunded' this will deduct it from revenue.
+  // If you don't have refunds, it returns empty.
+  const { data, error } = await supabase
+    .from("invoices")
+    .select("invoice_date, total, currency, status")
+    .eq("currency", curr)
+    .in("status", ["refunded", "refund", "returned"])
+    .gte("invoice_date", from)
+    .lte("invoice_date", to)
+    .limit(5000);
+
+  // If column doesn't exist or no refunds table behavior, ignore gracefully
+  if (error) return [];
+  return data || [];
+}
+
+async function loadExpensesRaw(from, to, curr){
+  const { data, error } = await supabase
+    .from("expenses")
+    .select("expense_date, category, amount, currency")
+    .eq("currency", curr)
+    .gte("expense_date", from)
+    .lte("expense_date", to)
+    .limit(10000);
+
+  if (error) throw error;
+  return data || [];
+}
+
+async function loadProductItems(from, to, curr){
+  // Paid only, date range by invoice_date
+  const { data, error } = await supabase
+    .from("invoice_items")
+    .select(`
+      quantity,
+      price,
+      product_cost,
+      product:products(name),
+      invoice:invoices!inner(status, currency, invoice_date)
+    `)
+    .eq("invoice.status", "paid")
+    .eq("invoice.currency", curr)
+    .gte("invoice.invoice_date", from)
+    .lte("invoice.invoice_date", to)
+    .limit(100000);
+
+  if (error) throw error;
+  return data || [];
+}
+
+/* =============================
+   Render charts
+   ============================= */
+
+function renderRevenueChart(monthlyRows, refundRows){
+  const labels = monthlyRows.map(r => String(r.month_start));
+
+  const revenuePaid = monthlyRows.map(r => Number(r.revenue_total || 0));
+  const cogs = monthlyRows.map(r => Number(r.subtotal_total || 0) - Number(r.invoice_profit || 0));
+  const net = monthlyRows.map(r => Number(r.net_profit || 0));
+
+  // Build refunds by month bucket (deduct)
+  const refundMap = new Map();
+  for (const r of (refundRows || [])){
+    const d = String(r.invoice_date || "").slice(0,10);
+    if (!d) continue;
+    const month = d.slice(0,7) + "-01";
+    refundMap.set(month, (refundMap.get(month) || 0) + Number(r.total || 0));
+  }
+  const refunds = labels.map(m => Number(refundMap.get(m) || 0));
+  const revenueNet = revenuePaid.map((v, i) => v - refunds[i]);
+
+  chartRevenue = destroy(chartRevenue);
+  chartRevenue = new Chart(chartRevenueEl, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        { label: "Revenue (Net)", data: revenueNet, tension: 0.25 },
+        { label: "COGS", data: cogs, tension: 0.25 },
+        { label: "Net Profit", data: net, tension: 0.25 },
+        { label: "Refunds", data: refunds, tension: 0.25 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: true } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+}
+
+function renderExpensesPie(expRows){
+  const map = new Map();
+  for (const r of expRows){
+    const cat = r.category || "other";
+    map.set(cat, (map.get(cat) || 0) + Number(r.amount || 0));
+  }
+
+  const labels = Array.from(map.keys());
+  const values = Array.from(map.values());
+
+  chartExpenses = destroy(chartExpenses);
+  chartExpenses = new Chart(chartExpensesEl, {
+    type: "pie",
+    data: { labels, datasets: [{ data: values }] },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+}
+
+function renderProductTable(rows){
+  productProfitTbody.innerHTML = "";
+  for (const r of rows){
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${r.name}</td>
+      <td class="right">${money(r.revenue)}</td>
+      <td class="right">${money(r.cogs)}</td>
+      <td class="right">${money(r.profit)}</td>
+      <td class="right">${Number(r.margin || 0).toFixed(1)}%</td>
+    `;
+    productProfitTbody.appendChild(tr);
+  }
+}
+
+function renderProductChart(topRows){
+  const labels = topRows.map(r => r.name);
+  const profits = topRows.map(r => r.profit);
+
+  chartProducts = destroy(chartProducts);
+  chartProducts = new Chart(chartProductsEl, {
+    type: "bar",
+    data: { labels, datasets: [{ label: "Profit", data: profits }] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+}
+
+/* =============================
+   Main load
+   ============================= */
+
+async function loadAll(){
+  const from = fromEl.value;
+  const to = toEl.value;
+  const curr = currEl.value;
+
+  show("Loading analytics…");
+
+  const [monthly, refunds, expenses, items] = await Promise.all([
+    loadMonthlyFinancials(from, to, curr),
+    loadRefundMonthly(from, to, curr),
+    loadExpensesRaw(from, to, curr),
+    loadProductItems(from, to, curr)
+  ]);
+
+  renderRevenueChart(monthly, refunds);
+  renderExpensesPie(expenses);
+
+  // Aggregate product profit
+  const map = new Map();
+  for (const r of items){
+    const name = r.product?.name || "Unknown";
+    if (!map.has(name)) map.set(name, { revenue: 0, cogs: 0 });
+
+    const qty = Number(r.quantity || 0);
+    const price = Number(r.price || 0);
+    const cost = Number(r.product_cost || 0);
+
+    const row = map.get(name);
+    row.revenue += qty * price;
+    row.cogs += qty * cost;
+  }
+
+  const rows = Array.from(map.entries()).map(([name, v]) => {
+    const profit = v.revenue - v.cogs;
+    const margin = v.revenue > 0 ? (profit / v.revenue) * 100 : 0;
+    return { name, revenue: v.revenue, cogs: v.cogs, profit, margin };
+  }).sort((a,b) => b.profit - a.profit);
+
+  renderProductTable(rows);
+  renderProductChart(rows.slice(0,10));
+
+  show("Done ✅");
+}
+
+/* =============================
+   Events + boot
+   ============================= */
+reloadBtn.addEventListener("click", async () => {
+  try { await loadAll(); }
+  catch (e){
+    console.error(e);
+    show("ERROR: " + (e?.message || String(e)));
+  }
+});
+
+try{
+  await requireAdmin();
+  await loadAll();
+}catch(e){
+  console.error(e);
+  show("ERROR: " + (e?.message || String(e)));
+}
+</script>
+</body>
+</html>
