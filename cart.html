@@ -2020,24 +2020,58 @@ const DELIVERY_FEE = Number(DELIVERY_RULE.fee || 0);
         const total = taxableBase + hst;
 
         const method = (paySel && paySel.value) ? paySel.value : "pay_now";
+
 	// ===== STOCK CHECK (STRICT) =====
-const reserveItems = items
-  .filter(r => /^[0-9a-fA-F-]{36}$/.test(r.product_id))
-  .map(r => ({
-    product_id: r.product_id,
-    qty: Number(r.qty || r.quantity || 0)
-  }));
-const bad = (items || []).filter(r => !/^[0-9a-fA-F-]{36}$/.test(r.product_id));
-if (bad.length) {
-  const names = bad.map(r => (r.product_name || r.name || r.product_id)).join(", ");
-  if (checkoutMsg) checkoutMsg.textContent =
-    "Cart item(s) must be removed and added again: " + names;
-  return;
+
+// 1) Normalize product_id to UUID if it is currently a slug like "flexlite-18".
+//    We do this by looking up products.id using the cart row's product_name/name.
+//    Then we update cart_items.product_id to the UUID so it is fixed permanently.
+const UUID_RE = /^[0-9a-fA-F-]{36}$/;
+
+for (const r of (items || [])) {
+  if (!r?.product_id) continue;
+
+  // If already UUID, nothing to do
+  if (UUID_RE.test(String(r.product_id))) continue;
+
+  // Try to resolve by product_name/name (must exist in cart_items)
+  const lookupName = String(r.product_name || r.name || "").trim();
+  if (!lookupName) {
+    if (checkoutMsg) checkoutMsg.textContent =
+      "Cart has an invalid product reference. Please remove the item and add it again.";
+    return;
+  }
+
+  const { data: prod, error: prodErr } = await sb
+    .from("products")
+    .select("id")
+    .eq("name", lookupName)
+    .maybeSingle();
+
+  if (prodErr || !prod?.id) {
+    if (checkoutMsg) checkoutMsg.textContent =
+      "Cart item cannot be matched to a product: " + lookupName + ". Please remove and add again.";
+    return;
+  }
+
+  // Persist the fix in cart_items
+  await sb
+    .from("cart_items")
+    .update({ product_id: prod.id })
+    .eq("id", r.id)
+    .eq("cart_id", cartId);
+
+  // Update local object so reservation uses the UUID now
+  r.product_id = prod.id;
 }
 
+// 2) Build reservation payload (now guaranteed UUIDs)
+const reserveItems = (items || []).map(r => ({
+  product_id: r.product_id,
+  qty: Number(r.qty || r.quantity || 0)
+}));
 
-
-
+// 3) Atomic reserve (blocks qty > stock, and blocks stock=0)
 const { error: stockErr } = await sb.rpc(
   "reserve_stock_strict",
   { items: reserveItems }
@@ -2046,9 +2080,10 @@ const { error: stockErr } = await sb.rpc(
 if (stockErr) {
   console.error("reserve_stock_strict error:", stockErr);
   if (checkoutMsg) checkoutMsg.textContent =
-    "Stock check failed: " + (stockErr.message || "unknown error");
+    "Stock check failed: " + (stockErr.message || "Not enough stock. Please reduce quantity.");
   return;
 }
+
 
 // ===== END STOCK CHECK =====
 
