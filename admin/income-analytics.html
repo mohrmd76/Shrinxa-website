@@ -784,11 +784,18 @@ async function loadAll(){
 
   // KPI totals
   const sum = (arr)=> arr.reduce((s,v)=> s + Number(v||0), 0);
+  // KPI totals
+  // IMPORTANT: Use the system's stored invoice_profit values (from v_monthly_financials),
+  // not a derived Revenue-COGS calculation. This keeps KPIs consistent with your invoices.
   const revenueTotal = sum(revenueNet);
   const cogsTotal = sum(cogs);
-  const invProfitTotal = revenueTotal - cogsTotal;
+
+  const invProfitSeries = monthly.map(r => Number(r.invoice_profit || 0));
+  const invProfitTotal = sum(invProfitSeries);
+
   const expenseTotal = expenses.reduce((s,r)=> s + Number(r.amount||0), 0);
   const netTotal = invProfitTotal - expenseTotal;
+
   const margin = revenueTotal > 0 ? (invProfitTotal / revenueTotal) * 100 : 0;
 
   setKpi(kpiRevenue, money(revenueTotal));
