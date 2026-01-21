@@ -33,10 +33,11 @@ async function loadInventory() {
 
       <td><input data-field="stock_on_hand" data-id="${p.id}" type="number" step="1" value="${num(p.stock_on_hand)}" style="width:110px"></td>
 	<td><input data-field="low_stock_threshold" data-id="${p.id}" type="number" step="1" value="${num(p.low_stock_threshold)}" style="width:110px"></td>
-      <td><input data-field="cost_product" data-id="${p.id}" type="number" step="0.0001" value="${num4(p.cost_product)}" style="width:140px"></td>
-      <td><input data-field="cost_import" data-id="${p.id}" type="number" step="0.0001" value="${num4(p.cost_import)}" style="width:140px"></td>
-      <td><input type="number" step="0.0001" value="${num4(p.cost_total)}" style="width:140px" disabled></td>
-	<td><input type="number" step="0.0001" value="${num4(costPerBox(p.cost_total, p.specification))}" style="width:160px" disabled></td>
+     <td><input data-field="cost_product" data-id="${p.id}" data-spec="${escapeHtml(p.specification || "")}" type="number" step="0.0001" value="${num4(perRoll(p.cost_product, p.specification))}" style="width:140px"></td>
+<td><input data-field="cost_import" data-id="${p.id}" data-spec="${escapeHtml(p.specification || "")}" type="number" step="0.0001" value="${num4(perRoll(p.cost_import, p.specification))}" style="width:140px"></td>
+<td><input type="number" step="0.0001" value="${num4(perRoll(p.cost_total, p.specification))}" style="width:140px" disabled></td>
+<td><input type="number" step="0.0001" value="${num4(costPerBox(p.cost_total, p.specification))}" style="width:160px" disabled></td>
+
     `;
 
     tbody.appendChild(tr);
@@ -63,7 +64,18 @@ async function onEditField(e) {
   } else {
     value = parseFloat(input.value);
     if (!Number.isFinite(value)) value = 0;
+
+    // IMPORTANT:
+    // UI shows costs PER ROLL, but DB stores costs PER BOX.
+    // So when admin edits cost_product / cost_import, convert roll -> box.
+    if (field === "cost_product" || field === "cost_import") {
+      const spec = input.getAttribute("data-spec") || "";
+      const r = rollsPerBox(spec);
+      const mult = Number.isFinite(r) && r > 0 ? r : 1;
+      value = value * mult;
+    }
   }
+
 
   input.disabled = true;
 
@@ -109,12 +121,24 @@ function rollsPerBox(spec) {
   return m ? parseInt(m[1], 10) : 1;
 }
 
-function costPerBox(costTotal, spec) {
+function perRoll(valuePerBox, spec) {
   const r = rollsPerBox(spec);
+  const v = Number(valuePerBox);
+  if (!Number.isFinite(v)) return 0;
+  const div = Number.isFinite(r) && r > 0 ? r : 1;
+  return v / div;
+}
+
+
+function costPerBox(costTotal, spec) {
+  // IMPORTANT:
+  // In your system, cost_total is already the COST PER BOX (confirmed by invoice_items.unit_cost == products.cost_total).
+  // So Total Cost / Box must NOT multiply by rolls/box.
   const c = Number(costTotal);
   if (!Number.isFinite(c)) return 0;
-  return c * (Number.isFinite(r) ? r : 1);
+  return c;
 }
+
 
 // Run
 loadInventory();
