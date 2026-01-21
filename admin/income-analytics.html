@@ -292,14 +292,14 @@ async function loadExpensesRaw(from, to, curr){
 async function loadProductItems(from, to, curr){
   // Paid only, date range by invoice_date
   const { data, error } = await supabase
-    .from("invoice_items")
-    .select(`
-      quantity,
-      price,
-      product_cost,
-      product:products(name),
-      invoice:invoices!inner(status, currency, invoice_date)
-    `)
+.from("invoice_items")
+.select(`
+  qty,
+  unit_price,
+  unit_cost,
+  product:products(name),
+  invoice:invoices!inner(status, currency, invoice_date)
+`)
     .eq("invoice.status", "paid")
     .eq("invoice.currency", curr)
     .gte("invoice.invoice_date", from)
@@ -430,9 +430,10 @@ async function loadAll(){
     const name = r.product?.name || "Unknown";
     if (!map.has(name)) map.set(name, { revenue: 0, cogs: 0 });
 
-    const qty = Number(r.quantity || 0);
-    const price = Number(r.price || 0);
-    const cost = Number(r.product_cost || 0);
+    const qty = Number(r.qty || 0);
+const price = Number(r.unit_price || 0);
+const cost = Number(r.unit_cost || 0);
+
 
     const row = map.get(name);
     row.revenue += qty * price;
