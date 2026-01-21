@@ -478,6 +478,20 @@ Chart.defaults.plugins.legend.labels.boxWidth = 10;
 Chart.defaults.plugins.legend.labels.boxHeight = 10;
 
 /* =============================
+   Color helpers
+   ============================= */
+const PALETTE = [
+  "#2563eb","#16a34a","#dc2626","#7c3aed","#ea580c",
+  "#0891b2","#9333ea","#65a30d","#f59e0b","#0d9488",
+  "#be123c","#1d4ed8","#15803d","#b45309","#6d28d9"
+];
+function pickColors(n){
+  const out=[];
+  for(let i=0;i<n;i++){ out.push(PALETTE[i % PALETTE.length]); }
+  return out;
+}
+
+/* =============================
    Auth (ADMIN)
    ============================= */
 async function requireAdmin(){
@@ -676,7 +690,7 @@ function renderExpensesPie(labels, values){
   chartExpPie = destroy(chartExpPie);
   chartExpPie = new Chart(chartExpPieEl, {
     type:"doughnut",
-    data:{ labels, datasets:[{ data: values, borderWidth:0 }] },
+    data:{ labels, datasets:[{ data: values, backgroundColor: pickColors(values.length), borderWidth:0 }] },
     options:{
       responsive:true,
       maintainAspectRatio:false,
@@ -690,7 +704,7 @@ function renderExpensesBar(labels, values){
   chartExpBar = destroy(chartExpBar);
   chartExpBar = new Chart(chartExpBarEl, {
     type:"bar",
-    data:{ labels, datasets:[{ label:"Expenses", data: values, borderWidth:0 }] },
+    data:{ labels, datasets:[{ label:"Expenses", data: values, backgroundColor: pickColors(values.length), borderWidth:0 }] },
     options:{
       responsive:true,
       maintainAspectRatio:false,
@@ -724,7 +738,7 @@ function renderProductsProfit(labels, profits){
   chartProductsProfit = destroy(chartProductsProfit);
   chartProductsProfit = new Chart(chartProductsProfitEl, {
     type:"bar",
-    data:{ labels, datasets:[{ label:"Profit", data: profits, borderWidth:0 }] },
+    data:{ labels, datasets:[{ label:"Profit", data: profits, backgroundColor: pickColors(profits.length), borderWidth:0 }] },
     options:{
       responsive:true,
       maintainAspectRatio:false,
@@ -741,7 +755,7 @@ function renderProductsMargin(labels, margins){
   chartProductsMargin = destroy(chartProductsMargin);
   chartProductsMargin = new Chart(chartProductsMarginEl, {
     type:"bar",
-    data:{ labels, datasets:[{ label:"Margin %", data: margins, borderWidth:0 }] },
+    data:{ labels, datasets:[{ label:"Margin %", data: margins, backgroundColor: pickColors(margins.length), borderWidth:0 }] },
     options:{
       responsive:true,
       maintainAspectRatio:false,
