@@ -2032,10 +2032,12 @@ const { error: stockErr } = await sb.rpc(
 );
 
 if (stockErr) {
+  console.error("reserve_stock_strict error:", stockErr);
   if (checkoutMsg) checkoutMsg.textContent =
-    "Some items are out of stock. Please reduce quantity.";
+    "Stock check failed: " + (stockErr.message || "unknown error");
   return;
 }
+
 // ===== END STOCK CHECK =====
 
 
