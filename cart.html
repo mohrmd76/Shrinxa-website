@@ -2021,10 +2021,22 @@ const DELIVERY_FEE = Number(DELIVERY_RULE.fee || 0);
 
         const method = (paySel && paySel.value) ? paySel.value : "pay_now";
 	// ===== STOCK CHECK (STRICT) =====
-const reserveItems = items.map(r => ({
-  product_id: r.product_id,
-  qty: Number(r.qty || r.quantity || 0)
-}));
+const reserveItems = items
+  .filter(r => /^[0-9a-fA-F-]{36}$/.test(r.product_id))
+  .map(r => ({
+    product_id: r.product_id,
+    qty: Number(r.qty || r.quantity || 0)
+  }));
+const bad = (items || []).filter(r => !/^[0-9a-fA-F-]{36}$/.test(r.product_id));
+if (bad.length) {
+  const names = bad.map(r => (r.product_name || r.name || r.product_id)).join(", ");
+  if (checkoutMsg) checkoutMsg.textContent =
+    "Cart item(s) must be removed and added again: " + names;
+  return;
+}
+
+
+
 
 const { error: stockErr } = await sb.rpc(
   "reserve_stock_strict",
