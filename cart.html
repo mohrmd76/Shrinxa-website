@@ -2020,6 +2020,26 @@ const DELIVERY_FEE = Number(DELIVERY_RULE.fee || 0);
         const total = taxableBase + hst;
 
         const method = (paySel && paySel.value) ? paySel.value : "pay_now";
+	// ===== STOCK CHECK (STRICT) =====
+const reserveItems = items.map(r => ({
+  product_id: r.product_id,
+  qty: Number(r.qty || r.quantity || 0)
+}));
+
+const { error: stockErr } = await sb.rpc(
+  "reserve_stock_strict",
+  { items: reserveItems }
+);
+
+if (stockErr) {
+  if (checkoutMsg) checkoutMsg.textContent =
+    "Some items are out of stock. Please reduce quantity.";
+  return;
+}
+// ===== END STOCK CHECK =====
+
+
+
 
         const token = session.access_token;
 
