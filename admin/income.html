@@ -226,6 +226,20 @@
     </div>
   </div>
 
+   <!-- Analytics button BETWEEN Monthly and Yearly -->
+  <div class="card" style="text-align:center; margin-top:12px;">
+    <div class="k">Analytics</div>
+    <div class="muted" style="margin-bottom:10px;">
+      Advanced charts & reports
+    </div>
+    <a href="./income-analytics.html" target="_blank">
+      <button type="button" style="padding:10px 18px; font-size:14px;">
+        📊 View Analytics & Charts
+      </button>
+    </a>
+  </div>
+
+  <!-- Row: Expenses + Yearly Summary -->
   <div class="row" style="margin-top:12px;">
     <div class="card">
       <div class="k">Expenses (range)</div>
@@ -247,20 +261,6 @@
       </div>
     </div>
 
-  <div class="card" style="text-align:center; margin-top:12px;">
-    <div class="k">Analytics</div>
-    <div class="muted" style="margin-bottom:10px;">
-      Advanced charts & reports
-    </div>
-    <a href="./income-analytics.html" target="_blank">
-      <button type="button" style="padding:10px 18px; font-size:14px;">
-        📊 View Analytics & Charts
-      </button>
-    </a>
-  </div>
-
-
-
     <div class="card">
       <div class="k">Yearly Summary</div>
       <div class="muted">From v_yearly_financials</div>
@@ -269,13 +269,12 @@
           <thead>
             <tr>
               <th>Year</th>
-           <th class="right">Revenue</th>
-<th class="right">COGS</th>
-<th class="right">Invoice Profit</th>
-<th class="right">Delivery Income</th>
-<th class="right">Expenses</th>
-<th class="right">Net Profit</th>
-
+              <th class="right">Revenue</th>
+              <th class="right">COGS</th>
+              <th class="right">Invoice Profit</th>
+              <th class="right">Delivery Income</th>
+              <th class="right">Expenses</th>
+              <th class="right">Net Profit</th>
             </tr>
           </thead>
           <tbody id="yearlyTbody"></tbody>
@@ -284,7 +283,7 @@
     </div>
   </div>
 
-</div>
+
 
 <script type="module">
   import { supabase } from "../supabaseClient.js";
