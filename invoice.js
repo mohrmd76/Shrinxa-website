@@ -180,11 +180,10 @@ const SUPABASE_ANON_KEY = "sb_publishable_k5D9JKO5lMCHlju-WhlSAQ_XEiEruT_";
 const res = await fetch(url.toString(), {
   method: "GET",
   headers: {
-    "apikey": SUPABASE_ANON_KEY,
-    "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
     "Content-Type": "application/json",
   },
 });
+
 
   const text = await res.text();
   let payload = null;
