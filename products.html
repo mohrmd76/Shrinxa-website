@@ -420,24 +420,35 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(5, 9, 20, 0.55);
+  background: rgba(5, 9, 20, 0.75);
   border-radius: 0.8rem;
   z-index: 2;
 }
 
 .sold-out-overlay img {
-  max-width: 82%;
-  max-height: 82%;
-  opacity: 0.95;
+  max-width: 95%;
+  max-height: 95%;
+  opacity: 1;
+  filter: drop-shadow(0 4px 12px rgba(255, 78, 106, 0.5));
+  animation: pulse-sold-out 2s ease-in-out infinite;
+}
+
+@keyframes pulse-sold-out {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
 
 /* Disabled add-to-cart styling */
 .btn-add:disabled {
-  background: #3b435a !important;
-  color: rgba(255,255,255,0.75) !important;
+  background: linear-gradient(135deg, #ff4e6a, #d63050) !important;
+  color: #ffffff !important;
   cursor: not-allowed !important;
-  box-shadow: none !important;
-  filter: grayscale(40%);
+  box-shadow: 0 4px 15px rgba(255, 78, 106, 0.4) !important;
+  filter: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
     .prod-image-wrap img {
