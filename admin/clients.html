@@ -7,89 +7,77 @@
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../admin.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --primary: #4f46e5;
-      --primary-light: #6366f1;
-      --primary-dark: #4338ca;
-      --success: #10b981;
-      --success-light: #d1fae5;
-      --warning: #f59e0b;
-      --warning-light: #fef3c7;
-      --danger: #ef4444;
-      --danger-light: #fee2e2;
-      --info: #0ea5e9;
-      --info-light: #e0f2fe;
-      --gray-50: #f9fafb;
-      --gray-100: #f3f4f6;
-      --gray-200: #e5e7eb;
-      --gray-300: #d1d5db;
-      --gray-400: #9ca3af;
-      --gray-500: #6b7280;
-      --gray-600: #4b5563;
-      --gray-700: #374151;
-      --gray-800: #1f2937;
-      --gray-900: #111827;
-      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-      --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      /* Primary Palette */
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --primary-light: rgba(99, 102, 241, 0.1);
       
-      /* Theme colors (light mode default) */
-      --bg-body: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+      /* Semantic Colors */
+      --success: #10b981;
+      --success-light: rgba(16, 185, 129, 0.1);
+      --warning: #f59e0b;
+      --warning-light: rgba(245, 158, 11, 0.1);
+      --danger: #ef4444;
+      --danger-light: rgba(239, 68, 68, 0.1);
+      --info: #0ea5e9;
+      --info-light: rgba(14, 165, 233, 0.1);
+      
+      /* Light Theme */
+      --bg-body: #f8fafc;
       --bg-panel: #ffffff;
-      --bg-panel-header: linear-gradient(135deg, var(--gray-50), white);
-      --bg-input: white;
-      --bg-card: linear-gradient(135deg, white, var(--gray-50));
-      --bg-totals: linear-gradient(135deg, var(--gray-50), white);
-      --bg-client-info: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-      --border-client-info: #bae6fd;
-      --bg-delivery-rule: linear-gradient(135deg, #fefce8, #fef9c3);
-      --border-delivery-rule: #fde047;
-      --text-primary: var(--gray-900);
-      --text-secondary: var(--gray-600);
-      --text-muted: var(--gray-500);
-      --border-color: var(--gray-200);
-      --border-input: var(--gray-300);
+      --bg-panel-header: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      --bg-input: #ffffff;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f8fafc;
+      --bg-badge: #f1f5f9;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --border-color: #e2e8f0;
+      --border-light: #f1f5f9;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+      --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.15);
     }
 
-    /* Dark Mode */
+    /* Dark Theme */
     [data-theme="dark"] {
-      --bg-body: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      --bg-body: #0f172a;
       --bg-panel: #1e293b;
-      --bg-panel-header: linear-gradient(135deg, #334155, #1e293b);
+      --bg-panel-header: linear-gradient(135deg, #1e293b 0%, #334155 100%);
       --bg-input: #0f172a;
-      --bg-card: linear-gradient(135deg, #334155, #1e293b);
-      --bg-totals: linear-gradient(135deg, #334155, #1e293b);
-      --bg-client-info: linear-gradient(135deg, #1e3a5f, #0f172a);
-      --border-client-info: #1d4ed8;
-      --bg-delivery-rule: linear-gradient(135deg, #422006, #1c1917);
-      --border-delivery-rule: #b45309;
+      --bg-card: #1e293b;
+      --bg-card-hover: #334155;
+      --bg-badge: #334155;
       --text-primary: #f1f5f9;
       --text-secondary: #cbd5e1;
-      --text-muted: #94a3b8;
+      --text-muted: #64748b;
       --border-color: #334155;
-      --border-input: #475569;
-      --gray-50: #1e293b;
-      --gray-100: #334155;
-      --gray-200: #475569;
-      --gray-800: #f1f5f9;
-      --gray-900: #f8fafc;
-      --success-light: #064e3b;
-      --warning-light: #78350f;
-      --danger-light: #7f1d1d;
-      --info-light: #0c4a6e;
+      --border-light: #1e293b;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+      --shadow-glow: 0 0 30px rgba(99, 102, 241, 0.2);
+      --primary-light: rgba(99, 102, 241, 0.2);
+      --success-light: rgba(16, 185, 129, 0.2);
+      --warning-light: rgba(245, 158, 11, 0.2);
+      --danger-light: rgba(239, 68, 68, 0.2);
+      --info-light: rgba(14, 165, 233, 0.2);
     }
 
     * { box-sizing: border-box; }
 
     body { 
       background: var(--bg-body);
-      min-height: 100vh;
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
       color: var(--text-primary);
       transition: background 0.3s ease, color 0.3s ease;
+      min-height: 100vh;
     }
 
     header { background:#111; }
@@ -109,68 +97,121 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 24px;
+      margin-bottom: 28px;
       flex-wrap: wrap;
       gap: 16px;
     }
 
+    .page-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .page-icon {
+      width: 52px;
+      height: 52px;
+      background: linear-gradient(135deg, var(--primary), #8b5cf6);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: var(--shadow-glow);
+    }
+
     .page-title { 
-      font-size: 32px; 
+      font-size: 28px; 
       font-weight: 800; 
       margin: 0;
-      background: linear-gradient(135deg, var(--gray-800), var(--primary));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+      color: var(--text-primary);
     }
 
     .page-subtitle {
       font-size: 14px;
-      color: var(--gray-500);
-      margin-top: 4px;
+      color: var(--text-muted);
+      margin-top: 2px;
     }
 
-    .page-stats {
-      display: flex;
-      gap: 16px;
-    }
-
-    .stat-badge {
+    .page-actions {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 10px 16px;
-      background: var(--bg-panel);
-      border-radius: 12px;
-      box-shadow: var(--shadow-sm);
-      border: 1px solid var(--border-color);
+      gap: 12px;
     }
 
-    .stat-badge .icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
+    /* --- THEME TOGGLE --- */
+    .theme-toggle {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-panel);
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
-    }
-
-    .stat-badge .icon.customers { background: var(--info-light); }
-    .stat-badge .icon.products { background: var(--success-light); }
-    .stat-badge .icon.orders { background: var(--warning-light); }
-
-    .stat-badge .value {
       font-size: 20px;
-      font-weight: 700;
-      color: var(--gray-800);
+      transition: all 0.2s ease;
+      color: var(--text-primary);
     }
 
-    .stat-badge .label {
-      font-size: 12px;
-      color: var(--gray-500);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+    .theme-toggle:hover {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-glow);
+      transform: scale(1.05);
+    }
+
+    /* --- STAT CARDS --- */
+    .stats-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      flex: 1;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: var(--shadow);
+      transition: all 0.2s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .stat-icon.customers { background: var(--info-light); }
+    .stat-icon.products { background: var(--success-light); }
+    .stat-icon.orders { background: var(--primary-light); }
+    .stat-icon.delivery { background: var(--warning-light); }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
     }
 
     /* --- PANELS --- */
@@ -184,7 +225,7 @@
     }
 
     .panel:hover {
-      box-shadow: var(--shadow-md);
+      box-shadow: var(--shadow-lg);
     }
 
     .panel-hd {
@@ -199,7 +240,7 @@
       gap: 10px;
     }
 
-    .panel-hd .icon {
+    .panel-hd-icon {
       width: 32px;
       height: 32px;
       border-radius: 8px;
@@ -209,15 +250,49 @@
       font-size: 16px;
     }
 
-    .panel-hd .icon.customer { background: var(--info-light); color: var(--info); }
-    .panel-hd .icon.products { background: var(--success-light); color: var(--success); }
-    .panel-hd .icon.order { background: var(--primary); color: white; }
+    .panel-hd-icon.customer { background: var(--info-light); }
+    .panel-hd-icon.products { background: var(--success-light); }
+    .panel-hd-icon.order { background: var(--primary-light); }
 
     .panel-bd { padding: 20px; }
 
-    .muted { color: var(--gray-500); }
+    .muted { color: var(--text-muted); }
     .mini { font-size: 12px; }
-    .input-compact { height: 42px; border-radius: 10px; }
+
+    /* --- FORM CONTROLS --- */
+    .input-compact { 
+      height: 42px; 
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-input);
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+    }
+
+    .input-compact:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+      outline: none;
+    }
+
+    .form-select {
+      background-color: var(--bg-input);
+      color: var(--text-primary);
+      border-color: var(--border-color);
+    }
+
+    .form-control {
+      background-color: var(--bg-input);
+      color: var(--text-primary);
+      border-color: var(--border-color);
+    }
+
+    .form-control:focus, .form-select:focus {
+      background-color: var(--bg-input);
+      color: var(--text-primary);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
 
     /* --- GRID LAYOUT --- */
     .order-grid {
@@ -231,7 +306,7 @@
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
-      max-height: 420px;
+      max-height: 400px;
       overflow-y: auto;
       padding-right: 8px;
     }
@@ -241,12 +316,12 @@
     }
 
     .products-grid::-webkit-scrollbar-track {
-      background: var(--gray-100);
+      background: var(--bg-badge);
       border-radius: 3px;
     }
 
     .products-grid::-webkit-scrollbar-thumb {
-      background: var(--gray-300);
+      background: var(--text-muted);
       border-radius: 3px;
     }
 
@@ -254,7 +329,7 @@
     .prod-card {
       border: 1px solid var(--border-color);
       border-radius: 14px;
-      padding: 14px;
+      padding: 16px;
       background: var(--bg-card);
       display: grid;
       grid-template-columns: 1fr auto;
@@ -266,19 +341,20 @@
     }
 
     .prod-card:hover {
-      border-color: var(--primary-light);
-      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+      border-color: var(--primary);
+      background: var(--bg-card-hover);
+      box-shadow: var(--shadow-glow);
       transform: translateY(-2px);
     }
 
-    .prod-card .prod-name {
+    .prod-name {
       font-weight: 600;
       color: var(--text-primary);
       font-size: 14px;
       margin-bottom: 4px;
     }
 
-    .prod-card .prod-price {
+    .prod-price {
       font-size: 16px;
       font-weight: 700;
       color: var(--primary);
@@ -287,12 +363,12 @@
     /* --- BADGES --- */
     .badge-stock {
       font-size: 11px;
-      padding: 4px 10px;
+      padding: 5px 10px;
       border-radius: 999px;
       font-weight: 600;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
     }
 
     .badge-stock::before {
@@ -300,23 +376,41 @@
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: currentColor;
     }
 
     .badge-stock.in-stock {
       background: var(--success-light);
-      color: #059669;
+      color: var(--success);
     }
+    .badge-stock.in-stock::before { background: var(--success); }
 
-    .badge-stock.badge-low {
+    .badge-low {
       background: var(--warning-light);
-      color: #d97706;
+      color: var(--warning);
+    }
+    .badge-low::before { background: var(--warning); }
+
+    .badge-out {
+      background: var(--danger-light);
+      color: var(--danger);
+    }
+    .badge-out::before { background: var(--danger); }
+
+    /* --- TIER BADGES --- */
+    .tier-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
     }
 
-    .badge-stock.badge-out {
-      background: var(--danger-light);
-      color: #dc2626;
-    }
+    .tier-badge.standard { background: var(--bg-badge); color: var(--text-secondary); }
+    .tier-badge.gold { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+    .tier-badge.platinum { background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15)); color: var(--primary); }
 
     /* --- BUTTONS --- */
     .btn-add-prod {
@@ -324,7 +418,7 @@
       height: 44px;
       border-radius: 12px;
       border: 2px solid var(--primary);
-      background: white;
+      background: transparent;
       color: var(--primary);
       font-size: 20px;
       font-weight: 700;
@@ -337,7 +431,7 @@
     .btn-add-prod:hover:not(:disabled) {
       background: var(--primary);
       color: white;
-      transform: scale(1.05);
+      transform: scale(1.1);
     }
 
     .btn-add-prod:disabled {
@@ -349,7 +443,7 @@
       width: 36px;
       height: 36px;
       border-radius: 10px;
-      border: 1px solid var(--border-input);
+      border: 1px solid var(--border-color);
       background: var(--bg-panel);
       font-weight: 700;
       font-size: 16px;
@@ -376,7 +470,7 @@
       width: 56px;
       height: 36px;
       border-radius: 10px;
-      border: 1px solid var(--border-input);
+      border: 1px solid var(--border-color);
       background: var(--bg-input);
       text-align: center;
       font-weight: 700;
@@ -384,16 +478,37 @@
       color: var(--text-primary);
     }
 
+    .btn-primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      border-radius: 10px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      border-color: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-success {
+      background: var(--success);
+      border-color: var(--success);
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
     /* --- CLIENT INFO CARD --- */
     .client-info-card {
-      background: var(--bg-client-info);
-      border: 1px solid var(--border-client-info);
+      background: var(--info-light);
+      border: 1px solid rgba(14, 165, 233, 0.2);
       border-radius: 14px;
       padding: 16px;
       margin-top: 16px;
     }
 
-    .client-info-card .info-row {
+    .client-info-row {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -401,92 +516,81 @@
       font-size: 13px;
     }
 
-    .client-info-card .info-label {
+    .client-info-label {
       font-weight: 600;
       color: var(--text-secondary);
       min-width: 80px;
     }
 
-    .client-info-card .info-value {
+    .client-info-value {
       color: var(--text-primary);
     }
 
-    .client-info-card .tier-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 12px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-    }
-
-    .tier-badge.standard { background: var(--gray-200); color: var(--gray-700); }
-    .tier-badge.gold { background: #fef3c7; color: #b45309; }
-    .tier-badge.platinum { background: linear-gradient(135deg, #e0e7ff, #c7d2fe); color: #4338ca; }
-
     /* --- DELIVERY RULE DISPLAY --- */
-    .delivery-rule-display {
-      background: var(--bg-delivery-rule);
-      border: 1px solid var(--border-delivery-rule);
-      border-radius: 12px;
-      padding: 14px 16px;
+    .delivery-rule-card {
+      background: var(--warning-light);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      border-radius: 14px;
+      padding: 16px;
       margin-top: 16px;
     }
 
-    .delivery-rule-display .rule-title {
+    .delivery-rule-title {
       font-weight: 700;
       font-size: 13px;
-      color: #a16207;
+      color: #d97706;
       margin-bottom: 8px;
       display: flex;
       align-items: center;
       gap: 6px;
     }
 
-    .delivery-rule-display .rule-detail {
+    .delivery-rule-detail {
       font-size: 13px;
-      color: var(--gray-700);
+      color: var(--text-secondary);
       display: flex;
       align-items: center;
       gap: 6px;
       padding: 4px 0;
     }
 
-    .delivery-rule-display .rule-value {
+    .delivery-rule-value {
       font-weight: 700;
-      color: var(--gray-900);
+      color: var(--text-primary);
     }
 
     /* --- ORDER TABLE --- */
     .order-table {
       margin-bottom: 0;
+      color: var(--text-primary);
     }
 
     .order-table th {
       font-size: 12px;
-      color: var(--gray-500);
+      color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
       font-weight: 600;
       padding: 12px 8px;
-      border-bottom: 2px solid var(--gray-200);
+      border-bottom: 2px solid var(--border-color);
+      background: transparent;
     }
 
     .order-table td {
       vertical-align: middle;
       padding: 14px 8px;
-      border-bottom: 1px solid var(--gray-100);
+      border-bottom: 1px solid var(--border-light);
+      background: transparent;
+      color: var(--text-primary);
     }
 
     .order-table tbody tr:hover {
-      background: var(--gray-50);
+      background: var(--bg-card-hover);
     }
 
     /* --- TOTALS SECTION --- */
     .totals-section {
-      background: var(--bg-totals);
+      background: var(--bg-panel-header);
       border-radius: 14px;
       padding: 16px;
       margin-top: 16px;
@@ -498,27 +602,21 @@
       justify-content: space-between;
       padding: 10px 0;
       font-size: 14px;
-      color: var(--gray-600);
+      color: var(--text-secondary);
     }
 
     .totals-row:not(:last-child) {
-      border-bottom: 1px dashed var(--gray-200);
+      border-bottom: 1px dashed var(--border-color);
     }
 
     .totals-row.total {
       font-size: 20px;
       font-weight: 800;
-      color: var(--gray-900);
+      color: var(--text-primary);
       border-bottom: none;
       padding-top: 14px;
       margin-top: 6px;
-      border-top: 2px solid var(--gray-300);
-    }
-
-    .totals-row .label {
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      border-top: 2px solid var(--border-color);
     }
 
     /* --- CREATE INVOICE BUTTON --- */
@@ -544,7 +642,8 @@
     }
 
     .btn-create-invoice:disabled {
-      background: var(--gray-300);
+      background: var(--bg-badge);
+      color: var(--text-muted);
       box-shadow: none;
       cursor: not-allowed;
     }
@@ -562,17 +661,22 @@
 
     .status-msg.info {
       background: var(--info-light);
-      color: #0369a1;
+      color: var(--info);
     }
 
     .status-msg.success {
       background: var(--success-light);
-      color: #059669;
+      color: var(--success);
     }
 
     .status-msg.error {
       background: var(--danger-light);
-      color: #dc2626;
+      color: var(--danger);
+    }
+
+    .status-msg.warning {
+      background: var(--warning-light);
+      color: var(--warning);
     }
 
     /* --- SEARCH & FILTER --- */
@@ -587,10 +691,10 @@
       min-width: 200px;
       height: 44px;
       border-radius: 12px;
-      border: 1px solid var(--border-input);
+      border: 1px solid var(--border-color);
       padding: 0 16px 0 44px;
       font-size: 14px;
-      background: var(--bg-input) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'/%3E%3C/svg%3E") 14px center / 20px no-repeat;
+      background: var(--bg-input) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'/%3E%3C/svg%3E") 14px center / 20px no-repeat;
       transition: all 0.2s ease;
       color: var(--text-primary);
     }
@@ -598,13 +702,13 @@
     .search-input:focus {
       outline: none;
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+      box-shadow: 0 0 0 3px var(--primary-light);
     }
 
     .filter-select {
       height: 44px;
       border-radius: 12px;
-      border: 1px solid var(--border-input);
+      border: 1px solid var(--border-color);
       padding: 0 36px 0 14px;
       font-size: 14px;
       background: var(--bg-input);
@@ -612,52 +716,56 @@
       min-width: 180px;
     }
 
-    /* --- THEME TOGGLE --- */
-    .theme-toggle {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 14px;
-      border-radius: 12px;
-      border: 1px solid var(--border-color);
+    /* --- MODAL STYLING --- */
+    .modal-content {
       background: var(--bg-panel);
-      cursor: pointer;
-      transition: all 0.2s ease;
-      font-size: 13px;
-      font-weight: 600;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+    }
+
+    .modal-header {
+      background: var(--bg-panel-header);
+      border-bottom: 1px solid var(--border-color);
+      border-radius: 16px 16px 0 0;
+    }
+
+    .modal-title {
+      color: var(--text-primary);
+      font-weight: 700;
+    }
+
+    .modal-body {
       color: var(--text-primary);
     }
 
-    .theme-toggle:hover {
-      border-color: var(--primary);
-      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.15);
+    .modal-footer {
+      background: var(--bg-panel-header);
+      border-top: 1px solid var(--border-color);
     }
 
-    .theme-toggle .icon {
-      font-size: 18px;
-      transition: transform 0.3s ease;
-    }
-
-    [data-theme="dark"] .theme-toggle .icon {
-      transform: rotate(180deg);
+    .form-label {
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 13px;
     }
 
     /* --- RESPONSIVE --- */
     @media (max-width: 1100px) {
       .order-grid { grid-template-columns: 1fr; }
       .products-grid { grid-template-columns: 1fr; max-height: 300px; }
+      .stats-row { flex-wrap: wrap; }
+      .stat-card { min-width: 200px; }
     }
 
     @media (max-width: 768px) {
       .page-wrap { padding: 16px; }
       .page-header { flex-direction: column; align-items: flex-start; }
-      .page-stats { flex-wrap: wrap; }
     }
   </style>
 </head>
 
 <body>
-  <!-- Admin Auth Gate -->
+  <!-- Admin Auth Gate (same pattern as inventory.html) -->
   <div id="loading">Checking access...</div>
   <div id="denied" class="hidden">Access denied</div>
 
@@ -666,6 +774,7 @@
       <div class="container-fluid px-4 d-flex align-items-center gap-3">
         <div class="text-white fw-bold">Shrinxa Admin</div>
 
+        <!-- IMPORTANT: Clients link is LAST -->
         <div class="d-flex nav-links">
           <a href="./dashboard.html">Dashboard</a>
           <a href="./orders.html">Orders</a>
@@ -688,29 +797,47 @@
     <div class="page-wrap">
       <!-- Page Header -->
       <div class="page-header">
-        <div>
-          <h1 class="page-title">Clients</h1>
-          <p class="page-subtitle">Create orders and invoices for customers</p>
+        <div class="page-title-wrap">
+          <div class="page-icon">👥</div>
+          <div>
+            <h1 class="page-title">Clients</h1>
+            <p class="page-subtitle">Create orders and invoices for customers</p>
+          </div>
         </div>
-        <div class="page-stats">
-          <div class="stat-badge">
-            <div class="icon customers">👥</div>
-            <div>
-              <div class="value" id="statCustomers">0</div>
-              <div class="label">Customers</div>
-            </div>
+        <div class="page-actions">
+          <button id="themeToggle" class="theme-toggle" title="Toggle Dark Mode">🌙</button>
+        </div>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon customers">👥</div>
+          <div>
+            <div class="stat-value" id="statCustomers">0</div>
+            <div class="stat-label">Customers</div>
           </div>
-          <div class="stat-badge">
-            <div class="icon products">📦</div>
-            <div>
-              <div class="value" id="statProducts">0</div>
-              <div class="label">Products</div>
-            </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon products">📦</div>
+          <div>
+            <div class="stat-value" id="statProducts">0</div>
+            <div class="stat-label">Products</div>
           </div>
-          <button id="themeToggle" class="theme-toggle">
-            <span class="icon">🌙</span>
-            <span class="label">Dark Mode</span>
-          </button>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orders">🛒</div>
+          <div>
+            <div class="stat-value" id="statCartItems">0</div>
+            <div class="stat-label">Cart Items</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon delivery">🚚</div>
+          <div>
+            <div class="stat-value" id="statDeliveryFee">$0</div>
+            <div class="stat-label">Delivery Fee</div>
+          </div>
         </div>
       </div>
 
@@ -720,67 +847,67 @@
           <!-- Customer Panel -->
           <div class="panel">
             <div class="panel-hd">
-              <div class="icon customer">👤</div>
+              <div class="panel-hd-icon customer">👤</div>
               Customer Selection
             </div>
             <div class="panel-bd">
               <div class="d-flex gap-3 align-items-center flex-wrap">
-                <select id="clientSelect" class="form-select input-compact" style="min-width: 380px; flex: 1;">
+                <select id="clientSelect" class="form-select input-compact" style="min-width: 360px; flex: 1;">
                   <option value="">Select a customer…</option>
                 </select>
-                <button id="refreshClientsBtn" class="btn btn-primary" style="height: 42px; border-radius: 10px;">
+                <button id="refreshClientsBtn" class="btn btn-primary" style="height: 42px;">
                   🔄 Refresh
                 </button>
-                <button id="openCreateClientBtn" class="btn btn-success" style="height: 42px; border-radius: 10px;">
+                <button id="openCreateClientBtn" class="btn btn-success" style="height: 42px;">
                   ➕ New Customer
                 </button>
               </div>
 
               <div id="clientInfo" class="client-info-card" style="display: none;">
-                <div class="info-row">
-                  <span class="info-label">Name:</span>
-                  <span class="info-value" id="clientNameText">—</span>
+                <div class="client-info-row">
+                  <span class="client-info-label">ID:</span>
+                  <span class="client-info-value" id="clientIdText" style="font-family: monospace; font-size: 11px;">—</span>
                 </div>
-                <div class="info-row">
-                  <span class="info-label">Email:</span>
-                  <span class="info-value" id="clientEmailText">—</span>
+                <div class="client-info-row">
+                  <span class="client-info-label">Email:</span>
+                  <span class="client-info-value" id="clientEmailText">—</span>
                 </div>
-                <div class="info-row">
-                  <span class="info-label">Phone:</span>
-                  <span class="info-value" id="clientPhoneText">—</span>
+                <div class="client-info-row">
+                  <span class="client-info-label">Phone:</span>
+                  <span class="client-info-value" id="clientPhoneText">—</span>
                 </div>
-                <div class="info-row">
-                  <span class="info-label">Address:</span>
-                  <span class="info-value" id="clientAddressText">—</span>
+                <div class="client-info-row">
+                  <span class="client-info-label">Address:</span>
+                  <span class="client-info-value" id="clientAddressText">—</span>
                 </div>
-                <div class="info-row">
-                  <span class="info-label">Tier:</span>
+                <div class="client-info-row">
+                  <span class="client-info-label">Tier:</span>
                   <span id="clientTierText" class="tier-badge standard">Standard</span>
                 </div>
-                <div class="info-row">
-                  <span class="info-label">Wholesale:</span>
-                  <span class="info-value" id="clientWholesaleText">50+ boxes</span>
+                <div class="client-info-row">
+                  <span class="client-info-label">Wholesale:</span>
+                  <span class="client-info-value" id="clientWholesaleText">50+ boxes</span>
                 </div>
               </div>
 
               <!-- Delivery Rule Display -->
-              <div id="deliveryRuleDisplay" class="delivery-rule-display" style="display: none;">
-                <div class="rule-title">🚚 Delivery Rule</div>
-                <div class="rule-detail">
+              <div id="deliveryRuleCard" class="delivery-rule-card" style="display: none;">
+                <div class="delivery-rule-title">🚚 Delivery Rule</div>
+                <div class="delivery-rule-detail">
                   <span>Orders under</span>
-                  <span class="rule-value" id="ruleThresholdText">$300</span>
+                  <span class="delivery-rule-value" id="ruleThresholdText">$300</span>
                   <span>→ Delivery fee:</span>
-                  <span class="rule-value" id="ruleFeeText">$30</span>
+                  <span class="delivery-rule-value" id="ruleFeeText">$30</span>
                 </div>
-                <div class="rule-detail">
+                <div class="delivery-rule-detail">
                   <span>Orders</span>
-                  <span class="rule-value" id="ruleFreeText">$300+</span>
+                  <span class="delivery-rule-value" id="ruleFreeText">$300+</span>
                   <span>→ Free delivery</span>
                 </div>
               </div>
 
               <div id="clientStatus" class="status-msg info">
-                <span>ℹ️</span> Ready to select a customer.
+                <span>ℹ️</span> <span class="status-text">Ready to select a customer.</span>
               </div>
             </div>
           </div>
@@ -788,7 +915,7 @@
           <!-- Products Panel -->
           <div class="panel">
             <div class="panel-hd">
-              <div class="icon products">📦</div>
+              <div class="panel-hd-icon products">📦</div>
               Select Products
             </div>
             <div class="panel-bd">
@@ -804,7 +931,7 @@
               </div>
 
               <div id="productsStatus" class="status-msg info mt-3">
-                <span>⏳</span> Loading products…
+                <span>⏳</span> <span class="status-text">Loading products…</span>
               </div>
             </div>
           </div>
@@ -813,7 +940,7 @@
         <!-- RIGHT COLUMN -->
         <div class="panel" style="position: sticky; top: 20px;">
           <div class="panel-hd">
-            <div class="icon order">🛒</div>
+            <div class="panel-hd-icon order">🛒</div>
             Order Builder
           </div>
           <div class="panel-bd">
@@ -833,29 +960,29 @@
 
             <div class="totals-section">
               <div class="totals-row">
-                <div class="label">📦 Subtotal</div>
+                <div>📦 Subtotal</div>
                 <div id="subTotalText">$0.00</div>
               </div>
               <div class="totals-row">
-                <div class="label">🚚 Delivery</div>
+                <div>🚚 Delivery</div>
                 <div id="deliveryText">$0.00</div>
               </div>
               <div class="totals-row">
-                <div class="label">🧾 Tax (13% HST)</div>
+                <div>🧾 Tax (13% HST)</div>
                 <div id="taxText">$0.00</div>
               </div>
               <div class="totals-row total">
-                <div class="label">💰 Total</div>
+                <div>💰 Total</div>
                 <div id="totalText">$0.00</div>
               </div>
             </div>
 
             <button id="createInvoiceBtn" class="btn btn-create-invoice w-100 mt-4" disabled>
-              <span>📄</span> Create Invoice (Unpaid)
+              📄 Create Invoice (Unpaid)
             </button>
 
             <div id="orderStatus" class="status-msg info">
-              <span>👆</span> Select a customer to begin.
+              <span>👆</span> <span class="status-text">Select a customer to begin.</span>
             </div>
           </div>
         </div>
@@ -866,49 +993,49 @@
   <!-- MODALS -->
   <div class="modal fade" id="createClientModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-      <div class="modal-content" style="border-radius: 16px; overflow: hidden;">
-        <div class="modal-header" style="background: linear-gradient(135deg, var(--gray-50), white); border-bottom: 1px solid var(--gray-200);">
-          <h5 class="modal-title fw-bold">➕ Create New Customer</h5>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">➕ Create New Customer</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body" style="padding: 24px;">
+        <div class="modal-body">
           <div class="row g-3">
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+              <label class="form-label">Email <span class="text-danger">*</span></label>
               <input id="newEmail" class="form-control input-compact" placeholder="customer@email.com" />
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+              <label class="form-label">Full Name <span class="text-danger">*</span></label>
               <input id="newFullName" class="form-control input-compact" placeholder="Full name" />
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Phone <span class="text-danger">*</span></label>
+              <label class="form-label">Phone <span class="text-danger">*</span></label>
               <input id="newPhone" class="form-control input-compact" placeholder="Phone number" />
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Company</label>
-              <input id="newCompany" class="form-control input-compact" placeholder="Company name (optional)" />
-            </div>
-            <div class="col-12">
-              <label class="form-label fw-semibold">Address <span class="text-danger">*</span></label>
+              <label class="form-label">Address <span class="text-danger">*</span></label>
               <input id="newAddress" class="form-control input-compact" placeholder="Street address" />
             </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">City</label>
+            <div class="col-md-4">
+              <label class="form-label">Company</label>
+              <input id="newCompany" class="form-control input-compact" placeholder="Company name" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">City</label>
               <input id="newCity" class="form-control input-compact" placeholder="City" />
             </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Province</label>
+            <div class="col-md-4">
+              <label class="form-label">Province</label>
               <input id="newProvince" class="form-control input-compact" placeholder="Province" />
             </div>
           </div>
           <div id="createClientStatus" class="status-msg info mt-3">
-            <span>ℹ️</span> Fill required fields then create.
+            <span>ℹ️</span> <span class="status-text">Fill required fields then create.</span>
           </div>
         </div>
-        <div class="modal-footer" style="background: var(--gray-50); border-top: 1px solid var(--gray-200);">
+        <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" style="border-radius: 10px;">Cancel</button>
-          <button id="createClientConfirmBtn" type="button" class="btn btn-success" style="border-radius: 10px;">
+          <button type="button" class="btn btn-success" id="createClientConfirmBtn" style="border-radius: 10px;">
             ✅ Create Customer
           </button>
         </div>
@@ -917,34 +1044,91 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="../supabaseClient.js"></script>
-  <script src="../admin-auth.js"></script>
 
-  <script>
-    const $ = id => document.getElementById(id);
+  <script type="module">
+    import "./admin-auth.js";
+    import { supabase } from "../supabaseClient.js";
 
-    // DOM refs
+    // ---------------------------
+    // Helpers
+    // ---------------------------
+    const $ = (id) => document.getElementById(id);
+
+    function money(n) {
+      const v = Number(n || 0);
+      return new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD" }).format(v);
+    }
+
+    function escapeHtml(s) {
+      return String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function pickField(obj, keys, fallback = null) {
+      for (const k of keys) {
+        if (obj && Object.prototype.hasOwnProperty.call(obj, k) && obj[k] !== null && obj[k] !== undefined) return obj[k];
+      }
+      return fallback;
+    }
+
+    function normTier(t) {
+      const v = String(t ?? "standard").toLowerCase();
+      if (v.includes("platinum")) return "platinum";
+      if (v.includes("gold")) return "gold";
+      return "standard";
+    }
+
+    function setStatus(el, type, text) {
+      el.className = `status-msg ${type}`;
+      const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+      el.innerHTML = `<span>${icon}</span> <span class="status-text">${text}</span>`;
+    }
+
+    // ---------------------------
+    // State
+    // ---------------------------
+    let CLIENTS = [];
+    let PRODUCTS = [];
+    let SELECTED_CLIENT = null;
+
+    // product_id -> { price, wholesale_price } (for platinum overrides)
+    const PLATINUM_OVERRIDES = new Map();
+
+    // cart: productPublicId -> { product, qty }
+    const CART = new Map();
+
+    // Delivery Rules
+    let DEFAULT_DELIVERY_RULE = { min_subtotal: 300, fee: 30 };
+    let CUSTOMER_DELIVERY_RULE = null;
+
+    // ---------------------------
+    // Elements
+    // ---------------------------
     const clientSelect = $("clientSelect");
     const refreshClientsBtn = $("refreshClientsBtn");
-    const openCreateClientBtn = $("openCreateClientBtn");
+    const clientStatus = $("clientStatus");
     const clientInfo = $("clientInfo");
-    const clientNameText = $("clientNameText");
+
+    const clientIdText = $("clientIdText");
     const clientEmailText = $("clientEmailText");
     const clientPhoneText = $("clientPhoneText");
     const clientAddressText = $("clientAddressText");
     const clientTierText = $("clientTierText");
     const clientWholesaleText = $("clientWholesaleText");
-    const clientStatus = $("clientStatus");
 
-    const deliveryRuleDisplay = $("deliveryRuleDisplay");
+    const deliveryRuleCard = $("deliveryRuleCard");
     const ruleThresholdText = $("ruleThresholdText");
     const ruleFeeText = $("ruleFeeText");
     const ruleFreeText = $("ruleFreeText");
 
-    const productSearch = $("productSearch");
-    const productCategory = $("productCategory");
     const productsGrid = $("productsGrid");
     const productsStatus = $("productsStatus");
+    const productSearch = $("productSearch");
+    const productCategory = $("productCategory");
 
     const orderLines = $("orderLines");
     const subTotalText = $("subTotalText");
@@ -954,33 +1138,53 @@
     const createInvoiceBtn = $("createInvoiceBtn");
     const orderStatus = $("orderStatus");
 
-    const createClientConfirmBtn = $("createClientConfirmBtn");
-    const createClientStatus = $("createClientStatus");
-
     const statCustomers = $("statCustomers");
     const statProducts = $("statProducts");
+    const statCartItems = $("statCartItems");
+    const statDeliveryFee = $("statDeliveryFee");
 
-    let createClientModal = null;
+    // modal
+    const openCreateClientBtn = $("openCreateClientBtn");
+    const createClientConfirmBtn = $("createClientConfirmBtn");
+    const createClientStatus = $("createClientStatus");
+    const modalEl = document.getElementById("createClientModal");
+    const createClientModal = modalEl ? new bootstrap.Modal(modalEl) : null;
 
-    // State
-    let CLIENTS = [];
-    let PRODUCTS = [];
-    let SELECTED_CLIENT = null;
-    let CART = new Map();
-    let PLATINUM_OVERRIDES = new Map();
-    
-    // Delivery Rules State
-    let DEFAULT_DELIVERY_RULE = { min_subtotal: 300, fee: 30 };
-    let CUSTOMER_DELIVERY_RULE = null;
-
-    // Utils
-    const escapeHtml = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-    const money = n => "$" + Number(n || 0).toFixed(2);
-    const normTier = t => String(t || "standard").toLowerCase().trim();
-    const pickField = (obj, keys, def) => { for (const k of keys) if (obj?.[k] !== undefined && obj[k] !== null) return obj[k]; return def; };
+    // theme toggle
+    const themeToggle = $("themeToggle");
 
     // ---------------------------
-    // Admin gating
+    // Theme Toggle
+    // ---------------------------
+    const THEME_KEY = "shrinxa-theme";
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute("data-theme", theme);
+      localStorage.setItem(THEME_KEY, theme);
+      if (themeToggle) {
+        themeToggle.textContent = theme === "dark" ? "☀️" : "🌙";
+      }
+    }
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute("data-theme") || "light";
+      setTheme(current === "dark" ? "light" : "dark");
+    }
+
+    function initTheme() {
+      const saved = localStorage.getItem(THEME_KEY);
+      if (saved) {
+        setTheme(saved);
+      } else {
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        setTheme(prefersDark ? "dark" : "light");
+      }
+    }
+
+    themeToggle?.addEventListener("click", toggleTheme);
+
+    // ---------------------------
+    // Admin gating: wait until #admin is visible
     // ---------------------------
     async function waitForAdminReady() {
       for (let i = 0; i < 50; i++) {
@@ -1046,7 +1250,6 @@
     // Get Active Delivery Rule
     // ---------------------------
     function getActiveDeliveryRule() {
-      // Customer-specific rule takes priority, otherwise use default
       return CUSTOMER_DELIVERY_RULE || DEFAULT_DELIVERY_RULE;
     }
 
@@ -1060,7 +1263,7 @@
       ruleFeeText.textContent = money(rule.fee);
       ruleFreeText.textContent = money(rule.min_subtotal) + "+";
       
-      deliveryRuleDisplay.style.display = SELECTED_CLIENT ? "block" : "none";
+      deliveryRuleCard.style.display = SELECTED_CLIENT ? "block" : "none";
     }
 
     // ---------------------------
@@ -1077,8 +1280,7 @@
     async function loadClients() {
       if (!clientSelect) return;
 
-      clientStatus.innerHTML = `<span>⏳</span> Loading customers…`;
-      clientStatus.className = "status-msg info";
+      setStatus(clientStatus, 'info', 'Loading customers…');
       clientSelect.innerHTML = `<option value="">Select a customer…</option>`;
 
       const { data, error } = await supabase
@@ -1088,8 +1290,7 @@
         .order("full_name", { ascending: true });
 
       if (error) {
-        clientStatus.innerHTML = `<span>❌</span> ERROR: ${error.message}`;
-        clientStatus.className = "status-msg error";
+        setStatus(clientStatus, 'error', 'ERROR: ' + error.message);
         CLIENTS = [];
         return;
       }
@@ -1107,19 +1308,18 @@
       }
 
       statCustomers.textContent = CLIENTS.length;
-      clientStatus.innerHTML = `<span>✅</span> Loaded ${CLIENTS.length} customers.`;
-      clientStatus.className = "status-msg success";
+      setStatus(clientStatus, 'success', `Loaded ${CLIENTS.length} customers.`);
     }
 
     function renderClientInfo(client) {
       if (!client) {
         clientInfo.style.display = "none";
-        deliveryRuleDisplay.style.display = "none";
+        deliveryRuleCard.style.display = "none";
         return;
       }
 
       clientInfo.style.display = "block";
-      clientNameText.textContent = client.full_name || "—";
+      clientIdText.textContent = client.id || "—";
       clientEmailText.textContent = client.email || "—";
       clientPhoneText.textContent = client.phone || "—";
 
@@ -1128,7 +1328,7 @@
         client.city || "",
         client.province || ""
       ].filter(Boolean);
-      clientAddressText.textContent = addrParts.length ? addrParts.join(", ") : "—";
+      clientAddressText.textContent = addrParts.length ? addrParts.join(", ") : (client.address || "—");
 
       const tier = normTier(client.tier || "standard");
       clientTierText.textContent = tier.charAt(0).toUpperCase() + tier.slice(1);
@@ -1153,8 +1353,7 @@
     }
 
     async function loadProducts() {
-      productsStatus.innerHTML = `<span>⏳</span> Loading products…`;
-      productsStatus.className = "status-msg info";
+      setStatus(productsStatus, 'info', 'Loading products…');
       productsGrid.innerHTML = "";
 
       const { data, error } = await supabase
@@ -1163,8 +1362,7 @@
         .order("sort_order", { ascending: true });
 
       if (error) {
-        productsStatus.innerHTML = `<span>❌</span> ERROR: ${error.message}`;
-        productsStatus.className = "status-msg error";
+        setStatus(productsStatus, 'error', 'ERROR: ' + error.message);
         PRODUCTS = [];
         return;
       }
@@ -1183,8 +1381,7 @@
       productCategory.innerHTML = `<option value="all">All Categories</option>` + sortedCats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
 
       statProducts.textContent = PRODUCTS.length;
-      productsStatus.innerHTML = `<span>✅</span> Loaded ${PRODUCTS.length} products.`;
-      productsStatus.className = "status-msg success";
+      setStatus(productsStatus, 'success', `Loaded ${PRODUCTS.length} products.`);
       renderProductsGrid();
     }
 
@@ -1290,8 +1487,7 @@
     // ---------------------------
     function addToCart(vm, addQty) {
       if (!SELECTED_CLIENT) {
-        orderStatus.innerHTML = `<span>⚠️</span> Select a customer first.`;
-        orderStatus.className = "status-msg error";
+        setStatus(orderStatus, 'warning', 'Select a customer first.');
         return;
       }
 
@@ -1300,8 +1496,7 @@
       const nextQty = curQty + addQty;
 
       if (nextQty > vm.stock) {
-        orderStatus.innerHTML = `<span>⚠️</span> Cannot exceed stock. Available: ${vm.stock}`;
-        orderStatus.className = "status-msg error";
+        setStatus(orderStatus, 'error', `Cannot exceed stock. Available: ${vm.stock}`);
         return;
       }
 
@@ -1315,8 +1510,7 @@
 
       const q = Math.max(1, parseInt(String(qty || "1"), 10) || 1);
       if (q > entry.product.stock) {
-        orderStatus.innerHTML = `<span>⚠️</span> Cannot exceed stock. Available: ${entry.product.stock}`;
-        orderStatus.className = "status-msg error";
+        setStatus(orderStatus, 'error', `Cannot exceed stock. Available: ${entry.product.stock}`);
         return;
       }
       entry.qty = q;
@@ -1335,8 +1529,6 @@
         const unit = priceForQty(product, qty);
         sub += unit * qty;
       }
-      
-      // Use dynamic delivery calculation based on customer/default rules
       const del = calculateDeliveryFee(sub);
       const tax = (sub + del) * 0.13;
       const total = sub + del + tax;
@@ -1345,6 +1537,9 @@
 
     function renderOrder() {
       const items = Array.from(CART.values());
+
+      // Update stats
+      statCartItems.textContent = items.reduce((sum, i) => sum + i.qty, 0);
 
       if (!items.length) {
         orderLines.innerHTML = `<tr><td colspan="4" class="muted text-center py-4">No items selected yet</td></tr>`;
@@ -1365,7 +1560,7 @@
                   <input class="qty-box qty-input" value="${qty}" />
                   <button class="qty-btn btn-inc" type="button">+</button>
                 </div>
-                <button class="btn btn-sm btn-outline-danger btn-remove mt-1" type="button" style="font-size: 11px;">Remove</button>
+                <button class="btn btn-sm btn-outline-danger btn-remove mt-1" type="button" style="font-size: 11px; border-radius: 6px;">Remove</button>
               </td>
               <td class="fw-semibold">${money(unit)}</td>
               <td class="fw-bold" style="color: var(--primary);">${money(lineTotal)}</td>
@@ -1399,32 +1594,40 @@
 
       const { sub, del, tax, total } = computeTotals();
       subTotalText.textContent = money(sub);
-      deliveryText.textContent = del > 0 ? money(del) : "FREE";
-      deliveryText.style.color = del > 0 ? "inherit" : "var(--success)";
-      deliveryText.style.fontWeight = del > 0 ? "400" : "700";
+      
+      if (del > 0) {
+        deliveryText.textContent = money(del);
+        deliveryText.style.color = "inherit";
+        deliveryText.style.fontWeight = "400";
+      } else {
+        deliveryText.textContent = "FREE";
+        deliveryText.style.color = "var(--success)";
+        deliveryText.style.fontWeight = "700";
+      }
+      
       taxText.textContent = money(tax);
       totalText.textContent = money(total);
+
+      // Update delivery stat
+      statDeliveryFee.textContent = del > 0 ? money(del) : "FREE";
 
       // enable invoice only if customer selected and cart not empty
       const enable = !!SELECTED_CLIENT && CART.size > 0;
       createInvoiceBtn.disabled = !enable;
 
       if (enable) {
-        orderStatus.innerHTML = `<span>✅</span> Ready to create invoice.`;
-        orderStatus.className = "status-msg success";
+        setStatus(orderStatus, 'success', 'Ready to create invoice.');
       } else if (!SELECTED_CLIENT) {
-        orderStatus.innerHTML = `<span>👆</span> Select a customer to begin.`;
-        orderStatus.className = "status-msg info";
+        setStatus(orderStatus, 'info', 'Select a customer to begin.');
       } else {
-        orderStatus.innerHTML = `<span>📦</span> Add products to the order.`;
-        orderStatus.className = "status-msg info";
+        setStatus(orderStatus, 'info', 'Add products to the order.');
       }
 
       renderProductsGrid();
     }
 
     // ---------------------------
-    // Platinum overrides
+    // Platinum overrides (optional)
     // ---------------------------
     async function loadPlatinumOverrides(customerId) {
       PLATINUM_OVERRIDES.clear();
@@ -1468,8 +1671,7 @@
     async function createCustomerSilent() {
       const v = validateNewCustomerForm();
       if (!v.ok) {
-        createClientStatus.innerHTML = `<span>❌</span> Email, Full name, Phone, Address are required.`;
-        createClientStatus.className = "status-msg error";
+        setStatus(createClientStatus, 'error', 'Email, Full name, Phone, Address are required.');
         return;
       }
 
@@ -1484,21 +1686,18 @@
       };
 
       createClientConfirmBtn.disabled = true;
-      createClientStatus.innerHTML = `<span>⏳</span> Creating customer…`;
-      createClientStatus.className = "status-msg info";
+      setStatus(createClientStatus, 'info', 'Creating customer…');
 
       const { data, error } = await supabase.functions.invoke("admin-create-customer-silent", { body: payload });
 
       createClientConfirmBtn.disabled = false;
 
       if (error || !data?.ok) {
-        createClientStatus.innerHTML = `<span>❌</span> ERROR: ${data?.error || error?.message || "Failed"}`;
-        createClientStatus.className = "status-msg error";
+        setStatus(createClientStatus, 'error', (data?.error || error?.message || "Failed"));
         return;
       }
 
-      createClientStatus.innerHTML = `<span>✅</span> Customer created! Refreshing list…`;
-      createClientStatus.className = "status-msg success";
+      setStatus(createClientStatus, 'success', 'Customer created! Refreshing list…');
       await loadClients();
 
       const newId = data.customer_id || data.id;
@@ -1514,20 +1713,11 @@
     // Create Invoice (Unpaid)
     // ---------------------------
     async function createInvoiceUnpaid() {
-      if (!SELECTED_CLIENT) { 
-        orderStatus.innerHTML = `<span>⚠️</span> Select a customer.`;
-        orderStatus.className = "status-msg error";
-        return; 
-      }
-      if (!CART.size) { 
-        orderStatus.innerHTML = `<span>⚠️</span> Add items first.`;
-        orderStatus.className = "status-msg error";
-        return; 
-      }
+      if (!SELECTED_CLIENT) { setStatus(orderStatus, 'warning', 'Select a customer.'); return; }
+      if (!CART.size) { setStatus(orderStatus, 'warning', 'Add items first.'); return; }
 
       createInvoiceBtn.disabled = true;
-      orderStatus.innerHTML = `<span>⏳</span> Creating invoice…`;
-      orderStatus.className = "status-msg info";
+      setStatus(orderStatus, 'info', 'Creating invoice…');
 
       const items = Array.from(CART.values()).map(({ product, qty }) => {
         const unit = priceForQty(product, qty);
@@ -1552,16 +1742,14 @@
       createInvoiceBtn.disabled = false;
 
       if (error || !data?.ok) {
-        orderStatus.innerHTML = `<span>❌</span> ERROR: ${data?.error || error?.message || "Failed"}`;
-        orderStatus.className = "status-msg error";
+        setStatus(orderStatus, 'error', (data?.error || error?.message || "Failed"));
         return;
       }
 
       CART.clear();
       renderOrder();
 
-      orderStatus.innerHTML = `<span>✅</span> Invoice created! ${data.invoice_number ? "(" + data.invoice_number + ")" : ""}`;
-      orderStatus.className = "status-msg success";
+      setStatus(orderStatus, 'success', `Invoice created! ${data.invoice_number ? "(" + data.invoice_number + ")" : ""}`);
     }
 
     // ---------------------------
@@ -1572,28 +1760,25 @@
       SELECTED_CLIENT = CLIENTS.find(c => c.id === id) || null;
 
       CART.clear();
-      
+
       if (!SELECTED_CLIENT) {
         renderClientInfo(null);
-        orderStatus.innerHTML = `<span>👆</span> Select a customer to begin.`;
-        orderStatus.className = "status-msg info";
+        setStatus(orderStatus, 'info', 'Select a customer to begin.');
         createInvoiceBtn.disabled = true;
         renderOrder();
         return;
       }
 
+      setStatus(orderStatus, 'info', 'Loading customer data…');
+
       // Load customer-specific delivery rule
       await loadCustomerDeliveryRule(SELECTED_CLIENT.id);
-      
+
       renderClientInfo(SELECTED_CLIENT);
 
-      orderStatus.innerHTML = `<span>⏳</span> Loading pricing…`;
-      orderStatus.className = "status-msg info";
-      
       await loadPlatinumOverrides(SELECTED_CLIENT.id);
-      
-      orderStatus.innerHTML = `<span>✅</span> Customer selected. Add items.`;
-      orderStatus.className = "status-msg success";
+
+      setStatus(orderStatus, 'success', 'Customer selected. Add items.');
       renderOrder();
     }
 
@@ -1604,54 +1789,13 @@
     productCategory?.addEventListener("change", renderProductsGrid);
 
     openCreateClientBtn?.addEventListener("click", () => {
-      createClientStatus.innerHTML = `<span>ℹ️</span> Fill required fields then create.`;
-      createClientStatus.className = "status-msg info";
+      setStatus(createClientStatus, 'info', 'Fill required fields then create.');
       createClientModal?.show();
     });
 
     createClientConfirmBtn?.addEventListener("click", createCustomerSilent);
+
     createInvoiceBtn?.addEventListener("click", createInvoiceUnpaid);
-
-    // ---------------------------
-    // Theme Toggle
-    // ---------------------------
-    const themeToggle = $("themeToggle");
-    const THEME_KEY = "shrinxa-theme";
-
-    function setTheme(theme) {
-      document.documentElement.setAttribute("data-theme", theme);
-      localStorage.setItem(THEME_KEY, theme);
-      
-      const icon = themeToggle?.querySelector(".icon");
-      const label = themeToggle?.querySelector(".label");
-      
-      if (theme === "dark") {
-        if (icon) icon.textContent = "☀️";
-        if (label) label.textContent = "Light Mode";
-      } else {
-        if (icon) icon.textContent = "🌙";
-        if (label) label.textContent = "Dark Mode";
-      }
-    }
-
-    function toggleTheme() {
-      const current = document.documentElement.getAttribute("data-theme") || "light";
-      const next = current === "dark" ? "light" : "dark";
-      setTheme(next);
-    }
-
-    function initTheme() {
-      const saved = localStorage.getItem(THEME_KEY);
-      if (saved) {
-        setTheme(saved);
-      } else {
-        // Check system preference
-        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        setTheme(prefersDark ? "dark" : "light");
-      }
-    }
-
-    themeToggle?.addEventListener("click", toggleTheme);
 
     // ---------------------------
     // Init
@@ -1663,11 +1807,9 @@
       const ok = await waitForAdminReady();
       if (!ok) return;
 
-      createClientModal = new bootstrap.Modal($("createClientModal"));
-
-      // Load default delivery rule first
+      // Load default delivery rule
       await loadDefaultDeliveryRule();
-      
+
       await loadClients();
       await loadProducts();
       renderOrder();
