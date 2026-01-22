@@ -426,11 +426,12 @@
 }
 
 .sold-out-overlay img {
-  max-width: 200%;
-  max-height: 200%;
+  max-width: 80%;
+  max-height: 80%;
   opacity: 1;
-  filter: drop-shadow(0 8px 22px rgba(255, 78, 106, 0.7));
+  filter: drop-shadow(0 4px 12px rgba(255, 78, 106, 0.5));
   animation: pulse-sold-out 2s ease-in-out infinite;
+  transform: scale(1.5);  /* This makes it 150% bigger */
 }
 
 @keyframes pulse-sold-out {
