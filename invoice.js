@@ -170,12 +170,13 @@ async function loadInvoice() {
     return;
   }
 
-  // 1) Fetch invoice + items via public Edge Function (works without login)
-  const url = new URL(`${location.origin}/functions/v1/invoice-public`);
-  if (invoiceId) url.searchParams.set("id", invoiceId);
-  if (!invoiceId && invoiceNumber) url.searchParams.set("inv", invoiceNumber);
+ // 1) Fetch invoice + items via public Supabase Edge Function (works without login)
+const url = new URL("https://fgrjojxwevllnjdixiyd.functions.supabase.co/invoice-public");
+if (invoiceId) url.searchParams.set("id", invoiceId);
+if (!invoiceId && invoiceNumber) url.searchParams.set("inv", invoiceNumber);
 
-  const res = await fetch(url.toString(), { method: "GET" });
+const res = await fetch(url.toString(), { method: "GET" });
+
   const text = await res.text();
   let payload = null;
   try { payload = JSON.parse(text); } catch (_) { payload = null; }
