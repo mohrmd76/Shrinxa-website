@@ -400,17 +400,46 @@
       color: var(--text-muted);
       white-space: nowrap;
     }
-    .prod-image-wrap {
-      margin-top: 0.25rem;
-      background: radial-gradient(circle at 50% 0, rgba(180,230,255,0.18), transparent 65%);
-      border-radius: 0.8rem;
-      border: 1px solid rgba(40,60,110,0.9);
-      padding: 0.45rem;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 130px;
-    }
+	.prod-image-wrap {
+  position: relative; /* REQUIRED for overlay */
+  margin-top: 0.25rem;
+  background: radial-gradient(circle at 50% 0, rgba(180,230,255,0.18), transparent 65%);
+  border-radius: 0.8rem;
+  border: 1px solid rgba(40,60,110,0.9);
+  padding: 0.45rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 130px;
+}
+
+/* SOLD OUT overlay */
+.sold-out-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 9, 20, 0.55);
+  border-radius: 0.8rem;
+  z-index: 2;
+}
+
+.sold-out-overlay img {
+  max-width: 82%;
+  max-height: 82%;
+  opacity: 0.95;
+}
+
+/* Disabled add-to-cart styling */
+.btn-add:disabled {
+  background: #3b435a !important;
+  color: rgba(255,255,255,0.75) !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  filter: grayscale(40%);
+}
+
     .prod-image-wrap img {
       max-height: 110px;
       object-fit: contain;
@@ -1802,9 +1831,18 @@ document.addEventListener("DOMContentLoaded", () => {
     <div class="prod-name">${escapeHtml(name)}</div>
     <div class="prod-category">${escapeHtml(category)}</div>
   </div>
-  <div class="prod-image-wrap">
-    <img alt="${escapeHtml(name)}" src="${escapeHtml(imgSrc)}"/>
-  </div>
+
+ <div class="prod-image-wrap">
+  <img alt="${escapeHtml(name)}" src="${escapeHtml(imgSrc)}"/>
+
+  ${Number(r.stock_on_hand) === 0 ? `
+    <div class="sold-out-overlay">
+      <img src="Sold Out.png" alt="Sold out"/>
+    </div>
+  ` : ``}
+</div>
+
+
   <div class="prod-main">
     <div class="prod-spec">${escapeHtml(spec)}</div>
     <p class="prod-desc">${escapeHtml(desc)}</p>
@@ -1820,8 +1858,13 @@ document.addEventListener("DOMContentLoaded", () => {
   </div>
   <div class="prod-actions">
     <span class="qty-note">Qty (boxes)</span>
-    <input class="qty-input" min="1" type="number" value="1"/>
-    <button class="btn-add">Add to cart</button>
+    <input class="qty-input" min="1" type="number" value="1" ${Number(r.stock_on_hand) === 0 ? "disabled" : ""}/>
+
+
+<button class="btn-add" ${Number(r.stock_on_hand) === 0 ? "disabled" : ""}>
+  ${Number(r.stock_on_hand) === 0 ? "Sold out" : "Add to cart"}
+</button>
+
   </div>
 </article>`;
     }).join("\n");
@@ -2080,7 +2123,7 @@ function applyTierPricesToUI() {
   document.addEventListener("click", async (e) => {
     const btn = e.target.closest(".btn-add");
     if (!btn) return;
-
+	  if (btn.disabled) return;
     e.preventDefault();
 
     const card = btn.closest(".product-card");
