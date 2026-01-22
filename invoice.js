@@ -170,34 +170,23 @@ async function loadInvoice() {
     return;
   }
 
-  // 1) Fetch invoice
-  let invQuery = supabase.from("invoices").select("*").limit(1);
-  invQuery = invoiceId ? invQuery.eq("id", invoiceId) : invQuery.eq("invoice_number", invoiceNumber);
+  // 1) Fetch invoice + items via public Edge Function (works without login)
+  const url = new URL(`${location.origin}/functions/v1/invoice-public`);
+  if (invoiceId) url.searchParams.set("id", invoiceId);
+  if (!invoiceId && invoiceNumber) url.searchParams.set("inv", invoiceNumber);
 
-  const { data: invRows, error: invErr } = await invQuery;
+  const res = await fetch(url.toString(), { method: "GET" });
+  const text = await res.text();
+  let payload = null;
+  try { payload = JSON.parse(text); } catch (_) { payload = null; }
 
-  if (invErr || !invRows?.length) {
-    console.error("Invoice fetch error:", invErr);
-    alert("Invoice not found in Supabase.");
+  if (!res.ok || !payload?.ok) {
+    console.error("invoice-public error:", payload || text);
+    alert(payload?.message || "Invoice could not be loaded. Please contact support.");
     return;
   }
 
-  const inv = invRows[0];
-
-  // 2) Fetch items
-  const { data: items, error: itemsErr } = await supabase
-    .from("invoice_items")
-    .select("*")
-    .eq("invoice_id", inv.id)
-    .order("sort_order", { ascending: true });
-
-  if (itemsErr) {
-    console.error("Items fetch error:", itemsErr);
-    alert("Failed to load invoice items.");
-    return;
-  }
-
-  renderInvoice(inv, items || []);
+  renderInvoice(payload.invoice, payload.items || []);
 }
 
 function init() {
