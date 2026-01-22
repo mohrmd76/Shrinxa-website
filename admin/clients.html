@@ -1,21 +1,22 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Admin – Clients</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../admin.css" />
 
   <style>
     body { background:#f6f7fb; }
-
-    /* --- HEADER (same style as your admin files) --- */
     header { background:#111; }
     header a { color:#fff; text-decoration:none; opacity:.9; }
     header a:hover { opacity:1; text-decoration:underline; }
     .nav-links { gap:14px; flex-wrap:wrap; }
+    .hidden { display: none !important; }
 
-    /* --- PAGE LAYOUT (matches the mock you liked) --- */
+    /* --- PAGE LAYOUT (matches your mock) --- */
     .page-wrap { padding: 18px 18px 28px; }
     .page-title { font-size: 28px; font-weight: 700; margin: 6px 0 14px; }
 
@@ -73,11 +74,15 @@
       font-weight: 700;
       display: inline-block;
     }
-
     .badge-low {
       background: #fff4db;
       border-color: #ffdca0;
       color: #8a5a00;
+    }
+    .badge-out {
+      background:#ffe7ea;
+      border-color:#ffb8c2;
+      color:#a1001a;
     }
 
     .qty-btn {
@@ -93,6 +98,10 @@
       cursor: pointer;
       user-select: none;
     }
+    .qty-btn:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
 
     .qty-box {
       width: 54px;
@@ -106,6 +115,7 @@
 
     .order-table th, .order-table td { vertical-align: middle; }
     .order-table th { font-size: 13px; color:#4b5563; }
+
     .totals-row {
       display:flex;
       justify-content: space-between;
@@ -115,215 +125,807 @@
     }
     .totals-row:first-of-type { border-top: none; margin-top: 0; }
     .totals-strong { font-size: 18px; font-weight: 800; }
+
+    @media (max-width: 980px) {
+      .order-grid { grid-template-columns: 1fr; }
+      .products-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 
 <body>
-  <!-- HEADER (copied style from customers.html; only active link is Clients) -->
-  <header class="py-3">
-    <div class="container-fluid px-4 d-flex align-items-center gap-3">
-      <div class="text-white fw-bold">Shrinxa Admin</div>
+  <!-- Admin Auth Gate (same pattern as inventory.html) -->
+  <div id="loading">Checking access...</div>
+  <div id="denied" class="hidden">Access denied</div>
 
-      <div class="d-flex nav-links">
-        <a href="./dashboard.html">Dashboard</a>
-        <a href="./orders.html">Orders</a>
-        <a href="./customers.html">Customers</a>
-        <a href="./clients.html" style="text-decoration:underline; opacity:1;">Clients</a>
-        <a href="./products-admin.html">Products</a>
-        <a href="./platinum.html">Platinum</a>
-        <a href="./delivery-admin.html">Delivery Rules</a>
-        <a href="./inventory.html">Inventory</a>
-        <a href="./income.html">Income</a>
+  <div id="admin" class="hidden">
+    <header class="py-3">
+      <div class="container-fluid px-4 d-flex align-items-center gap-3">
+        <div class="text-white fw-bold">Shrinxa Admin</div>
+
+        <!-- IMPORTANT: Clients link is LAST -->
+        <div class="d-flex nav-links">
+          <a href="./dashboard.html">Dashboard</a>
+          <a href="./orders.html">Orders</a>
+          <a href="./customers.html">Customers</a>
+          <a href="./products-admin.html">Products</a>
+          <a href="./platinum.html">Platinum</a>
+          <a href="./delivery-admin.html">Delivery Rules</a>
+          <a href="./inventory.html">Inventory</a>
+          <a href="./income.html">Income</a>
+          <a href="./clients.html" style="text-decoration:underline; opacity:1;">Clients</a>
+        </div>
+
+        <div class="ms-auto d-flex align-items-center gap-2">
+          <span id="adminEmail" class="text-white small"></span>
+          <button id="logoutBtn" class="btn btn-sm btn-outline-light">Logout</button>
+        </div>
       </div>
+    </header>
 
-      <div class="ms-auto d-flex align-items-center gap-2">
-        <span id="adminEmail" class="text-white small"></span>
-        <button id="logoutBtn" class="btn btn-sm btn-outline-light">Logout</button>
-      </div>
-    </div>
-  </header>
+    <div class="page-wrap">
+      <div class="page-title">Clients</div>
 
-  <div class="page-wrap">
-    <div class="page-title">Clients</div>
+      <div class="order-grid">
+        <!-- LEFT COLUMN -->
+        <div class="d-grid gap-3">
+          <!-- Customer panel -->
+          <div class="panel">
+            <div class="panel-hd">Customer</div>
+            <div class="panel-bd">
+              <div class="d-flex gap-2 align-items-center flex-wrap">
+                <select id="clientSelect" class="form-select input-compact" style="min-width: 360px;">
+                  <option value="">Select a customer…</option>
+                </select>
+                <button id="refreshClientsBtn" class="btn btn-primary">Refresh List</button>
+              </div>
 
-    <div class="order-grid">
-      <!-- LEFT COLUMN -->
-      <div class="d-grid gap-3">
-        <!-- Customer panel -->
+              <div class="mt-3 d-flex gap-2 flex-wrap">
+                <button id="openCreateClientBtn" class="btn btn-success">
+                  + Create New Customer
+                </button>
+                <span class="mini muted align-self-center">
+                  (Silent creation is handled by an Edge Function; password is never set here.)
+                </span>
+              </div>
+
+              <div id="clientInfo" class="mt-3 p-3 rounded-3" style="background:#eef3f7; border:1px solid #d7dee8;">
+                <div class="fw-bold">Customer ID: <span id="clientIdText" class="muted">—</span></div>
+                <div class="muted mini">Email: <span id="clientEmailText">—</span></div>
+                <div class="muted mini">Phone: <span id="clientPhoneText">—</span></div>
+                <div class="muted mini">Address: <span id="clientAddressText">—</span></div>
+                <div class="muted mini">Tier: <span id="clientTierText">—</span></div>
+              </div>
+
+              <div id="clientStatus" class="mt-2 mini muted">Ready.</div>
+            </div>
+          </div>
+
+          <!-- Products panel -->
+          <div class="panel">
+            <div class="panel-hd">Select Products</div>
+            <div class="panel-bd">
+              <div class="d-flex gap-2 flex-wrap">
+                <input id="productSearch" class="form-control input-compact" placeholder="Search by name…" style="min-width: 280px;">
+                <select id="productCategory" class="form-select input-compact" style="max-width: 220px;">
+                  <option value="all">All Categories</option>
+                </select>
+              </div>
+
+              <div class="mt-3 products-grid" id="productsGrid">
+                <!-- Loaded from DB -->
+              </div>
+
+              <div id="productsStatus" class="mt-2 mini muted">Loading products…</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN -->
         <div class="panel">
-          <div class="panel-hd">Customer</div>
+          <div class="panel-hd">Order Builder</div>
           <div class="panel-bd">
-            <div class="d-flex gap-2 align-items-center flex-wrap">
-              <select id="clientSelect" class="form-select input-compact" style="min-width: 360px;">
-                <option value="">Select a customer…</option>
+            <table class="table table-sm order-table">
+              <thead>
+                <tr>
+                  <th style="width: 44%;">Product</th>
+                  <th style="width: 26%;">Quantity</th>
+                  <th style="width: 15%;">Price</th>
+                  <th style="width: 15%;">Total</th>
+                </tr>
+              </thead>
+              <tbody id="orderLines">
+                <tr><td colspan="4" class="muted mini">No items selected.</td></tr>
+              </tbody>
+            </table>
+
+            <div class="mt-2">
+              <select id="deliveryRule" class="form-select input-compact" style="max-width: 260px;">
+                <option value="0">Delivery: $0</option>
+                <option value="30">Delivery: $30</option>
               </select>
-              <button id="refreshClientsBtn" class="btn btn-primary">Refresh List</button>
             </div>
 
             <div class="mt-3">
-              <button id="openCreateClientBtn" class="btn btn-success">
-                + Create New Customer
-              </button>
+              <div class="totals-row"><div>Subtotal:</div><div id="subTotalText">$0.00</div></div>
+              <div class="totals-row"><div>Delivery:</div><div id="deliveryText">$0.00</div></div>
+              <div class="totals-row"><div>Tax (13% HST):</div><div id="taxText">$0.00</div></div>
+              <div class="totals-row"><div class="totals-strong">Total:</div><div class="totals-strong" id="totalText">$0.00</div></div>
             </div>
 
-            <div id="clientInfo" class="mt-3 p-3 rounded-3" style="background:#eef3f7; border:1px solid #d7dee8;">
-              <div class="fw-bold">Customer ID: <span id="clientIdText" class="muted">—</span></div>
-              <div class="muted mini">Address: <span id="clientAddressText">—</span></div>
-            </div>
+            <button id="createInvoiceBtn" class="btn btn-success w-100 mt-3" style="height: 46px; font-weight: 800;" disabled>
+              Create Invoice (Unpaid)
+            </button>
 
-            <div id="clientStatus" class="mt-2 mini muted">Ready.</div>
+            <div id="orderStatus" class="mt-2 mini muted">Select a customer to begin.</div>
           </div>
-        </div>
-
-        <!-- Products panel -->
-        <div class="panel">
-          <div class="panel-hd">Select Products</div>
-          <div class="panel-bd">
-            <div class="d-flex gap-2 flex-wrap">
-              <input id="productSearch" class="form-control input-compact" placeholder="Search by name…" style="min-width: 280px;">
-              <select id="productCategory" class="form-select input-compact" style="max-width: 220px;">
-                <option value="all">All Categories</option>
-              </select>
-            </div>
-
-            <div class="mt-3 products-grid" id="productsGrid">
-              <!-- Product cards will be rendered here later -->
-              <!-- Placeholder examples (static) so layout matches your image -->
-              <div class="prod-card">
-                <div>
-                  <div class="fw-bold">Adhesive Tape A</div>
-                  <div class="muted">$8.00 / unit</div>
-                  <div class="mt-2"><span class="badge-stock">In Stock: 40</span></div>
-                </div>
-                <button class="btn btn-outline-primary">+</button>
-              </div>
-
-              <div class="prod-card">
-                <div>
-                  <div class="fw-bold">Shrink Wrap XL</div>
-                  <div class="muted">$40.00 / unit</div>
-                  <div class="mt-2"><span class="badge-stock badge-low">Low</span> <span class="muted mini">last 3</span></div>
-                </div>
-                <button class="btn btn-outline-primary">+</button>
-              </div>
-
-              <div class="prod-card">
-                <div>
-                  <div class="fw-bold">Adhesive Tape B</div>
-                  <div class="muted">$9.00 / unit</div>
-                  <div class="mt-2"><span class="badge-stock">In Stock: 30</span></div>
-                </div>
-                <button class="btn btn-outline-primary">+</button>
-              </div>
-
-              <div class="prod-card">
-                <div>
-                  <div class="fw-bold">Packing Foam Sheets</div>
-                  <div class="muted">$10.00 / unit</div>
-                  <div class="mt-2"><span class="badge-stock">In Stock: 12</span></div>
-                </div>
-                <button class="btn btn-outline-primary">+</button>
-              </div>
-            </div>
-
-            <div class="mt-2 mini muted">
-              Note: this page will later load products from your <code>products</code> table including live stock.
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- RIGHT COLUMN -->
-      <div class="panel">
-        <div class="panel-hd">Order Builder</div>
-        <div class="panel-bd">
-          <table class="table table-sm order-table">
-            <thead>
-              <tr>
-                <th style="width: 44%;">Product</th>
-                <th style="width: 26%;">Quantity</th>
-                <th style="width: 15%;">Price</th>
-                <th style="width: 15%;">Total</th>
-              </tr>
-            </thead>
-            <tbody id="orderLines">
-              <!-- Placeholder lines so the layout matches the image -->
-              <tr>
-                <td>
-                  <div class="fw-bold">Adhesive Tape A</div>
-                  <div class="muted mini">$8.00 / unit</div>
-                </td>
-                <td>
-                  <div class="d-flex align-items-center gap-2">
-                    <span class="qty-btn">−</span>
-                    <input class="qty-box" value="10" />
-                    <span class="qty-btn">+</span>
-                  </div>
-                </td>
-                <td>$8.00</td>
-                <td class="fw-bold">$80.00</td>
-              </tr>
-              <tr>
-                <td>
-                  <div class="fw-bold">Shrink Wrap XL</div>
-                  <div class="muted mini">$40.00 / unit</div>
-                </td>
-                <td>
-                  <div class="d-flex align-items-center gap-2">
-                    <span class="qty-btn">−</span>
-                    <input class="qty-box" value="8" />
-                    <span class="qty-btn">+</span>
-                  </div>
-                </td>
-                <td>$40.00</td>
-                <td class="fw-bold">$320.00</td>
-              </tr>
-            </tbody>
-          </table>
-
-          <div class="mt-2">
-            <select id="deliveryRule" class="form-select input-compact" style="max-width: 260px;">
-              <option value="">+ Add Delivery Fee</option>
-              <option value="0">Delivery: $0</option>
-              <option value="30">Delivery: $30</option>
-            </select>
-          </div>
-
-          <div class="mt-3">
-            <div class="totals-row"><div>Subtotal:</div><div id="subTotalText">$466.40</div></div>
-            <div class="totals-row"><div>Delivery:</div><div id="deliveryText">$0.00</div></div>
-            <div class="totals-row"><div>Tax (13% HST):</div><div id="taxText">$60.63</div></div>
-            <div class="totals-row"><div class="totals-strong">Total:</div><div class="totals-strong" id="totalText">$527.03</div></div>
-          </div>
-
-          <button id="createInvoiceBtn" class="btn btn-success w-100 mt-3" style="height: 46px; font-weight: 800;">
-            Create Invoice (Unpaid)
-          </button>
-
-          <div id="orderStatus" class="mt-2 mini muted">Ready.</div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- MODALS -->
+  <div class="modal fade" id="createClientModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Create New Customer (Silent)</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Email (required)</label>
+              <input id="newEmail" class="form-control" placeholder="customer@email.com" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Full name (required)</label>
+              <input id="newFullName" class="form-control" placeholder="Full name" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Phone (required)</label>
+              <input id="newPhone" class="form-control" placeholder="Phone" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Address (required)</label>
+              <input id="newAddress" class="form-control" placeholder="Street address" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Company (optional)</label>
+              <input id="newCompany" class="form-control" placeholder="Company name" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">City (optional)</label>
+              <input id="newCity" class="form-control" placeholder="City" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Province (optional)</label>
+              <input id="newProvince" class="form-control" placeholder="Province" />
+            </div>
+          </div>
+          <div id="createClientStatus" class="mt-3 mini muted">Fill required fields then create.</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-success" id="createClientConfirmBtn">Create Customer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
   <script type="module">
+    import "./admin-auth.js";
     import { supabase } from "../supabaseClient.js";
 
-    // header: email + logout (same pattern as customers.html)
-    const adminEmailEl = document.getElementById("adminEmail");
-    const logoutBtn = document.getElementById("logoutBtn");
+    // ---------------------------
+    // Helpers
+    // ---------------------------
+    const $ = (id) => document.getElementById(id);
 
-    logoutBtn?.addEventListener("click", async () => {
-      await supabase.auth.signOut();
-      window.location.href = "../login.html";
-    });
-
-    async function initAdminHeader() {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (!error && user?.email && adminEmailEl) adminEmailEl.textContent = user.email;
+    function money(n) {
+      const v = Number(n || 0);
+      return new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD" }).format(v);
     }
 
-    initAdminHeader();
+    function escapeHtml(s) {
+      return String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function pickField(obj, keys, fallback = null) {
+      for (const k of keys) {
+        if (obj && Object.prototype.hasOwnProperty.call(obj, k) && obj[k] !== null && obj[k] !== undefined) return obj[k];
+      }
+      return fallback;
+    }
+
+    function normTier(t) {
+      const v = String(t ?? "standard").toLowerCase();
+      if (v.includes("platinum")) return "platinum";
+      if (v.includes("gold")) return "gold";
+      return "standard";
+    }
+
+    // ---------------------------
+    // State
+    // ---------------------------
+    let CLIENTS = [];
+    let PRODUCTS = [];
+    let SELECTED_CLIENT = null;
+
+    // product_id -> { price, wholesale_price } (for platinum overrides)
+    const PLATINUM_OVERRIDES = new Map();
+
+    // cart: productPublicId -> { product, qty }
+    const CART = new Map();
+
+    // ---------------------------
+    // Elements
+    // ---------------------------
+    const clientSelect = $("clientSelect");
+    const refreshClientsBtn = $("refreshClientsBtn");
+    const clientStatus = $("clientStatus");
+
+    const clientIdText = $("clientIdText");
+    const clientEmailText = $("clientEmailText");
+    const clientPhoneText = $("clientPhoneText");
+    const clientAddressText = $("clientAddressText");
+    const clientTierText = $("clientTierText");
+
+    const productsGrid = $("productsGrid");
+    const productsStatus = $("productsStatus");
+    const productSearch = $("productSearch");
+    const productCategory = $("productCategory");
+
+    const orderLines = $("orderLines");
+    const deliveryRule = $("deliveryRule");
+    const subTotalText = $("subTotalText");
+    const deliveryText = $("deliveryText");
+    const taxText = $("taxText");
+    const totalText = $("totalText");
+    const createInvoiceBtn = $("createInvoiceBtn");
+    const orderStatus = $("orderStatus");
+
+    // modal
+    const openCreateClientBtn = $("openCreateClientBtn");
+    const createClientConfirmBtn = $("createClientConfirmBtn");
+    const createClientStatus = $("createClientStatus");
+    const modalEl = document.getElementById("createClientModal");
+    const createClientModal = modalEl ? new bootstrap.Modal(modalEl) : null;
+
+    // ---------------------------
+    // Admin gating: wait until #admin is visible
+    // ---------------------------
+    async function waitForAdminReady() {
+      for (let i = 0; i < 50; i++) {
+        const adminWrap = $("admin");
+        if (adminWrap && !adminWrap.classList.contains("hidden")) return true;
+        await new Promise(r => setTimeout(r, 100));
+      }
+      return false;
+    }
+
+    // ---------------------------
+    // Load Clients
+    // ---------------------------
+    async function loadClients() {
+      if (!clientSelect) return;
+
+      clientStatus.textContent = "Loading customers…";
+      clientSelect.innerHTML = `<option value="">Select a customer…</option>`;
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, email, full_name, phone, address, city, province, company_name, tier, wholesale_qty_threshold, is_admin")
+        .eq("is_admin", false)
+        .order("full_name", { ascending: true });
+
+      if (error) {
+        clientStatus.textContent = "ERROR loading customers: " + error.message;
+        CLIENTS = [];
+        return;
+      }
+
+      CLIENTS = Array.isArray(data) ? data : [];
+
+      for (const c of CLIENTS) {
+        const name = c.full_name || "—";
+        const email = c.email || "—";
+        const phone = c.phone || "";
+        const opt = document.createElement("option");
+        opt.value = c.id;
+        opt.textContent = `${name} — ${email}${phone ? " — " + phone : ""}`;
+        clientSelect.appendChild(opt);
+      }
+
+      clientStatus.textContent = `Loaded ${CLIENTS.length} customers.`;
+    }
+
+    function renderClientInfo(client) {
+      if (!client) {
+        clientIdText.textContent = "—";
+        clientEmailText.textContent = "—";
+        clientPhoneText.textContent = "—";
+        clientAddressText.textContent = "—";
+        clientTierText.textContent = "—";
+        return;
+      }
+
+      clientIdText.textContent = client.id || "—";
+      clientEmailText.textContent = client.email || "—";
+      clientPhoneText.textContent = client.phone || "—";
+
+      const addrParts = [
+        client.address || "",
+        client.city || "",
+        client.province || ""
+      ].filter(Boolean);
+      clientAddressText.textContent = addrParts.length ? addrParts.join(", ") : (client.address || "—");
+
+      clientTierText.textContent = normTier(client.tier || "standard");
+    }
+
+    // ---------------------------
+    // Load Products
+    // ---------------------------
+    function normalizeCategoryLabel(cat) {
+      const c = String(cat || "").trim();
+      if (!c) return "Uncategorized";
+      if (/^stretch wrap$/i.test(c)) return "Stretch Wrap";
+      if (/^pre-?stretch wrap$/i.test(c)) return "Pre-Stretch Wrap";
+      if (/^tape rolls$/i.test(c)) return "Tape Rolls";
+      return c;
+    }
+
+    async function loadProducts() {
+      productsStatus.textContent = "Loading products…";
+      productsGrid.innerHTML = "";
+
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .order("sort_order", { ascending: true });
+
+      if (error) {
+        productsStatus.textContent = "ERROR loading products: " + error.message;
+        PRODUCTS = [];
+        return;
+      }
+
+      const rows = Array.isArray(data) ? data : [];
+      // filter active if flag exists
+      PRODUCTS = rows.filter(r => {
+        const v = (r?.is_active ?? r?.active);
+        if (v === null || v === undefined) return true;
+        return v === true;
+      });
+
+      // categories dropdown
+      const cats = new Set();
+      for (const p of PRODUCTS) cats.add(normalizeCategoryLabel(p.category || p.type || p.product_type));
+      const sortedCats = Array.from(cats).sort((a,b)=>a.localeCompare(b));
+      productCategory.innerHTML = `<option value="all">All Categories</option>` + sortedCats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+
+      productsStatus.textContent = `Loaded ${PRODUCTS.length} products.`;
+      renderProductsGrid();
+    }
+
+    function productToViewModel(r) {
+      const publicId = String(pickField(r, ["public_id", "publicId", "slug", "id"], "") || "");
+      const name = String(pickField(r, ["name", "product_name", "title"], "") || "");
+      const category = normalizeCategoryLabel(pickField(r, ["category", "type", "product_type"], ""));
+      const stock = Number(pickField(r, ["stock_on_hand", "stock", "qty_on_hand", "quantity_on_hand"], 0)) || 0;
+
+      const retailStd = Number(pickField(r, ["retail_price", "std_retail", "price_retail"], 0)) || 0;
+      const wholesaleStd = Number(pickField(r, ["wholesale_price", "std_wholesale", "price_wholesale"], 0)) || 0;
+
+      const retailGold = Number(pickField(r, ["gold_retail_price", "retail_gold", "gold_retail"], retailStd)) || retailStd;
+      const wholesaleGold = Number(pickField(r, ["gold_wholesale_price", "wholesale_gold", "gold_wholesale"], wholesaleStd)) || wholesaleStd;
+
+      return { publicId, name, category, stock, retailStd, wholesaleStd, retailGold, wholesaleGold, raw: r };
+    }
+
+    function getWholesaleThresholdForClient() {
+      const n = Number(SELECTED_CLIENT?.wholesale_qty_threshold);
+      return Number.isFinite(n) && n > 0 ? n : 50;
+    }
+
+    function tierForPricing() {
+      const t = normTier(SELECTED_CLIENT?.tier || "standard");
+      // platinum defaults to gold unless overridden
+      return (t === "gold" || t === "platinum") ? "gold" : "standard";
+    }
+
+    function getTieredPricesForProduct(vm) {
+      const t = normTier(SELECTED_CLIENT?.tier || "standard");
+      const base = tierForPricing();
+
+      const retail = base === "gold" ? vm.retailGold : vm.retailStd;
+      const wholesale = base === "gold" ? vm.wholesaleGold : vm.wholesaleStd;
+
+      if (t === "platinum") {
+        const ov = PLATINUM_OVERRIDES.get(vm.publicId);
+        if (ov) {
+          return {
+            retail: (ov.price ?? retail),
+            wholesale: (ov.wholesale_price ?? wholesale),
+          };
+        }
+      }
+
+      return { retail, wholesale };
+    }
+
+    function priceForQty(vm, qty) {
+      const threshold = getWholesaleThresholdForClient();
+      const prices = getTieredPricesForProduct(vm);
+      return (qty >= threshold) ? prices.wholesale : prices.retail;
+    }
+
+    function renderProductsGrid() {
+      const q = (productSearch.value || "").trim().toLowerCase();
+      const cat = (productCategory.value || "all");
+
+      const filtered = PRODUCTS
+        .map(productToViewModel)
+        .filter(vm => {
+          if (!vm.publicId || !vm.name) return false;
+          if (cat !== "all" && vm.category !== cat) return false;
+          if (q && !vm.name.toLowerCase().includes(q)) return false;
+          return true;
+        });
+
+      productsGrid.innerHTML = filtered.map(vm => {
+        const out = vm.stock <= 0;
+        const low = vm.stock > 0 && vm.stock <= 5;
+        const badgeClass = out ? "badge-out" : (low ? "badge-low" : "");
+        const badgeText = out ? "Out of stock" : (low ? `Low (last ${vm.stock})` : `In Stock: ${vm.stock}`);
+
+        // show price preview for qty=1
+        const p = priceForQty(vm, 1);
+
+        return `
+          <div class="prod-card" data-pid="${escapeHtml(vm.publicId)}">
+            <div>
+              <div class="fw-bold">${escapeHtml(vm.name)}</div>
+              <div class="muted">${money(p)} / box</div>
+              <div class="mt-2"><span class="badge-stock ${badgeClass}">${escapeHtml(badgeText)}</span></div>
+            </div>
+            <button class="btn btn-outline-primary btn-add-prod" ${out ? "disabled" : ""}>+</button>
+          </div>
+        `;
+      }).join("");
+
+      // wire add buttons
+      productsGrid.querySelectorAll(".btn-add-prod").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const card = btn.closest(".prod-card");
+          const pid = card?.getAttribute("data-pid") || "";
+          const vm = productToViewModel(PRODUCTS.find(r => String(pickField(r, ["public_id", "publicId", "slug", "id"], "")) === pid));
+          if (!vm?.publicId) return;
+
+          addToCart(vm, 1);
+        });
+      });
+    }
+
+    // ---------------------------
+    // Cart / Order Builder
+    // ---------------------------
+    function addToCart(vm, addQty) {
+      if (!SELECTED_CLIENT) {
+        orderStatus.textContent = "Select a customer first.";
+        return;
+      }
+
+      const existing = CART.get(vm.publicId);
+      const curQty = existing ? existing.qty : 0;
+      const nextQty = curQty + addQty;
+
+      if (nextQty > vm.stock) {
+        orderStatus.textContent = `Cannot exceed stock. Available: ${vm.stock}`;
+        return;
+      }
+
+      CART.set(vm.publicId, { product: vm, qty: nextQty });
+      renderOrder();
+    }
+
+    function setCartQty(pid, qty) {
+      const entry = CART.get(pid);
+      if (!entry) return;
+
+      const q = Math.max(1, parseInt(String(qty || "1"), 10) || 1);
+      if (q > entry.product.stock) {
+        orderStatus.textContent = `Cannot exceed stock. Available: ${entry.product.stock}`;
+        return;
+      }
+      entry.qty = q;
+      CART.set(pid, entry);
+      renderOrder();
+    }
+
+    function removeFromCart(pid) {
+      CART.delete(pid);
+      renderOrder();
+    }
+
+    function computeTotals() {
+      let sub = 0;
+      for (const { product, qty } of CART.values()) {
+        const unit = priceForQty(product, qty);
+        sub += unit * qty;
+      }
+      const del = Number(deliveryRule.value || 0) || 0;
+      const tax = (sub + del) * 0.13;
+      const total = sub + del + tax;
+      return { sub, del, tax, total };
+    }
+
+    function renderOrder() {
+      const items = Array.from(CART.values());
+
+      if (!items.length) {
+        orderLines.innerHTML = `<tr><td colspan="4" class="muted mini">No items selected.</td></tr>`;
+      } else {
+        orderLines.innerHTML = items.map(({ product, qty }) => {
+          const unit = priceForQty(product, qty);
+          const lineTotal = unit * qty;
+
+          return `
+            <tr data-pid="${escapeHtml(product.publicId)}">
+              <td>
+                <div class="fw-bold">${escapeHtml(product.name)}</div>
+                <div class="muted mini">Stock: ${product.stock}</div>
+              </td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <button class="qty-btn btn-dec" type="button">−</button>
+                  <input class="qty-box qty-input" value="${qty}" />
+                  <button class="qty-btn btn-inc" type="button">+</button>
+                  <button class="btn btn-sm btn-outline-danger btn-remove" type="button">Remove</button>
+                </div>
+              </td>
+              <td>${money(unit)}</td>
+              <td class="fw-bold">${money(lineTotal)}</td>
+            </tr>
+          `;
+        }).join("");
+
+        // wire qty controls
+        orderLines.querySelectorAll("tr[data-pid]").forEach(tr => {
+          const pid = tr.getAttribute("data-pid");
+          const entry = CART.get(pid);
+          if (!entry) return;
+
+          tr.querySelector(".btn-dec")?.addEventListener("click", () => {
+            const next = Math.max(1, entry.qty - 1);
+            setCartQty(pid, next);
+          });
+
+          tr.querySelector(".btn-inc")?.addEventListener("click", () => {
+            const next = entry.qty + 1;
+            setCartQty(pid, next);
+          });
+
+          tr.querySelector(".btn-remove")?.addEventListener("click", () => removeFromCart(pid));
+
+          tr.querySelector(".qty-input")?.addEventListener("change", (e) => {
+            setCartQty(pid, e.target.value);
+          });
+        });
+      }
+
+      const { sub, del, tax, total } = computeTotals();
+      subTotalText.textContent = money(sub);
+      deliveryText.textContent = money(del);
+      taxText.textContent = money(tax);
+      totalText.textContent = money(total);
+
+      // enable invoice only if customer selected and cart not empty
+      const enable = !!SELECTED_CLIENT && CART.size > 0;
+      createInvoiceBtn.disabled = !enable;
+
+      orderStatus.textContent = enable ? "Ready to create invoice (Unpaid)." : "Select a customer and add items.";
+      renderProductsGrid(); // refresh preview prices when tier/threshold changes
+    }
+
+    // ---------------------------
+    // Platinum overrides (optional)
+    // ---------------------------
+    async function loadPlatinumOverrides(customerId) {
+      PLATINUM_OVERRIDES.clear();
+      const tier = normTier(SELECTED_CLIENT?.tier || "standard");
+      if (tier !== "platinum") return;
+
+      try {
+        const { data, error } = await supabase
+          .from("platinum_prices")
+          .select("retail_price, wholesale_price, products!inner(public_id)")
+          .eq("customer_id", customerId);
+
+        if (error || !Array.isArray(data)) return;
+
+        for (const row of data) {
+          const key = row.products?.public_id;
+          if (!key) continue;
+
+          const retail = Number(row.retail_price);
+          const wholesale = Number(row.wholesale_price);
+
+          PLATINUM_OVERRIDES.set(String(key), {
+            price: Number.isFinite(retail) ? retail : null,
+            wholesale_price: Number.isFinite(wholesale) ? wholesale : null
+          });
+        }
+      } catch (_) {}
+    }
+
+    // ---------------------------
+    // Create Customer (Silent)
+    // ---------------------------
+    function validateNewCustomerForm() {
+      const email = ($("newEmail")?.value || "").trim();
+      const full_name = ($("newFullName")?.value || "").trim();
+      const phone = ($("newPhone")?.value || "").trim();
+      const address = ($("newAddress")?.value || "").trim();
+      return { ok: !!(email && full_name && phone && address), email, full_name, phone, address };
+    }
+
+    async function createCustomerSilent() {
+      const v = validateNewCustomerForm();
+      if (!v.ok) {
+        createClientStatus.textContent = "ERROR: Email, Full name, Phone, Address are required.";
+        return;
+      }
+
+      const payload = {
+        email: v.email,
+        full_name: v.full_name,
+        phone: v.phone,
+        address: v.address,
+        company_name: ($("newCompany")?.value || "").trim() || null,
+        city: ($("newCity")?.value || "").trim() || null,
+        province: ($("newProvince")?.value || "").trim() || null,
+      };
+
+      createClientConfirmBtn.disabled = true;
+      createClientStatus.textContent = "Creating customer…";
+
+      // NOTE: This requires an Edge Function you will create next step:
+      //   supabase functions name: "admin-create-customer-silent"
+      // It must use service role and return: { ok:true, customer_id:"uuid" }
+      const { data, error } = await supabase.functions.invoke("admin-create-customer-silent", { body: payload });
+
+      createClientConfirmBtn.disabled = false;
+
+      if (error || !data?.ok) {
+        createClientStatus.textContent = "ERROR: " + (data?.error || error?.message || "Failed");
+        return;
+      }
+
+      createClientStatus.textContent = "Customer created ✅ refreshing list…";
+      await loadClients();
+
+      // auto-select created customer
+      const newId = data.customer_id || data.id;
+      if (newId) {
+        clientSelect.value = newId;
+        onClientChange();
+      }
+
+      // close modal
+      createClientModal?.hide();
+    }
+
+    // ---------------------------
+    // Create Invoice (Unpaid)
+    // ---------------------------
+    async function createInvoiceUnpaid() {
+      if (!SELECTED_CLIENT) { orderStatus.textContent = "Select a customer."; return; }
+      if (!CART.size) { orderStatus.textContent = "Add items first."; return; }
+
+      createInvoiceBtn.disabled = true;
+      orderStatus.textContent = "Creating invoice (Unpaid)…";
+
+      const items = Array.from(CART.values()).map(({ product, qty }) => {
+        const unit = priceForQty(product, qty);
+        return {
+          product_id: product.publicId,
+          qty,
+          unit_price: unit
+        };
+      });
+
+      const del = Number(deliveryRule.value || 0) || 0;
+
+      // NOTE: This requires an Edge Function you will create later:
+      //   "admin-create-invoice-unpaid"
+      // It must:
+      //   - create invoice status=unpaid
+      //   - reduce stock (your existing rule)
+      //   - email invoice
+      //   - NOT sync QBO until status set to paid (existing trigger)
+      const { data, error } = await supabase.functions.invoke("admin-create-invoice-unpaid", {
+        body: {
+          customer_id: SELECTED_CLIENT.id,
+          delivery_fee: del,
+          items
+        }
+      });
+
+      createInvoiceBtn.disabled = false;
+
+      if (error || !data?.ok) {
+        orderStatus.textContent = "ERROR: " + (data?.error || error?.message || "Failed");
+        return;
+      }
+
+      // clear cart
+      CART.clear();
+      renderOrder();
+
+      orderStatus.textContent = `Invoice created ✅ ${data.invoice_number ? "(" + data.invoice_number + ")" : ""}`;
+    }
+
+    // ---------------------------
+    // Events
+    // ---------------------------
+    function onClientChange() {
+      const id = clientSelect.value || "";
+      SELECTED_CLIENT = CLIENTS.find(c => c.id === id) || null;
+
+      CART.clear();
+      renderClientInfo(SELECTED_CLIENT);
+
+      if (!SELECTED_CLIENT) {
+        orderStatus.textContent = "Select a customer to begin.";
+        createInvoiceBtn.disabled = true;
+        renderOrder();
+        return;
+      }
+
+      orderStatus.textContent = "Loading pricing…";
+      loadPlatinumOverrides(SELECTED_CLIENT.id).finally(() => {
+        orderStatus.textContent = "Customer selected. Add items.";
+        renderOrder();
+      });
+    }
+
+    refreshClientsBtn?.addEventListener("click", loadClients);
+    clientSelect?.addEventListener("change", onClientChange);
+
+    productSearch?.addEventListener("input", renderProductsGrid);
+    productCategory?.addEventListener("change", renderProductsGrid);
+
+    deliveryRule?.addEventListener("change", renderOrder);
+
+    openCreateClientBtn?.addEventListener("click", () => {
+      createClientStatus.textContent = "Fill required fields then create.";
+      createClientModal?.show();
+    });
+
+    createClientConfirmBtn?.addEventListener("click", createCustomerSilent);
+
+    createInvoiceBtn?.addEventListener("click", createInvoiceUnpaid);
+
+    // ---------------------------
+    // Init
+    // ---------------------------
+    (async () => {
+      const ok = await waitForAdminReady();
+      if (!ok) return;
+
+      await loadClients();
+      await loadProducts();
+      renderOrder();
+    })();
   </script>
 </body>
 </html>
