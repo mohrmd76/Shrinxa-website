@@ -175,7 +175,16 @@ const url = new URL("https://fgrjojxwevllnjdixiyd.functions.supabase.co/invoice-
 if (invoiceId) url.searchParams.set("id", invoiceId);
 if (!invoiceId && invoiceNumber) url.searchParams.set("inv", invoiceNumber);
 
-const res = await fetch(url.toString(), { method: "GET" });
+const SUPABASE_ANON_KEY = "sb_publishable_k5D9JKO5lMCHlju-WhlSAQ_XEiEruT_";
+
+const res = await fetch(url.toString(), {
+  method: "GET",
+  headers: {
+    "apikey": SUPABASE_ANON_KEY,
+    "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+    "Content-Type": "application/json",
+  },
+});
 
   const text = await res.text();
   let payload = null;
