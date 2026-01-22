@@ -181,6 +181,8 @@ const res = await fetch(url.toString(), {
   method: "GET",
   headers: {
     "Content-Type": "application/json",
+    "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+    "apikey": SUPABASE_ANON_KEY
   },
 });
 
