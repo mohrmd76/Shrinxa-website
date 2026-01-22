@@ -2023,22 +2023,20 @@ const DELIVERY_FEE = Number(DELIVERY_RULE.fee || 0);
 
 	// ===== STOCK CHECK (STRICT) =====
 
-// 1) Normalize product_id to UUID if it is currently a slug like "flexlite-18".
-//    We do this by looking up products.id using the cart row's product_name/name.
-//    Then we update cart_items.product_id to the UUID so it is fixed permanently.
+// Normalize product_id to UUID if needed (slug -> UUID) using cart item's name.
+// Then do a STRICT stock check (NO stock deduction here).
 const UUID_RE = /^[0-9a-fA-F-]{36}$/;
 
+// 1) Normalize product_id to UUID (fix bad old cart data)
 for (const r of (items || [])) {
   if (!r?.product_id) continue;
 
-  // If already UUID, nothing to do
   if (UUID_RE.test(String(r.product_id))) continue;
 
-  // Try to resolve by product_name/name (must exist in cart_items)
   const lookupName = String(r.product_name || r.name || "").trim();
   if (!lookupName) {
     if (checkoutMsg) checkoutMsg.textContent =
-      "Cart has an invalid product reference. Please remove the item and add it again.";
+      "We couldn’t validate this cart item. Please remove it and add it again.";
     return;
   }
 
@@ -2050,42 +2048,84 @@ for (const r of (items || [])) {
 
   if (prodErr || !prod?.id) {
     if (checkoutMsg) checkoutMsg.textContent =
-      "Cart item cannot be matched to a product: " + lookupName + ". Please remove and add again.";
+      "We couldn’t match this item to a product: " + lookupName + ". Please remove it and add it again.";
     return;
   }
 
-  // Persist the fix in cart_items
   await sb
     .from("cart_items")
     .update({ product_id: prod.id })
     .eq("id", r.id)
     .eq("cart_id", cartId);
 
-  // Update local object so reservation uses the UUID now
   r.product_id = prod.id;
 }
 
-// 2) Build reservation payload (now guaranteed UUIDs)
-const reserveItems = (items || []).map(r => ({
-  product_id: r.product_id,
-  qty: Number(r.qty || r.quantity || 0)
-}));
-
-// 3) Atomic reserve (blocks qty > stock, and blocks stock=0)
-const { error: stockErr } = await sb.rpc(
-  "reserve_stock_strict",
-  { items: reserveItems }
-);
-
-if (stockErr) {
-  console.error("reserve_stock_strict error:", stockErr);
+// 2) Fetch live stock for all products in cart (strict check, qty==stock is allowed)
+const ids = Array.from(new Set((items || []).map(r => String(r.product_id)).filter(id => UUID_RE.test(id))));
+if (!ids.length) {
   if (checkoutMsg) checkoutMsg.textContent =
-    "Stock check failed: " + (stockErr.message || "Not enough stock. Please reduce quantity.");
+    "Your cart has invalid items. Please remove them and add again.";
   return;
 }
 
+const { data: prods, error: prodsErr } = await sb
+  .from("products")
+  .select("id,name,stock_on_hand,is_active,deleted_at")
+  .in("id", ids);
+
+if (prodsErr || !prods) {
+  if (checkoutMsg) checkoutMsg.textContent =
+    "We couldn’t validate stock right now. Please try again.";
+  return;
+}
+
+const map = new Map(prods.map(p => [String(p.id), p]));
+
+// 3) Validate each item against stock_on_hand (NO UUID shown to customer)
+for (const r of (items || [])) {
+  const pid = String(r.product_id || "");
+  if (!UUID_RE.test(pid)) {
+    const nm = String(r.product_name || r.name || "Item");
+    if (checkoutMsg) checkoutMsg.textContent =
+      "Please remove and re-add this item: " + nm;
+    return;
+  }
+
+  const p = map.get(pid);
+  const nm = String(p?.name || r.product_name || r.name || "Item");
+  const q = Number(r.qty || r.quantity || 0);
+
+  if (!p || p.deleted_at) {
+    if (checkoutMsg) checkoutMsg.textContent =
+      "This item is no longer available: " + nm;
+    return;
+  }
+
+  if (!p.is_active) {
+    if (checkoutMsg) checkoutMsg.textContent =
+      "This item is currently unavailable: " + nm;
+    return;
+  }
+
+  const stock = Number(p.stock_on_hand || 0);
+
+  if (stock <= 0) {
+    if (checkoutMsg) checkoutMsg.textContent =
+      "Sold out: " + nm;
+    return;
+  }
+
+  // IMPORTANT: qty == stock is allowed. Only block when qty > stock.
+  if (q > stock) {
+    if (checkoutMsg) checkoutMsg.textContent =
+      "Insufficient stock for " + nm + ". Available: " + stock + ". Please reduce quantity.";
+    return;
+  }
+}
 
 // ===== END STOCK CHECK =====
+
 
 
 
