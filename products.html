@@ -1354,7 +1354,7 @@
 <main>
 <section class="page-section" data-page="products" id="products">
 <h2>Product catalogue</h2>
-<p class="section-lede">All items below come directly from the official Shrinxa catalogue. Use the filters to see only Stretch Wrap, Pre-Stretch, or Tape rolls. The cart is a simulator and applies 13% HST on the subtotal.</p><div class="pricing-note">Pricing tiers: retail applies from 1–49 boxes per item. Wholesale pricing starts from 50 boxes and above for a given product line. Orders under $300 are estimated at a $30 GTA delivery charge; orders $300+ qualify for free delivery.</div>
+<p class="section-lede">All items below come directly from the official Shrinxa catalogue. Use the filters to see only Stretch Wrap, Pre-Stretch, or Tape rolls. The cart is a simulator and applies 13% HST on the subtotal.</p><div class="pricing-note" id="pricingNote">Pricing tiers: retail applies from 1–49 boxes per item. Wholesale pricing starts from 50 boxes and above for a given product line. Orders under $300 are estimated at a $30 GTA delivery charge; orders $300+ qualify for free delivery.</div>
 <div class="filters-row">
 <button class="pill" data-filter="all">All products</button>
 <button class="pill" data-filter="Stretch Wrap">Stretch Wrap</button>
@@ -2002,6 +2002,56 @@ function applyTierPricesToUI() {
     } catch (_) {}
   }
 
+  // Default values for pricing note
+  const DEFAULT_WHOLESALE_QTY = 50;
+  const DEFAULT_DELIVERY_THRESHOLD = 300;
+  const DEFAULT_DELIVERY_FEE = 30;
+
+  async function updatePricingNote(sb, userId, wholesaleQtyFromProfile) {
+    // Use defaults initially
+    let wholesaleQty = DEFAULT_WHOLESALE_QTY;
+    let deliveryThreshold = DEFAULT_DELIVERY_THRESHOLD;
+    let deliveryFee = DEFAULT_DELIVERY_FEE;
+
+    try {
+      // Get wholesale qty from profile (already passed in)
+      if (wholesaleQtyFromProfile !== null && wholesaleQtyFromProfile !== undefined) {
+        wholesaleQty = Number(wholesaleQtyFromProfile) || DEFAULT_WHOLESALE_QTY;
+      }
+
+      // Fetch customer-specific delivery rule
+      if (userId) {
+        const { data: deliveryRule, error: drErr } = await sb
+          .from("delivery_rules")
+          .select("min_subtotal, fee")
+          .eq("customer_id", userId)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (!drErr && deliveryRule) {
+          deliveryThreshold = Number(deliveryRule.min_subtotal) || DEFAULT_DELIVERY_THRESHOLD;
+          deliveryFee = Number(deliveryRule.fee) || DEFAULT_DELIVERY_FEE;
+        }
+      }
+    } catch (_) {
+      // Use defaults on error
+    }
+
+    // Update the pricing note text
+    const pricingNoteEl = document.getElementById("pricingNote");
+    if (pricingNoteEl) {
+      const retailMax = wholesaleQty - 1;
+      pricingNoteEl.textContent = `Pricing tiers: retail applies from 1\u2013${retailMax} boxes per item. Wholesale pricing starts from ${wholesaleQty} boxes and above for a given product line. Orders under $${deliveryThreshold} are estimated at a $${deliveryFee} GTA delivery charge; orders $${deliveryThreshold}+ qualify for free delivery.`;
+    }
+
+    // Also update the product card meta text
+    document.querySelectorAll(".prod-meta span").forEach((span) => {
+      if (span.textContent.includes("tiered pricing")) {
+        span.textContent = `Cart uses tiered pricing (retail 1\u2013${wholesaleQty - 1} boxes, wholesale ${wholesaleQty}+)`;
+      }
+    });
+  }
+
   async function loadCustomerTier() {
     try {
       const sb = window._supabase || window.supabaseClient || window.SupabaseClient || window.supabase;
@@ -2024,7 +2074,7 @@ function applyTierPricesToUI() {
 
       const { data: prof, error: pErr } = await sb
         .from("profiles")
-        .select("tier")
+        .select("tier, wholesale_qty_threshold")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -2037,6 +2087,9 @@ function applyTierPricesToUI() {
       if (CURRENT_TIER === "platinum") {
         try { await loadPlatinumOverrides(user.id); } catch (_) {}
       }
+
+      // Fetch customer-specific delivery rules and wholesale qty
+      await updatePricingNote(sb, user.id, prof?.wholesale_qty_threshold);
 
       applyTierPricesToUI();
     } catch (_) {
