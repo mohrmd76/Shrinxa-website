@@ -1,5 +1,5 @@
 // invoice.js (Supabase + render) — SAFE VERSION (won't crash if an element is missing)
-import { supabase } from "./supabaseClient.js";
+
 
 const $ = (id) => document.getElementById(id);
 
@@ -175,16 +175,7 @@ const url = new URL("https://fgrjojxwevllnjdixiyd.functions.supabase.co/invoice-
 if (invoiceId) url.searchParams.set("id", invoiceId);
 if (!invoiceId && invoiceNumber) url.searchParams.set("inv", invoiceNumber);
 
-const SUPABASE_ANON_KEY = "sb_publishable_k5D9JKO5lMCHlju-WhlSAQ_XEiEruT_";
-
-const res = await fetch(url.toString(), {
-  method: "GET",
-  headers: {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-    "apikey": SUPABASE_ANON_KEY
-  },
-});
+const res = await fetch(url.toString());
 
 
   const text = await res.text();
