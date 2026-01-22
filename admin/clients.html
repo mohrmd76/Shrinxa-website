@@ -9,132 +9,575 @@
   <link rel="stylesheet" href="../admin.css" />
 
   <style>
-    body { background:#f6f7fb; }
+    :root {
+      --primary: #4f46e5;
+      --primary-light: #6366f1;
+      --primary-dark: #4338ca;
+      --success: #10b981;
+      --success-light: #d1fae5;
+      --warning: #f59e0b;
+      --warning-light: #fef3c7;
+      --danger: #ef4444;
+      --danger-light: #fee2e2;
+      --info: #0ea5e9;
+      --info-light: #e0f2fe;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    * { box-sizing: border-box; }
+
+    body { 
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+      min-height: 100vh;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
     header { background:#111; }
     header a { color:#fff; text-decoration:none; opacity:.9; }
     header a:hover { opacity:1; text-decoration:underline; }
     .nav-links { gap:14px; flex-wrap:wrap; }
     .hidden { display: none !important; }
 
-    /* --- PAGE LAYOUT (matches your mock) --- */
-    .page-wrap { padding: 18px 18px 28px; }
-    .page-title { font-size: 28px; font-weight: 700; margin: 6px 0 14px; }
+    /* --- PAGE LAYOUT --- */
+    .page-wrap { 
+      padding: 24px 28px 40px; 
+      max-width: 1600px;
+      margin: 0 auto;
+    }
 
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .page-title { 
+      font-size: 32px; 
+      font-weight: 800; 
+      margin: 0;
+      background: linear-gradient(135deg, var(--gray-800), var(--primary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .page-subtitle {
+      font-size: 14px;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+
+    .page-stats {
+      display: flex;
+      gap: 16px;
+    }
+
+    .stat-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--gray-200);
+    }
+
+    .stat-badge .icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .stat-badge .icon.customers { background: var(--info-light); }
+    .stat-badge .icon.products { background: var(--success-light); }
+    .stat-badge .icon.orders { background: var(--warning-light); }
+
+    .stat-badge .value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--gray-800);
+    }
+
+    .stat-badge .label {
+      font-size: 12px;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* --- PANELS --- */
     .panel {
       background: #ffffff;
-      border: 1px solid #d9dde6;
-      border-radius: 12px;
-      box-shadow: 0 6px 18px rgba(20,32,60,0.06);
+      border: 1px solid var(--gray-200);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
       overflow: hidden;
+      transition: box-shadow 0.2s ease;
     }
+
+    .panel:hover {
+      box-shadow: var(--shadow-md);
+    }
+
     .panel-hd {
-      padding: 12px 14px;
-      border-bottom: 1px solid #e5e8ef;
-      background: #f3f4f7;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+      background: linear-gradient(135deg, var(--gray-50), white);
       font-weight: 700;
+      font-size: 15px;
+      color: var(--gray-800);
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
-    .panel-bd { padding: 14px; }
 
-    .muted { color:#6b7280; }
+    .panel-hd .icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .panel-hd .icon.customer { background: var(--info-light); color: var(--info); }
+    .panel-hd .icon.products { background: var(--success-light); color: var(--success); }
+    .panel-hd .icon.order { background: var(--primary); color: white; }
+
+    .panel-bd { padding: 20px; }
+
+    .muted { color: var(--gray-500); }
     .mini { font-size: 12px; }
-    .input-compact { height: 38px; }
+    .input-compact { height: 42px; border-radius: 10px; }
 
+    /* --- GRID LAYOUT --- */
     .order-grid {
       display: grid;
-      grid-template-columns: 1.05fr 0.95fr;
-      gap: 14px;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 20px;
       align-items: start;
     }
 
     .products-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
+      gap: 12px;
+      max-height: 420px;
+      overflow-y: auto;
+      padding-right: 8px;
     }
 
+    .products-grid::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .products-grid::-webkit-scrollbar-track {
+      background: var(--gray-100);
+      border-radius: 3px;
+    }
+
+    .products-grid::-webkit-scrollbar-thumb {
+      background: var(--gray-300);
+      border-radius: 3px;
+    }
+
+    /* --- PRODUCT CARDS --- */
     .prod-card {
-      border: 1px solid #d9dde6;
-      border-radius: 12px;
-      padding: 12px;
-      background: #fff;
+      border: 1px solid var(--gray-200);
+      border-radius: 14px;
+      padding: 14px;
+      background: linear-gradient(135deg, white, var(--gray-50));
       display: grid;
       grid-template-columns: 1fr auto;
-      gap: 10px;
+      gap: 12px;
       align-items: center;
-      min-height: 92px;
+      min-height: 100px;
+      transition: all 0.2s ease;
+      cursor: pointer;
     }
 
+    .prod-card:hover {
+      border-color: var(--primary-light);
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .prod-card .prod-name {
+      font-weight: 600;
+      color: var(--gray-800);
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .prod-card .prod-price {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    /* --- BADGES --- */
     .badge-stock {
-      font-size: 12px;
+      font-size: 11px;
       padding: 4px 10px;
       border-radius: 999px;
-      background: #e8f5ff;
-      border: 1px solid #bfe6ff;
-      color: #0b5cab;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .badge-stock::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .badge-stock.in-stock {
+      background: var(--success-light);
+      color: #059669;
+    }
+
+    .badge-stock.badge-low {
+      background: var(--warning-light);
+      color: #d97706;
+    }
+
+    .badge-stock.badge-out {
+      background: var(--danger-light);
+      color: #dc2626;
+    }
+
+    /* --- BUTTONS --- */
+    .btn-add-prod {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 2px solid var(--primary);
+      background: white;
+      color: var(--primary);
+      font-size: 20px;
       font-weight: 700;
-      display: inline-block;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
     }
-    .badge-low {
-      background: #fff4db;
-      border-color: #ffdca0;
-      color: #8a5a00;
+
+    .btn-add-prod:hover:not(:disabled) {
+      background: var(--primary);
+      color: white;
+      transform: scale(1.05);
     }
-    .badge-out {
-      background:#ffe7ea;
-      border-color:#ffb8c2;
-      color:#a1001a;
+
+    .btn-add-prod:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
     }
 
     .qty-btn {
-      width: 38px;
-      height: 34px;
-      border-radius: 8px;
-      border: 1px solid #d0d5df;
-      background: #f7f8fb;
-      font-weight: 800;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid var(--gray-300);
+      background: white;
+      font-weight: 700;
+      font-size: 16px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      user-select: none;
+      transition: all 0.15s ease;
+      color: var(--gray-700);
     }
+
+    .qty-btn:hover:not(:disabled) {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+
     .qty-btn:disabled {
-      opacity: .5;
+      opacity: .4;
       cursor: not-allowed;
     }
 
     .qty-box {
-      width: 54px;
-      height: 34px;
-      border-radius: 8px;
-      border: 1px solid #d0d5df;
-      background: #fff;
+      width: 56px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid var(--gray-300);
+      background: var(--gray-50);
       text-align: center;
       font-weight: 700;
+      font-size: 14px;
     }
 
-    .order-table th, .order-table td { vertical-align: middle; }
-    .order-table th { font-size: 13px; color:#4b5563; }
+    /* --- CLIENT INFO CARD --- */
+    .client-info-card {
+      background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+      border: 1px solid #bae6fd;
+      border-radius: 14px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+
+    .client-info-card .info-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      font-size: 13px;
+    }
+
+    .client-info-card .info-label {
+      font-weight: 600;
+      color: var(--gray-600);
+      min-width: 80px;
+    }
+
+    .client-info-card .info-value {
+      color: var(--gray-800);
+    }
+
+    .client-info-card .tier-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .tier-badge.standard { background: var(--gray-200); color: var(--gray-700); }
+    .tier-badge.gold { background: #fef3c7; color: #b45309; }
+    .tier-badge.platinum { background: linear-gradient(135deg, #e0e7ff, #c7d2fe); color: #4338ca; }
+
+    /* --- DELIVERY RULE DISPLAY --- */
+    .delivery-rule-display {
+      background: linear-gradient(135deg, #fefce8, #fef9c3);
+      border: 1px solid #fde047;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-top: 16px;
+    }
+
+    .delivery-rule-display .rule-title {
+      font-weight: 700;
+      font-size: 13px;
+      color: #a16207;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .delivery-rule-display .rule-detail {
+      font-size: 13px;
+      color: var(--gray-700);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 0;
+    }
+
+    .delivery-rule-display .rule-value {
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+
+    /* --- ORDER TABLE --- */
+    .order-table {
+      margin-bottom: 0;
+    }
+
+    .order-table th {
+      font-size: 12px;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+      padding: 12px 8px;
+      border-bottom: 2px solid var(--gray-200);
+    }
+
+    .order-table td {
+      vertical-align: middle;
+      padding: 14px 8px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .order-table tbody tr:hover {
+      background: var(--gray-50);
+    }
+
+    /* --- TOTALS SECTION --- */
+    .totals-section {
+      background: linear-gradient(135deg, var(--gray-50), white);
+      border-radius: 14px;
+      padding: 16px;
+      margin-top: 16px;
+      border: 1px solid var(--gray-200);
+    }
 
     .totals-row {
-      display:flex;
+      display: flex;
       justify-content: space-between;
-      padding: 6px 0;
-      border-top: 1px solid #e5e8ef;
-      margin-top: 8px;
+      padding: 10px 0;
+      font-size: 14px;
+      color: var(--gray-600);
     }
-    .totals-row:first-of-type { border-top: none; margin-top: 0; }
-    .totals-strong { font-size: 18px; font-weight: 800; }
 
-    @media (max-width: 980px) {
+    .totals-row:not(:last-child) {
+      border-bottom: 1px dashed var(--gray-200);
+    }
+
+    .totals-row.total {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--gray-900);
+      border-bottom: none;
+      padding-top: 14px;
+      margin-top: 6px;
+      border-top: 2px solid var(--gray-300);
+    }
+
+    .totals-row .label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* --- CREATE INVOICE BUTTON --- */
+    .btn-create-invoice {
+      height: 54px;
+      font-weight: 700;
+      font-size: 16px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--success), #059669);
+      border: none;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-create-invoice:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+    }
+
+    .btn-create-invoice:disabled {
+      background: var(--gray-300);
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    /* --- STATUS MESSAGES --- */
+    .status-msg {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-top: 12px;
+    }
+
+    .status-msg.info {
+      background: var(--info-light);
+      color: #0369a1;
+    }
+
+    .status-msg.success {
+      background: var(--success-light);
+      color: #059669;
+    }
+
+    .status-msg.error {
+      background: var(--danger-light);
+      color: #dc2626;
+    }
+
+    /* --- SEARCH & FILTER --- */
+    .search-filter-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .search-input {
+      flex: 1;
+      min-width: 200px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid var(--gray-300);
+      padding: 0 16px 0 44px;
+      font-size: 14px;
+      background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'/%3E%3C/svg%3E") 14px center / 20px no-repeat;
+      transition: all 0.2s ease;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    .filter-select {
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid var(--gray-300);
+      padding: 0 36px 0 14px;
+      font-size: 14px;
+      background: white;
+      min-width: 180px;
+    }
+
+    /* --- RESPONSIVE --- */
+    @media (max-width: 1100px) {
       .order-grid { grid-template-columns: 1fr; }
-      .products-grid { grid-template-columns: 1fr; }
+      .products-grid { grid-template-columns: 1fr; max-height: 300px; }
+    }
+
+    @media (max-width: 768px) {
+      .page-wrap { padding: 16px; }
+      .page-header { flex-direction: column; align-items: flex-start; }
+      .page-stats { flex-wrap: wrap; }
     }
   </style>
 </head>
 
 <body>
-  <!-- Admin Auth Gate (same pattern as inventory.html) -->
+  <!-- Admin Auth Gate -->
   <div id="loading">Checking access...</div>
   <div id="denied" class="hidden">Access denied</div>
 
@@ -143,7 +586,6 @@
       <div class="container-fluid px-4 d-flex align-items-center gap-3">
         <div class="text-white fw-bold">Shrinxa Admin</div>
 
-        <!-- IMPORTANT: Clients link is LAST -->
         <div class="d-flex nav-links">
           <a href="./dashboard.html">Dashboard</a>
           <a href="./orders.html">Orders</a>
@@ -164,50 +606,111 @@
     </header>
 
     <div class="page-wrap">
-      <div class="page-title">Clients</div>
+      <!-- Page Header -->
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Clients</h1>
+          <p class="page-subtitle">Create orders and invoices for customers</p>
+        </div>
+        <div class="page-stats">
+          <div class="stat-badge">
+            <div class="icon customers">👥</div>
+            <div>
+              <div class="value" id="statCustomers">0</div>
+              <div class="label">Customers</div>
+            </div>
+          </div>
+          <div class="stat-badge">
+            <div class="icon products">📦</div>
+            <div>
+              <div class="value" id="statProducts">0</div>
+              <div class="label">Products</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div class="order-grid">
         <!-- LEFT COLUMN -->
-        <div class="d-grid gap-3">
-          <!-- Customer panel -->
+        <div class="d-grid gap-4">
+          <!-- Customer Panel -->
           <div class="panel">
-            <div class="panel-hd">Customer</div>
+            <div class="panel-hd">
+              <div class="icon customer">👤</div>
+              Customer Selection
+            </div>
             <div class="panel-bd">
-              <div class="d-flex gap-2 align-items-center flex-wrap">
-                <select id="clientSelect" class="form-select input-compact" style="min-width: 360px;">
+              <div class="d-flex gap-3 align-items-center flex-wrap">
+                <select id="clientSelect" class="form-select input-compact" style="min-width: 380px; flex: 1;">
                   <option value="">Select a customer…</option>
                 </select>
-                <button id="refreshClientsBtn" class="btn btn-primary">Refresh List</button>
-              </div>
-
-              <div class="mt-3 d-flex gap-2 flex-wrap">
-                <button id="openCreateClientBtn" class="btn btn-success">
-                  + Create New Customer
+                <button id="refreshClientsBtn" class="btn btn-primary" style="height: 42px; border-radius: 10px;">
+                  🔄 Refresh
                 </button>
-                <span class="mini muted align-self-center">
-                  (Silent creation is handled by an Edge Function; password is never set here.)
-                </span>
+                <button id="openCreateClientBtn" class="btn btn-success" style="height: 42px; border-radius: 10px;">
+                  ➕ New Customer
+                </button>
               </div>
 
-              <div id="clientInfo" class="mt-3 p-3 rounded-3" style="background:#eef3f7; border:1px solid #d7dee8;">
-                <div class="fw-bold">Customer ID: <span id="clientIdText" class="muted">—</span></div>
-                <div class="muted mini">Email: <span id="clientEmailText">—</span></div>
-                <div class="muted mini">Phone: <span id="clientPhoneText">—</span></div>
-                <div class="muted mini">Address: <span id="clientAddressText">—</span></div>
-                <div class="muted mini">Tier: <span id="clientTierText">—</span></div>
+              <div id="clientInfo" class="client-info-card" style="display: none;">
+                <div class="info-row">
+                  <span class="info-label">Name:</span>
+                  <span class="info-value" id="clientNameText">—</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">Email:</span>
+                  <span class="info-value" id="clientEmailText">—</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">Phone:</span>
+                  <span class="info-value" id="clientPhoneText">—</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">Address:</span>
+                  <span class="info-value" id="clientAddressText">—</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">Tier:</span>
+                  <span id="clientTierText" class="tier-badge standard">Standard</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">Wholesale:</span>
+                  <span class="info-value" id="clientWholesaleText">50+ boxes</span>
+                </div>
               </div>
 
-              <div id="clientStatus" class="mt-2 mini muted">Ready.</div>
+              <!-- Delivery Rule Display -->
+              <div id="deliveryRuleDisplay" class="delivery-rule-display" style="display: none;">
+                <div class="rule-title">🚚 Delivery Rule</div>
+                <div class="rule-detail">
+                  <span>Orders under</span>
+                  <span class="rule-value" id="ruleThresholdText">$300</span>
+                  <span>→ Delivery fee:</span>
+                  <span class="rule-value" id="ruleFeeText">$30</span>
+                </div>
+                <div class="rule-detail">
+                  <span>Orders</span>
+                  <span class="rule-value" id="ruleFreeText">$300+</span>
+                  <span>→ Free delivery</span>
+                </div>
+              </div>
+
+              <div id="clientStatus" class="status-msg info">
+                <span>ℹ️</span> Ready to select a customer.
+              </div>
             </div>
           </div>
 
-          <!-- Products panel -->
+          <!-- Products Panel -->
           <div class="panel">
-            <div class="panel-hd">Select Products</div>
+            <div class="panel-hd">
+              <div class="icon products">📦</div>
+              Select Products
+            </div>
             <div class="panel-bd">
-              <div class="d-flex gap-2 flex-wrap">
-                <input id="productSearch" class="form-control input-compact" placeholder="Search by name…" style="min-width: 280px;">
-                <select id="productCategory" class="form-select input-compact" style="max-width: 220px;">
+              <div class="search-filter-row">
+                <input id="productSearch" class="search-input" placeholder="Search products…">
+                <select id="productCategory" class="filter-select">
                   <option value="all">All Categories</option>
                 </select>
               </div>
@@ -216,48 +719,60 @@
                 <!-- Loaded from DB -->
               </div>
 
-              <div id="productsStatus" class="mt-2 mini muted">Loading products…</div>
+              <div id="productsStatus" class="status-msg info mt-3">
+                <span>⏳</span> Loading products…
+              </div>
             </div>
           </div>
         </div>
 
         <!-- RIGHT COLUMN -->
-        <div class="panel">
-          <div class="panel-hd">Order Builder</div>
+        <div class="panel" style="position: sticky; top: 20px;">
+          <div class="panel-hd">
+            <div class="icon order">🛒</div>
+            Order Builder
+          </div>
           <div class="panel-bd">
-            <table class="table table-sm order-table">
+            <table class="table order-table">
               <thead>
                 <tr>
-                  <th style="width: 44%;">Product</th>
-                  <th style="width: 26%;">Quantity</th>
-                  <th style="width: 15%;">Price</th>
-                  <th style="width: 15%;">Total</th>
+                  <th style="width: 40%;">Product</th>
+                  <th style="width: 28%;">Quantity</th>
+                  <th style="width: 16%;">Price</th>
+                  <th style="width: 16%;">Total</th>
                 </tr>
               </thead>
               <tbody id="orderLines">
-                <tr><td colspan="4" class="muted mini">No items selected.</td></tr>
+                <tr><td colspan="4" class="muted text-center py-4">No items selected yet</td></tr>
               </tbody>
             </table>
 
-            <div class="mt-2">
-              <select id="deliveryRule" class="form-select input-compact" style="max-width: 260px;">
-                <option value="0">Delivery: $0</option>
-                <option value="30">Delivery: $30</option>
-              </select>
+            <div class="totals-section">
+              <div class="totals-row">
+                <div class="label">📦 Subtotal</div>
+                <div id="subTotalText">$0.00</div>
+              </div>
+              <div class="totals-row">
+                <div class="label">🚚 Delivery</div>
+                <div id="deliveryText">$0.00</div>
+              </div>
+              <div class="totals-row">
+                <div class="label">🧾 Tax (13% HST)</div>
+                <div id="taxText">$0.00</div>
+              </div>
+              <div class="totals-row total">
+                <div class="label">💰 Total</div>
+                <div id="totalText">$0.00</div>
+              </div>
             </div>
 
-            <div class="mt-3">
-              <div class="totals-row"><div>Subtotal:</div><div id="subTotalText">$0.00</div></div>
-              <div class="totals-row"><div>Delivery:</div><div id="deliveryText">$0.00</div></div>
-              <div class="totals-row"><div>Tax (13% HST):</div><div id="taxText">$0.00</div></div>
-              <div class="totals-row"><div class="totals-strong">Total:</div><div class="totals-strong" id="totalText">$0.00</div></div>
-            </div>
-
-            <button id="createInvoiceBtn" class="btn btn-success w-100 mt-3" style="height: 46px; font-weight: 800;" disabled>
-              Create Invoice (Unpaid)
+            <button id="createInvoiceBtn" class="btn btn-create-invoice w-100 mt-4" disabled>
+              <span>📄</span> Create Invoice (Unpaid)
             </button>
 
-            <div id="orderStatus" class="mt-2 mini muted">Select a customer to begin.</div>
+            <div id="orderStatus" class="status-msg info">
+              <span>👆</span> Select a customer to begin.
+            </div>
           </div>
         </div>
       </div>
@@ -267,124 +782,87 @@
   <!-- MODALS -->
   <div class="modal fade" id="createClientModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Create New Customer (Silent)</h5>
+      <div class="modal-content" style="border-radius: 16px; overflow: hidden;">
+        <div class="modal-header" style="background: linear-gradient(135deg, var(--gray-50), white); border-bottom: 1px solid var(--gray-200);">
+          <h5 class="modal-title fw-bold">➕ Create New Customer</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body" style="padding: 24px;">
           <div class="row g-3">
             <div class="col-md-6">
-              <label class="form-label">Email (required)</label>
-              <input id="newEmail" class="form-control" placeholder="customer@email.com" />
+              <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+              <input id="newEmail" class="form-control input-compact" placeholder="customer@email.com" />
             </div>
             <div class="col-md-6">
-              <label class="form-label">Full name (required)</label>
-              <input id="newFullName" class="form-control" placeholder="Full name" />
+              <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+              <input id="newFullName" class="form-control input-compact" placeholder="Full name" />
             </div>
             <div class="col-md-6">
-              <label class="form-label">Phone (required)</label>
-              <input id="newPhone" class="form-control" placeholder="Phone" />
+              <label class="form-label fw-semibold">Phone <span class="text-danger">*</span></label>
+              <input id="newPhone" class="form-control input-compact" placeholder="Phone number" />
             </div>
             <div class="col-md-6">
-              <label class="form-label">Address (required)</label>
-              <input id="newAddress" class="form-control" placeholder="Street address" />
+              <label class="form-label fw-semibold">Company</label>
+              <input id="newCompany" class="form-control input-compact" placeholder="Company name (optional)" />
             </div>
-            <div class="col-md-4">
-              <label class="form-label">Company (optional)</label>
-              <input id="newCompany" class="form-control" placeholder="Company name" />
+            <div class="col-12">
+              <label class="form-label fw-semibold">Address <span class="text-danger">*</span></label>
+              <input id="newAddress" class="form-control input-compact" placeholder="Street address" />
             </div>
-            <div class="col-md-4">
-              <label class="form-label">City (optional)</label>
-              <input id="newCity" class="form-control" placeholder="City" />
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">City</label>
+              <input id="newCity" class="form-control input-compact" placeholder="City" />
             </div>
-            <div class="col-md-4">
-              <label class="form-label">Province (optional)</label>
-              <input id="newProvince" class="form-control" placeholder="Province" />
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Province</label>
+              <input id="newProvince" class="form-control input-compact" placeholder="Province" />
             </div>
           </div>
-          <div id="createClientStatus" class="mt-3 mini muted">Fill required fields then create.</div>
+          <div id="createClientStatus" class="status-msg info mt-3">
+            <span>ℹ️</span> Fill required fields then create.
+          </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-success" id="createClientConfirmBtn">Create Customer</button>
+        <div class="modal-footer" style="background: var(--gray-50); border-top: 1px solid var(--gray-200);">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" style="border-radius: 10px;">Cancel</button>
+          <button id="createClientConfirmBtn" type="button" class="btn btn-success" style="border-radius: 10px;">
+            ✅ Create Customer
+          </button>
         </div>
       </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../supabaseClient.js"></script>
+  <script src="../admin-auth.js"></script>
 
-  <script type="module">
-    import "./admin-auth.js";
-    import { supabase } from "../supabaseClient.js";
+  <script>
+    const $ = id => document.getElementById(id);
 
-    // ---------------------------
-    // Helpers
-    // ---------------------------
-    const $ = (id) => document.getElementById(id);
-
-    function money(n) {
-      const v = Number(n || 0);
-      return new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD" }).format(v);
-    }
-
-    function escapeHtml(s) {
-      return String(s ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    function pickField(obj, keys, fallback = null) {
-      for (const k of keys) {
-        if (obj && Object.prototype.hasOwnProperty.call(obj, k) && obj[k] !== null && obj[k] !== undefined) return obj[k];
-      }
-      return fallback;
-    }
-
-    function normTier(t) {
-      const v = String(t ?? "standard").toLowerCase();
-      if (v.includes("platinum")) return "platinum";
-      if (v.includes("gold")) return "gold";
-      return "standard";
-    }
-
-    // ---------------------------
-    // State
-    // ---------------------------
-    let CLIENTS = [];
-    let PRODUCTS = [];
-    let SELECTED_CLIENT = null;
-
-    // product_id -> { price, wholesale_price } (for platinum overrides)
-    const PLATINUM_OVERRIDES = new Map();
-
-    // cart: productPublicId -> { product, qty }
-    const CART = new Map();
-
-    // ---------------------------
-    // Elements
-    // ---------------------------
+    // DOM refs
     const clientSelect = $("clientSelect");
     const refreshClientsBtn = $("refreshClientsBtn");
-    const clientStatus = $("clientStatus");
-
-    const clientIdText = $("clientIdText");
+    const openCreateClientBtn = $("openCreateClientBtn");
+    const clientInfo = $("clientInfo");
+    const clientNameText = $("clientNameText");
     const clientEmailText = $("clientEmailText");
     const clientPhoneText = $("clientPhoneText");
     const clientAddressText = $("clientAddressText");
     const clientTierText = $("clientTierText");
+    const clientWholesaleText = $("clientWholesaleText");
+    const clientStatus = $("clientStatus");
 
-    const productsGrid = $("productsGrid");
-    const productsStatus = $("productsStatus");
+    const deliveryRuleDisplay = $("deliveryRuleDisplay");
+    const ruleThresholdText = $("ruleThresholdText");
+    const ruleFeeText = $("ruleFeeText");
+    const ruleFreeText = $("ruleFreeText");
+
     const productSearch = $("productSearch");
     const productCategory = $("productCategory");
+    const productsGrid = $("productsGrid");
+    const productsStatus = $("productsStatus");
 
     const orderLines = $("orderLines");
-    const deliveryRule = $("deliveryRule");
     const subTotalText = $("subTotalText");
     const deliveryText = $("deliveryText");
     const taxText = $("taxText");
@@ -392,15 +870,33 @@
     const createInvoiceBtn = $("createInvoiceBtn");
     const orderStatus = $("orderStatus");
 
-    // modal
-    const openCreateClientBtn = $("openCreateClientBtn");
     const createClientConfirmBtn = $("createClientConfirmBtn");
     const createClientStatus = $("createClientStatus");
-    const modalEl = document.getElementById("createClientModal");
-    const createClientModal = modalEl ? new bootstrap.Modal(modalEl) : null;
+
+    const statCustomers = $("statCustomers");
+    const statProducts = $("statProducts");
+
+    let createClientModal = null;
+
+    // State
+    let CLIENTS = [];
+    let PRODUCTS = [];
+    let SELECTED_CLIENT = null;
+    let CART = new Map();
+    let PLATINUM_OVERRIDES = new Map();
+    
+    // Delivery Rules State
+    let DEFAULT_DELIVERY_RULE = { min_subtotal: 300, fee: 30 };
+    let CUSTOMER_DELIVERY_RULE = null;
+
+    // Utils
+    const escapeHtml = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const money = n => "$" + Number(n || 0).toFixed(2);
+    const normTier = t => String(t || "standard").toLowerCase().trim();
+    const pickField = (obj, keys, def) => { for (const k of keys) if (obj?.[k] !== undefined && obj[k] !== null) return obj[k]; return def; };
 
     // ---------------------------
-    // Admin gating: wait until #admin is visible
+    // Admin gating
     // ---------------------------
     async function waitForAdminReady() {
       for (let i = 0; i < 50; i++) {
@@ -412,12 +908,93 @@
     }
 
     // ---------------------------
+    // Load Default Delivery Rule
+    // ---------------------------
+    async function loadDefaultDeliveryRule() {
+      try {
+        const { data, error } = await supabase
+          .from("delivery_rules")
+          .select("min_subtotal, fee")
+          .is("customer_id", null)
+          .eq("is_active", true)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (!error && data && data.length > 0) {
+          DEFAULT_DELIVERY_RULE = {
+            min_subtotal: Number(data[0].min_subtotal) || 300,
+            fee: Number(data[0].fee) || 30
+          };
+        }
+      } catch (e) {
+        console.error("Error loading default delivery rule:", e);
+      }
+    }
+
+    // ---------------------------
+    // Load Customer Delivery Rule
+    // ---------------------------
+    async function loadCustomerDeliveryRule(customerId) {
+      CUSTOMER_DELIVERY_RULE = null;
+      
+      if (!customerId) return;
+
+      try {
+        const { data, error } = await supabase
+          .from("delivery_rules")
+          .select("min_subtotal, fee")
+          .eq("customer_id", customerId)
+          .eq("is_active", true)
+          .limit(1);
+
+        if (!error && data && data.length > 0) {
+          CUSTOMER_DELIVERY_RULE = {
+            min_subtotal: Number(data[0].min_subtotal),
+            fee: Number(data[0].fee)
+          };
+        }
+      } catch (e) {
+        console.error("Error loading customer delivery rule:", e);
+      }
+    }
+
+    // ---------------------------
+    // Get Active Delivery Rule
+    // ---------------------------
+    function getActiveDeliveryRule() {
+      // Customer-specific rule takes priority, otherwise use default
+      return CUSTOMER_DELIVERY_RULE || DEFAULT_DELIVERY_RULE;
+    }
+
+    // ---------------------------
+    // Update Delivery Rule Display
+    // ---------------------------
+    function updateDeliveryRuleDisplay() {
+      const rule = getActiveDeliveryRule();
+      
+      ruleThresholdText.textContent = money(rule.min_subtotal);
+      ruleFeeText.textContent = money(rule.fee);
+      ruleFreeText.textContent = money(rule.min_subtotal) + "+";
+      
+      deliveryRuleDisplay.style.display = SELECTED_CLIENT ? "block" : "none";
+    }
+
+    // ---------------------------
+    // Calculate Delivery Fee
+    // ---------------------------
+    function calculateDeliveryFee(subtotal) {
+      const rule = getActiveDeliveryRule();
+      return subtotal < rule.min_subtotal ? rule.fee : 0;
+    }
+
+    // ---------------------------
     // Load Clients
     // ---------------------------
     async function loadClients() {
       if (!clientSelect) return;
 
-      clientStatus.textContent = "Loading customers…";
+      clientStatus.innerHTML = `<span>⏳</span> Loading customers…`;
+      clientStatus.className = "status-msg info";
       clientSelect.innerHTML = `<option value="">Select a customer…</option>`;
 
       const { data, error } = await supabase
@@ -427,7 +1004,8 @@
         .order("full_name", { ascending: true });
 
       if (error) {
-        clientStatus.textContent = "ERROR loading customers: " + error.message;
+        clientStatus.innerHTML = `<span>❌</span> ERROR: ${error.message}`;
+        clientStatus.className = "status-msg error";
         CLIENTS = [];
         return;
       }
@@ -444,20 +1022,20 @@
         clientSelect.appendChild(opt);
       }
 
-      clientStatus.textContent = `Loaded ${CLIENTS.length} customers.`;
+      statCustomers.textContent = CLIENTS.length;
+      clientStatus.innerHTML = `<span>✅</span> Loaded ${CLIENTS.length} customers.`;
+      clientStatus.className = "status-msg success";
     }
 
     function renderClientInfo(client) {
       if (!client) {
-        clientIdText.textContent = "—";
-        clientEmailText.textContent = "—";
-        clientPhoneText.textContent = "—";
-        clientAddressText.textContent = "—";
-        clientTierText.textContent = "—";
+        clientInfo.style.display = "none";
+        deliveryRuleDisplay.style.display = "none";
         return;
       }
 
-      clientIdText.textContent = client.id || "—";
+      clientInfo.style.display = "block";
+      clientNameText.textContent = client.full_name || "—";
       clientEmailText.textContent = client.email || "—";
       clientPhoneText.textContent = client.phone || "—";
 
@@ -466,9 +1044,16 @@
         client.city || "",
         client.province || ""
       ].filter(Boolean);
-      clientAddressText.textContent = addrParts.length ? addrParts.join(", ") : (client.address || "—");
+      clientAddressText.textContent = addrParts.length ? addrParts.join(", ") : "—";
 
-      clientTierText.textContent = normTier(client.tier || "standard");
+      const tier = normTier(client.tier || "standard");
+      clientTierText.textContent = tier.charAt(0).toUpperCase() + tier.slice(1);
+      clientTierText.className = `tier-badge ${tier}`;
+
+      const wholesaleQty = Number(client.wholesale_qty_threshold) || 50;
+      clientWholesaleText.textContent = `${wholesaleQty}+ boxes`;
+
+      updateDeliveryRuleDisplay();
     }
 
     // ---------------------------
@@ -484,7 +1069,8 @@
     }
 
     async function loadProducts() {
-      productsStatus.textContent = "Loading products…";
+      productsStatus.innerHTML = `<span>⏳</span> Loading products…`;
+      productsStatus.className = "status-msg info";
       productsGrid.innerHTML = "";
 
       const { data, error } = await supabase
@@ -493,13 +1079,13 @@
         .order("sort_order", { ascending: true });
 
       if (error) {
-        productsStatus.textContent = "ERROR loading products: " + error.message;
+        productsStatus.innerHTML = `<span>❌</span> ERROR: ${error.message}`;
+        productsStatus.className = "status-msg error";
         PRODUCTS = [];
         return;
       }
 
       const rows = Array.isArray(data) ? data : [];
-      // filter active if flag exists
       PRODUCTS = rows.filter(r => {
         const v = (r?.is_active ?? r?.active);
         if (v === null || v === undefined) return true;
@@ -512,7 +1098,9 @@
       const sortedCats = Array.from(cats).sort((a,b)=>a.localeCompare(b));
       productCategory.innerHTML = `<option value="all">All Categories</option>` + sortedCats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
 
-      productsStatus.textContent = `Loaded ${PRODUCTS.length} products.`;
+      statProducts.textContent = PRODUCTS.length;
+      productsStatus.innerHTML = `<span>✅</span> Loaded ${PRODUCTS.length} products.`;
+      productsStatus.className = "status-msg success";
       renderProductsGrid();
     }
 
@@ -538,7 +1126,6 @@
 
     function tierForPricing() {
       const t = normTier(SELECTED_CLIENT?.tier || "standard");
-      // platinum defaults to gold unless overridden
       return (t === "gold" || t === "platinum") ? "gold" : "standard";
     }
 
@@ -584,20 +1171,19 @@
       productsGrid.innerHTML = filtered.map(vm => {
         const out = vm.stock <= 0;
         const low = vm.stock > 0 && vm.stock <= 5;
-        const badgeClass = out ? "badge-out" : (low ? "badge-low" : "");
-        const badgeText = out ? "Out of stock" : (low ? `Low (last ${vm.stock})` : `In Stock: ${vm.stock}`);
+        const badgeClass = out ? "badge-out" : (low ? "badge-low" : "in-stock");
+        const badgeText = out ? "Out of stock" : (low ? `Low: ${vm.stock}` : `Stock: ${vm.stock}`);
 
-        // show price preview for qty=1
         const p = priceForQty(vm, 1);
 
         return `
           <div class="prod-card" data-pid="${escapeHtml(vm.publicId)}">
             <div>
-              <div class="fw-bold">${escapeHtml(vm.name)}</div>
-              <div class="muted">${money(p)} / box</div>
+              <div class="prod-name">${escapeHtml(vm.name)}</div>
+              <div class="prod-price">${money(p)}<span class="muted" style="font-size: 12px; font-weight: 400;"> / box</span></div>
               <div class="mt-2"><span class="badge-stock ${badgeClass}">${escapeHtml(badgeText)}</span></div>
             </div>
-            <button class="btn btn-outline-primary btn-add-prod" ${out ? "disabled" : ""}>+</button>
+            <button class="btn-add-prod" ${out ? "disabled" : ""}>+</button>
           </div>
         `;
       }).join("");
@@ -620,7 +1206,8 @@
     // ---------------------------
     function addToCart(vm, addQty) {
       if (!SELECTED_CLIENT) {
-        orderStatus.textContent = "Select a customer first.";
+        orderStatus.innerHTML = `<span>⚠️</span> Select a customer first.`;
+        orderStatus.className = "status-msg error";
         return;
       }
 
@@ -629,7 +1216,8 @@
       const nextQty = curQty + addQty;
 
       if (nextQty > vm.stock) {
-        orderStatus.textContent = `Cannot exceed stock. Available: ${vm.stock}`;
+        orderStatus.innerHTML = `<span>⚠️</span> Cannot exceed stock. Available: ${vm.stock}`;
+        orderStatus.className = "status-msg error";
         return;
       }
 
@@ -643,7 +1231,8 @@
 
       const q = Math.max(1, parseInt(String(qty || "1"), 10) || 1);
       if (q > entry.product.stock) {
-        orderStatus.textContent = `Cannot exceed stock. Available: ${entry.product.stock}`;
+        orderStatus.innerHTML = `<span>⚠️</span> Cannot exceed stock. Available: ${entry.product.stock}`;
+        orderStatus.className = "status-msg error";
         return;
       }
       entry.qty = q;
@@ -662,7 +1251,9 @@
         const unit = priceForQty(product, qty);
         sub += unit * qty;
       }
-      const del = Number(deliveryRule.value || 0) || 0;
+      
+      // Use dynamic delivery calculation based on customer/default rules
+      const del = calculateDeliveryFee(sub);
       const tax = (sub + del) * 0.13;
       const total = sub + del + tax;
       return { sub, del, tax, total };
@@ -672,7 +1263,7 @@
       const items = Array.from(CART.values());
 
       if (!items.length) {
-        orderLines.innerHTML = `<tr><td colspan="4" class="muted mini">No items selected.</td></tr>`;
+        orderLines.innerHTML = `<tr><td colspan="4" class="muted text-center py-4">No items selected yet</td></tr>`;
       } else {
         orderLines.innerHTML = items.map(({ product, qty }) => {
           const unit = priceForQty(product, qty);
@@ -681,7 +1272,7 @@
           return `
             <tr data-pid="${escapeHtml(product.publicId)}">
               <td>
-                <div class="fw-bold">${escapeHtml(product.name)}</div>
+                <div class="fw-bold" style="font-size: 13px;">${escapeHtml(product.name)}</div>
                 <div class="muted mini">Stock: ${product.stock}</div>
               </td>
               <td>
@@ -689,11 +1280,11 @@
                   <button class="qty-btn btn-dec" type="button">−</button>
                   <input class="qty-box qty-input" value="${qty}" />
                   <button class="qty-btn btn-inc" type="button">+</button>
-                  <button class="btn btn-sm btn-outline-danger btn-remove" type="button">Remove</button>
                 </div>
+                <button class="btn btn-sm btn-outline-danger btn-remove mt-1" type="button" style="font-size: 11px;">Remove</button>
               </td>
-              <td>${money(unit)}</td>
-              <td class="fw-bold">${money(lineTotal)}</td>
+              <td class="fw-semibold">${money(unit)}</td>
+              <td class="fw-bold" style="color: var(--primary);">${money(lineTotal)}</td>
             </tr>
           `;
         }).join("");
@@ -724,7 +1315,9 @@
 
       const { sub, del, tax, total } = computeTotals();
       subTotalText.textContent = money(sub);
-      deliveryText.textContent = money(del);
+      deliveryText.textContent = del > 0 ? money(del) : "FREE";
+      deliveryText.style.color = del > 0 ? "inherit" : "var(--success)";
+      deliveryText.style.fontWeight = del > 0 ? "400" : "700";
       taxText.textContent = money(tax);
       totalText.textContent = money(total);
 
@@ -732,12 +1325,22 @@
       const enable = !!SELECTED_CLIENT && CART.size > 0;
       createInvoiceBtn.disabled = !enable;
 
-      orderStatus.textContent = enable ? "Ready to create invoice (Unpaid)." : "Select a customer and add items.";
-      renderProductsGrid(); // refresh preview prices when tier/threshold changes
+      if (enable) {
+        orderStatus.innerHTML = `<span>✅</span> Ready to create invoice.`;
+        orderStatus.className = "status-msg success";
+      } else if (!SELECTED_CLIENT) {
+        orderStatus.innerHTML = `<span>👆</span> Select a customer to begin.`;
+        orderStatus.className = "status-msg info";
+      } else {
+        orderStatus.innerHTML = `<span>📦</span> Add products to the order.`;
+        orderStatus.className = "status-msg info";
+      }
+
+      renderProductsGrid();
     }
 
     // ---------------------------
-    // Platinum overrides (optional)
+    // Platinum overrides
     // ---------------------------
     async function loadPlatinumOverrides(customerId) {
       PLATINUM_OVERRIDES.clear();
@@ -781,7 +1384,8 @@
     async function createCustomerSilent() {
       const v = validateNewCustomerForm();
       if (!v.ok) {
-        createClientStatus.textContent = "ERROR: Email, Full name, Phone, Address are required.";
+        createClientStatus.innerHTML = `<span>❌</span> Email, Full name, Phone, Address are required.`;
+        createClientStatus.className = "status-msg error";
         return;
       }
 
@@ -796,31 +1400,29 @@
       };
 
       createClientConfirmBtn.disabled = true;
-      createClientStatus.textContent = "Creating customer…";
+      createClientStatus.innerHTML = `<span>⏳</span> Creating customer…`;
+      createClientStatus.className = "status-msg info";
 
-      // NOTE: This requires an Edge Function you will create next step:
-      //   supabase functions name: "admin-create-customer-silent"
-      // It must use service role and return: { ok:true, customer_id:"uuid" }
       const { data, error } = await supabase.functions.invoke("admin-create-customer-silent", { body: payload });
 
       createClientConfirmBtn.disabled = false;
 
       if (error || !data?.ok) {
-        createClientStatus.textContent = "ERROR: " + (data?.error || error?.message || "Failed");
+        createClientStatus.innerHTML = `<span>❌</span> ERROR: ${data?.error || error?.message || "Failed"}`;
+        createClientStatus.className = "status-msg error";
         return;
       }
 
-      createClientStatus.textContent = "Customer created ✅ refreshing list…";
+      createClientStatus.innerHTML = `<span>✅</span> Customer created! Refreshing list…`;
+      createClientStatus.className = "status-msg success";
       await loadClients();
 
-      // auto-select created customer
       const newId = data.customer_id || data.id;
       if (newId) {
         clientSelect.value = newId;
         onClientChange();
       }
 
-      // close modal
       createClientModal?.hide();
     }
 
@@ -828,11 +1430,20 @@
     // Create Invoice (Unpaid)
     // ---------------------------
     async function createInvoiceUnpaid() {
-      if (!SELECTED_CLIENT) { orderStatus.textContent = "Select a customer."; return; }
-      if (!CART.size) { orderStatus.textContent = "Add items first."; return; }
+      if (!SELECTED_CLIENT) { 
+        orderStatus.innerHTML = `<span>⚠️</span> Select a customer.`;
+        orderStatus.className = "status-msg error";
+        return; 
+      }
+      if (!CART.size) { 
+        orderStatus.innerHTML = `<span>⚠️</span> Add items first.`;
+        orderStatus.className = "status-msg error";
+        return; 
+      }
 
       createInvoiceBtn.disabled = true;
-      orderStatus.textContent = "Creating invoice (Unpaid)…";
+      orderStatus.innerHTML = `<span>⏳</span> Creating invoice…`;
+      orderStatus.className = "status-msg info";
 
       const items = Array.from(CART.values()).map(({ product, qty }) => {
         const unit = priceForQty(product, qty);
@@ -843,15 +1454,9 @@
         };
       });
 
-      const del = Number(deliveryRule.value || 0) || 0;
+      const { sub } = computeTotals();
+      const del = calculateDeliveryFee(sub);
 
-      // NOTE: This requires an Edge Function you will create later:
-      //   "admin-create-invoice-unpaid"
-      // It must:
-      //   - create invoice status=unpaid
-      //   - reduce stock (your existing rule)
-      //   - email invoice
-      //   - NOT sync QBO until status set to paid (existing trigger)
       const { data, error } = await supabase.functions.invoke("admin-create-invoice-unpaid", {
         body: {
           customer_id: SELECTED_CLIENT.id,
@@ -863,39 +1468,49 @@
       createInvoiceBtn.disabled = false;
 
       if (error || !data?.ok) {
-        orderStatus.textContent = "ERROR: " + (data?.error || error?.message || "Failed");
+        orderStatus.innerHTML = `<span>❌</span> ERROR: ${data?.error || error?.message || "Failed"}`;
+        orderStatus.className = "status-msg error";
         return;
       }
 
-      // clear cart
       CART.clear();
       renderOrder();
 
-      orderStatus.textContent = `Invoice created ✅ ${data.invoice_number ? "(" + data.invoice_number + ")" : ""}`;
+      orderStatus.innerHTML = `<span>✅</span> Invoice created! ${data.invoice_number ? "(" + data.invoice_number + ")" : ""}`;
+      orderStatus.className = "status-msg success";
     }
 
     // ---------------------------
     // Events
     // ---------------------------
-    function onClientChange() {
+    async function onClientChange() {
       const id = clientSelect.value || "";
       SELECTED_CLIENT = CLIENTS.find(c => c.id === id) || null;
 
       CART.clear();
-      renderClientInfo(SELECTED_CLIENT);
-
+      
       if (!SELECTED_CLIENT) {
-        orderStatus.textContent = "Select a customer to begin.";
+        renderClientInfo(null);
+        orderStatus.innerHTML = `<span>👆</span> Select a customer to begin.`;
+        orderStatus.className = "status-msg info";
         createInvoiceBtn.disabled = true;
         renderOrder();
         return;
       }
 
-      orderStatus.textContent = "Loading pricing…";
-      loadPlatinumOverrides(SELECTED_CLIENT.id).finally(() => {
-        orderStatus.textContent = "Customer selected. Add items.";
-        renderOrder();
-      });
+      // Load customer-specific delivery rule
+      await loadCustomerDeliveryRule(SELECTED_CLIENT.id);
+      
+      renderClientInfo(SELECTED_CLIENT);
+
+      orderStatus.innerHTML = `<span>⏳</span> Loading pricing…`;
+      orderStatus.className = "status-msg info";
+      
+      await loadPlatinumOverrides(SELECTED_CLIENT.id);
+      
+      orderStatus.innerHTML = `<span>✅</span> Customer selected. Add items.`;
+      orderStatus.className = "status-msg success";
+      renderOrder();
     }
 
     refreshClientsBtn?.addEventListener("click", loadClients);
@@ -904,15 +1519,13 @@
     productSearch?.addEventListener("input", renderProductsGrid);
     productCategory?.addEventListener("change", renderProductsGrid);
 
-    deliveryRule?.addEventListener("change", renderOrder);
-
     openCreateClientBtn?.addEventListener("click", () => {
-      createClientStatus.textContent = "Fill required fields then create.";
+      createClientStatus.innerHTML = `<span>ℹ️</span> Fill required fields then create.`;
+      createClientStatus.className = "status-msg info";
       createClientModal?.show();
     });
 
     createClientConfirmBtn?.addEventListener("click", createCustomerSilent);
-
     createInvoiceBtn?.addEventListener("click", createInvoiceUnpaid);
 
     // ---------------------------
@@ -922,6 +1535,11 @@
       const ok = await waitForAdminReady();
       if (!ok) return;
 
+      createClientModal = new bootstrap.Modal($("createClientModal"));
+
+      // Load default delivery rule first
+      await loadDefaultDeliveryRule();
+      
       await loadClients();
       await loadProducts();
       renderOrder();
