@@ -283,15 +283,22 @@
 
       if (deleteBtn) {
         const email = tr.dataset.email || "";
-        const ok = confirm(`Delete this customer from profiles?\n\n${email || id}\n\nThis deletes ONLY from profiles table (does not delete Supabase Auth user).`);
+        const ok = confirm(
+          `Permanently delete this customer?\n\n${email || id}\n\nThis will delete from:\n- profiles table\n- Supabase Auth (user account)\n\nWARNING: If this customer has invoices/orders linked, deletion may fail due to database constraints.`
+        );
         if (!ok) return;
 
-        show("Deleting customer…");
-        const { error } = await supabase.from("profiles").delete().eq("id", id);
+        show("Deleting customer permanently…");
+
+        const { data, error } = await supabase.functions.invoke("admin-delete-customer", {
+          body: { customer_id: id },
+        });
+
         if (error) return show("ERROR: " + error.message);
+        if (!data?.ok) return show("ERROR: " + (data?.error || "Delete failed"));
 
         tr.remove();
-        show("Customer deleted ✅");
+        show("Customer permanently deleted ✅");
         return;
       }
     });
