@@ -1759,9 +1759,26 @@
       createInvoiceBtn.disabled = false;
 
       if (error || !data?.ok) {
-        setStatus(orderStatus, 'error', (data?.error || error?.message || "Failed"));
-        return;
-      }
+  const status =
+    error?.status ??
+    error?.context?.status ??
+    "unknown";
+
+  const msg =
+    (data && (data.error || data.message)) ||
+    error?.message ||
+    "Failed";
+
+  let extra = "";
+  try {
+    if (data) extra = " | data=" + JSON.stringify(data);
+    if (error?.context) extra += " | context=" + JSON.stringify(error.context);
+  } catch (_) {}
+
+  setStatus(orderStatus, "error", `ERROR (${status}): ${msg}${extra}`);
+  return;
+}
+
 
       CART.clear();
       renderOrder();
