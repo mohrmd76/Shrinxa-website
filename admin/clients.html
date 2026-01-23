@@ -1692,10 +1692,27 @@
 
       createClientConfirmBtn.disabled = false;
 
-      if (error || !data?.ok) {
-        setStatus(createClientStatus, 'error', (data?.error || error?.message || "Failed"));
+           if (error || !data?.ok) {
+        const status =
+          error?.status ??
+          error?.context?.status ??
+          "unknown";
+
+        const msg =
+          (data && (data.error || data.message)) ||
+          error?.message ||
+          "Failed";
+
+        let extra = "";
+        try {
+          if (data) extra = " | data=" + JSON.stringify(data);
+          if (error?.context) extra += " | context=" + JSON.stringify(error.context);
+        } catch (_) {}
+
+        setStatus(createClientStatus, "error", `ERROR (${status}): ${msg}${extra}`);
         return;
       }
+
 
       setStatus(createClientStatus, 'success', 'Customer created! Refreshing list…');
       await loadClients();
