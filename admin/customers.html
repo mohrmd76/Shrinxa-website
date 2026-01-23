@@ -27,64 +27,88 @@
       <a href="./platinum.html">Platinum</a>
       <a href="./delivery-admin.html">Delivery Rules</a>
       <a href="./inventory.html">Inventory</a>
-	<a href="./income.html">Income</a>
-	<a href="./clients.html">Clients</a>
-
+      <a href="./income.html">Income</a>
+      <a href="./clients.html">Clients</a>
     </div>
-<div class="ms-auto d-flex align-items-center gap-2">
-  <span id="adminEmail" class="text-white small"></span>
-  <button id="logoutBtn" class="btn btn-sm btn-outline-light">Logout</button>
-</div>
+
+    <div class="ms-auto d-flex align-items-center gap-2">
+      <span id="adminEmail" class="text-white small"></span>
+      <button id="logoutBtn" class="btn btn-sm btn-outline-light">Logout</button>
+    </div>
 
   </div>
 </header>
 
-  <h2>Customers</h2>
+  <h2 class="px-4 pt-3">Customers</h2>
 
-  <div id="status" style="padding:8px;border:1px solid #ccc;display:inline-block;margin-bottom:10px;">
+  <div id="status" class="mx-4" style="padding:8px;border:1px solid #ccc;display:inline-block;margin-bottom:10px;">
     Loading…
   </div>
 
-  <table border="1" cellpadding="6">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Email</th>
-        <th>Full Name</th>
-        <th>Company</th>
-        <th>Phone</th>
-        <th>Tier</th>
-        <th>Save Tier</th>
-        <th>Wholesale Qty</th>
-        <th>Save Qty</th>
-	<th>Payment Terms (Days)</th>
-	<th>Save Terms</th>
-        <th>Admin</th>
-      </tr>
-    </thead>
-    <tbody id="rows"></tbody>
-  </table>
+  <div class="px-4 pb-4">
+    <div class="table-responsive">
+      <table class="table table-sm table-bordered align-middle bg-white">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Email</th>
+
+            <th>Full Name</th>
+            <th>Company</th>
+            <th>Phone</th>
+            <th>Address</th>
+            <th>City</th>
+            <th>Province</th>
+
+            <th>Tier</th>
+            <th>Save Tier</th>
+
+            <th>Wholesale Qty</th>
+            <th>Save Qty</th>
+
+            <th>Payment Terms (Days)</th>
+            <th>Save Terms</th>
+
+            <th>Admin</th>
+            <th style="min-width:220px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
 
   <script type="module">
     import { supabase } from "../supabaseClient.js";
-// header: email + logout
-const adminEmailEl = document.getElementById("adminEmail");
-const logoutBtn = document.getElementById("logoutBtn");
 
-logoutBtn?.addEventListener("click", async () => {
-  await supabase.auth.signOut();
-  window.location.href = "../login.html";
-});
+    // header: email + logout
+    const adminEmailEl = document.getElementById("adminEmail");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    logoutBtn?.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      window.location.href = "../login.html";
+    });
 
     const status = document.getElementById("status");
     const tbody = document.getElementById("rows");
 
     function show(msg) { status.textContent = msg; }
 
+    function esc(s) {
+      return String(s ?? "").replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      }[c]));
+    }
+
     function tierSelect(current) {
-      const v = current || "standard";
+      const v = String(current ?? "standard").toLowerCase();
       return `
-        <select class="tierSel">
+        <select class="tierSel form-select form-select-sm" style="width:140px;">
           <option value="standard" ${v==="standard"?"selected":""}>standard</option>
           <option value="gold" ${v==="gold"?"selected":""}>gold</option>
           <option value="platinum" ${v==="platinum"?"selected":""}>platinum</option>
@@ -94,62 +118,190 @@ logoutBtn?.addEventListener("click", async () => {
 
     function qtyInput(current) {
       const v = Number.isFinite(Number(current)) ? Number(current) : 50;
-      return `<input class="qtyInp" type="number" min="1" step="1" value="${v}" style="width:90px;">`;
+      return `<input class="qtyInp form-control form-control-sm" type="number" min="1" step="1" value="${v}" style="width:90px;">`;
     }
- tbody.addEventListener("click", async (e) => {
-  const tierBtn = e.target?.closest?.(".saveTierBtn");
-  const qtyBtn = e.target?.closest?.(".saveQtyBtn");
-  const termsBtn = e.target?.closest?.(".saveTermsBtn");
-  if (!tierBtn && !qtyBtn && !termsBtn) return;
 
-  const tr = e.target.closest("tr");
-  const id = tr.dataset.id;
+    function termsInput(current) {
+      const v = Number.isFinite(Number(current)) ? Number(current) : 2;
+      return `
+        <input class="termsInp form-control form-control-sm" type="number" min="2" step="1" value="${v}" style="width:90px;">
+      `;
+    }
 
-  if (tierBtn) {
-    const sel = tr.querySelector(".tierSel");
-    const newTier = sel.value;
+    function renderInfoCellsReadOnly(c) {
+      return `
+        <td class="c-full">${esc(c.full_name ?? "")}</td>
+        <td class="c-company">${esc(c.company_name ?? "")}</td>
+        <td class="c-phone">${esc(c.phone ?? "")}</td>
+        <td class="c-address">${esc(c.address ?? "")}</td>
+        <td class="c-city">${esc(c.city ?? "")}</td>
+        <td class="c-province">${esc(c.province ?? "")}</td>
+      `;
+    }
 
-    show("Saving tier…");
-    const { error } = await supabase.from("profiles").update({ tier: newTier }).eq("id", id);
-    if (error) return show("ERROR: " + error.message);
-    show("Tier saved ✅");
-  }
+    function setInfoCellsEditMode(tr) {
+      const full = tr.querySelector(".c-full")?.textContent ?? "";
+      const company = tr.querySelector(".c-company")?.textContent ?? "";
+      const phone = tr.querySelector(".c-phone")?.textContent ?? "";
+      const address = tr.querySelector(".c-address")?.textContent ?? "";
+      const city = tr.querySelector(".c-city")?.textContent ?? "";
+      const province = tr.querySelector(".c-province")?.textContent ?? "";
 
-  if (qtyBtn) {
-    const inp = tr.querySelector(".qtyInp");
-    const newQty = parseInt(inp.value, 10);
-    if (!Number.isFinite(newQty) || newQty < 1) return show("ERROR: invalid qty");
+      // store original values for cancel
+      tr.dataset.orig_full = full;
+      tr.dataset.orig_company = company;
+      tr.dataset.orig_phone = phone;
+      tr.dataset.orig_address = address;
+      tr.dataset.orig_city = city;
+      tr.dataset.orig_province = province;
 
-    show("Saving wholesale qty…");
-    const { error } = await supabase
-      .from("profiles")
-      .update({ wholesale_qty_threshold: newQty })
-      .eq("id", id);
-    if (error) return show("ERROR: " + error.message);
-    show("Wholesale qty saved ✅");
-  }
+      tr.querySelector(".c-full").innerHTML = `<input class="editFull form-control form-control-sm" value="${esc(full)}">`;
+      tr.querySelector(".c-company").innerHTML = `<input class="editCompany form-control form-control-sm" value="${esc(company)}">`;
+      tr.querySelector(".c-phone").innerHTML = `<input class="editPhone form-control form-control-sm" value="${esc(phone)}">`;
+      tr.querySelector(".c-address").innerHTML = `<input class="editAddress form-control form-control-sm" value="${esc(address)}">`;
+      tr.querySelector(".c-city").innerHTML = `<input class="editCity form-control form-control-sm" value="${esc(city)}">`;
+      tr.querySelector(".c-province").innerHTML = `<input class="editProvince form-control form-control-sm" value="${esc(province)}">`;
 
-  if (termsBtn) {
-    const inp = tr.querySelector(".termsInp");
-    const days = parseInt(inp.value, 10);
-    if (!Number.isFinite(days) || days < 2) return show("ERROR: invalid days");
+      tr.querySelector(".editInfoBtn")?.classList.add("d-none");
+      tr.querySelector(".saveInfoBtn")?.classList.remove("d-none");
+      tr.querySelector(".cancelInfoBtn")?.classList.remove("d-none");
+    }
 
-    show("Saving payment terms…");
-    const { error } = await supabase
-      .from("profiles")
-      .update({ payment_terms_days: days })
-      .eq("id", id);
-    if (error) return show("ERROR: " + error.message);
-    show("Payment terms saved ✅");
-  }
-});
+    function setInfoCellsReadOnlyMode(tr) {
+      const full = tr.dataset.orig_full ?? (tr.querySelector(".editFull")?.value ?? "");
+      const company = tr.dataset.orig_company ?? (tr.querySelector(".editCompany")?.value ?? "");
+      const phone = tr.dataset.orig_phone ?? (tr.querySelector(".editPhone")?.value ?? "");
+      const address = tr.dataset.orig_address ?? (tr.querySelector(".editAddress")?.value ?? "");
+      const city = tr.dataset.orig_city ?? (tr.querySelector(".editCity")?.value ?? "");
+      const province = tr.dataset.orig_province ?? (tr.querySelector(".editProvince")?.value ?? "");
+
+      tr.querySelector(".c-full").textContent = full;
+      tr.querySelector(".c-company").textContent = company;
+      tr.querySelector(".c-phone").textContent = phone;
+      tr.querySelector(".c-address").textContent = address;
+      tr.querySelector(".c-city").textContent = city;
+      tr.querySelector(".c-province").textContent = province;
+
+      tr.querySelector(".editInfoBtn")?.classList.remove("d-none");
+      tr.querySelector(".saveInfoBtn")?.classList.add("d-none");
+      tr.querySelector(".cancelInfoBtn")?.classList.add("d-none");
+    }
+
+    tbody.addEventListener("click", async (e) => {
+      const tierBtn = e.target?.closest?.(".saveTierBtn");
+      const qtyBtn = e.target?.closest?.(".saveQtyBtn");
+      const termsBtn = e.target?.closest?.(".saveTermsBtn");
+      const editInfoBtn = e.target?.closest?.(".editInfoBtn");
+      const saveInfoBtn = e.target?.closest?.(".saveInfoBtn");
+      const cancelInfoBtn = e.target?.closest?.(".cancelInfoBtn");
+      const deleteBtn = e.target?.closest?.(".deleteCustomerBtn");
+
+      if (!tierBtn && !qtyBtn && !termsBtn && !editInfoBtn && !saveInfoBtn && !cancelInfoBtn && !deleteBtn) return;
+
+      const tr = e.target.closest("tr");
+      const id = tr.dataset.id;
+
+      if (tierBtn) {
+        const sel = tr.querySelector(".tierSel");
+        const newTier = sel.value;
+
+        show("Saving tier…");
+        const { error } = await supabase.from("profiles").update({ tier: newTier }).eq("id", id);
+        if (error) return show("ERROR: " + error.message);
+        show("Tier saved ✅");
+        return;
+      }
+
+      if (qtyBtn) {
+        const inp = tr.querySelector(".qtyInp");
+        const newQty = parseInt(inp.value, 10);
+        if (!Number.isFinite(newQty) || newQty < 1) return show("ERROR: invalid qty");
+
+        show("Saving wholesale qty…");
+        const { error } = await supabase
+          .from("profiles")
+          .update({ wholesale_qty_threshold: newQty })
+          .eq("id", id);
+        if (error) return show("ERROR: " + error.message);
+        show("Wholesale qty saved ✅");
+        return;
+      }
+
+      if (termsBtn) {
+        const inp = tr.querySelector(".termsInp");
+        const days = parseInt(inp.value, 10);
+        if (!Number.isFinite(days) || days < 2) return show("ERROR: invalid days");
+
+        show("Saving payment terms…");
+        const { error } = await supabase
+          .from("profiles")
+          .update({ payment_terms_days: days })
+          .eq("id", id);
+        if (error) return show("ERROR: " + error.message);
+        show("Payment terms saved ✅");
+        return;
+      }
+
+      if (editInfoBtn) {
+        setInfoCellsEditMode(tr);
+        show("Editing customer info…");
+        return;
+      }
+
+      if (cancelInfoBtn) {
+        setInfoCellsReadOnlyMode(tr);
+        show("Canceled.");
+        return;
+      }
+
+      if (saveInfoBtn) {
+        const payload = {
+          full_name: tr.querySelector(".editFull")?.value ?? "",
+          company_name: tr.querySelector(".editCompany")?.value ?? "",
+          phone: tr.querySelector(".editPhone")?.value ?? "",
+          address: tr.querySelector(".editAddress")?.value ?? "",
+          city: tr.querySelector(".editCity")?.value ?? "",
+          province: tr.querySelector(".editProvince")?.value ?? "",
+        };
+
+        show("Saving customer info…");
+        const { error } = await supabase.from("profiles").update(payload).eq("id", id);
+        if (error) return show("ERROR: " + error.message);
+
+        // update display + exit edit mode
+        tr.dataset.orig_full = payload.full_name;
+        tr.dataset.orig_company = payload.company_name;
+        tr.dataset.orig_phone = payload.phone;
+        tr.dataset.orig_address = payload.address;
+        tr.dataset.orig_city = payload.city;
+        tr.dataset.orig_province = payload.province;
+
+        setInfoCellsReadOnlyMode(tr);
+        show("Customer info saved ✅");
+        return;
+      }
+
+      if (deleteBtn) {
+        const email = tr.dataset.email || "";
+        const ok = confirm(`Delete this customer from profiles?\n\n${email || id}\n\nThis deletes ONLY from profiles table (does not delete Supabase Auth user).`);
+        if (!ok) return;
+
+        show("Deleting customer…");
+        const { error } = await supabase.from("profiles").delete().eq("id", id);
+        if (error) return show("ERROR: " + error.message);
+
+        tr.remove();
+        show("Customer deleted ✅");
+        return;
+      }
+    });
 
     async function load() {
       show("Checking login…");
       const { data: { user }, error: userErr } = await supabase.auth.getUser();
       if (userErr) throw new Error("getUser error: " + userErr.message);
       if (!user) { location.href = "../login.html"; return; }
-	if (adminEmailEl) adminEmailEl.textContent = user.email || "";
+      if (adminEmailEl) adminEmailEl.textContent = user.email || "";
 
       show("Checking admin…");
       const { data: me, error: meErr } = await supabase
@@ -164,7 +316,7 @@ logoutBtn?.addEventListener("click", async () => {
       show("Loading customers…");
       const { data: customers, error: custErr } = await supabase
         .from("profiles")
-	.select("id, email, full_name, company_name, phone, tier, wholesale_qty_threshold, payment_terms_days, is_admin")
+        .select("id, email, full_name, company_name, phone, address, city, province, tier, wholesale_qty_threshold, payment_terms_days, is_admin")
         .order("created_at", { ascending: false });
 
       if (custErr) throw new Error("customers query error: " + custErr.message);
@@ -173,36 +325,37 @@ logoutBtn?.addEventListener("click", async () => {
       for (const c of (customers || [])) {
         const tr = document.createElement("tr");
         tr.dataset.id = c.id;
+        tr.dataset.email = c.email ?? "";
 
         tr.innerHTML = `
-          <td>${c.id}</td>
-          <td>${c.email ?? ""}</td>
-          <td>${c.full_name ?? ""}</td>
-          <td>${c.company_name ?? ""}</td>
-          <td>${c.phone ?? ""}</td>
+          <td>${esc(c.id)}</td>
+          <td>${esc(c.email ?? "")}</td>
+
+          ${renderInfoCellsReadOnly(c)}
+
           <td>${tierSelect(c.tier)}</td>
-          <td><button class="saveTierBtn">Save</button></td>
+          <td><button class="saveTierBtn btn btn-sm btn-outline-primary">Save</button></td>
+
           <td>${qtyInput(c.wholesale_qty_threshold)}</td>
-          <td><button class="saveQtyBtn">Save</button></td>
-<td>
-  <input
-    class="termsInp"
-    type="number"
-    min="2"
-    step="1"
-    value="${Number.isFinite(Number(c.payment_terms_days)) ? Number(c.payment_terms_days) : 2}"
-    style="width:90px;"
-  >
-</td>
-	<td><button class="saveTermsBtn">Save</button></td>
+          <td><button class="saveQtyBtn btn btn-sm btn-outline-primary">Save</button></td>
+
+          <td>${termsInput(c.payment_terms_days)}</td>
+          <td><button class="saveTermsBtn btn btn-sm btn-outline-primary">Save</button></td>
+
           <td>${c.is_admin ? "YES" : "NO"}</td>
+
+          <td>
+            <div class="d-flex gap-2 flex-wrap">
+              <button class="editInfoBtn btn btn-sm btn-outline-secondary">Edit</button>
+              <button class="saveInfoBtn btn btn-sm btn-success d-none">Save</button>
+              <button class="cancelInfoBtn btn btn-sm btn-outline-secondary d-none">Cancel</button>
+              <button class="deleteCustomerBtn btn btn-sm btn-outline-danger">Delete</button>
+            </div>
+          </td>
         `;
 
         tbody.appendChild(tr);
       }
-
-   
-
 
       show(`Done. Rows: ${(customers || []).length}`);
     }
