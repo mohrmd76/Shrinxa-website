@@ -300,10 +300,19 @@
 
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>
-          <div class="fw-semibold">${escapeHtml(it.item_name ?? "")}</div>
-          <div class="muted" style="font-size:.85rem;">${escapeHtml(it.item_desc ?? "")}</div>
-        </td>
+        <tr.innerHTML = `
+  <td>
+    <div class="fw-semibold">${escapeHtml(it.item_name ?? "")}</div>
+
+    ${
+      it.item_desc
+        ? `<div class="muted" style="font-size:.85rem;">
+             <strong>Specification:</strong> ${escapeHtml(it.item_desc)}
+           </div>`
+        : ``
+    }
+  </td>
+
         <td class="right">${qty}</td>
         <td class="right">${money(unit_price)}</td>
         <td class="right fw-semibold">${money(line_total)}</td>
