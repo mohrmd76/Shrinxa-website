@@ -492,27 +492,34 @@
 
         <td>${escapeHtml(fmtDate(created))}</td>
 
-        <td>
-          <select class="stSel form-select form-select-sm" data-prev="${escapeHtml(stv)}">
-            <option value="" ${!stv ? "selected" : ""}>(blank)</option>
+   <td>
+  ${
+    isCash
+      ? `<span class="pill">cash</span>`
+      : `
+        <select class="stSel form-select form-select-sm" data-prev="${escapeHtml(stv)}">
+          <option value="" ${!stv ? "selected" : ""}>(blank)</option>
           <option value="paid" ${stv==="paid" ? "selected" : ""}>paid</option>
-<option value="unpaid" ${stv==="unpaid" ? "selected" : ""}>unpaid</option>
-<option value="pending" ${stv==="pending" ? "selected" : ""}>pending</option>
-<option value="cash" ${stv==="cash" ? "selected" : ""}>cash</option>
-<option value="cancelled" ${stv==="cancelled" ? "selected" : ""}>cancelled</option>
-          </select>
-        </td>
+          <option value="unpaid" ${stv==="unpaid" ? "selected" : ""}>unpaid</option>
+          <option value="pending" ${stv==="pending" ? "selected" : ""}>pending</option>
+          <option value="cash" ${stv==="cash" ? "selected" : ""}>cash</option>
+          <option value="cancelled" ${stv==="cancelled" ? "selected" : ""}>cancelled</option>
+        </select>
+      `
+  }
+</td>
+
 
         <td class="right fw-semibold">${escapeHtml(fmtMoney(total))}</td>
         <td class="right">${escapeHtml(fmtMoney(inv.invoice_profit))}</td>
 
         <td>
-          <div class="row-actions">
-            <button type="button" class="btnOpen btn btn-sm btn-outline-secondary" data-id="${escapeHtml(inv.id)}">Open</button>
-	${isCash ? "" : `<button type="button" class="btnResend btn btn-sm btn-outline-primary" data-id="${escapeHtml(inv.id)}">Resend Email</button>`}
-            <button type="button" class="btnSaveStatus btn btn-sm btn-success" data-id="${escapeHtml(inv.id)}">Save Status</button>
-            <button type="button" class="btnCancel btn btn-sm btn-outline-danger" data-id="${escapeHtml(inv.id)}">Cancel Order</button>
-          </div>
+         <div class="row-actions">
+  ${isCash ? "" : `<button type="button" class="btnOpen btn btn-sm btn-outline-secondary" data-id="${escapeHtml(inv.id)}">Open</button>`}
+  ${isCash ? "" : `<button type="button" class="btnResend btn btn-sm btn-outline-primary" data-id="${escapeHtml(inv.id)}">Resend Email</button>`}
+  ${isCash ? "" : `<button type="button" class="btnSaveStatus btn btn-sm btn-success" data-id="${escapeHtml(inv.id)}">Save Status</button>`}
+  <button type="button" class="btnCancel btn btn-sm btn-outline-danger" data-id="${escapeHtml(inv.id)}">Cancel Order</button>
+</div>
 
           <details>
             <summary class="muted">details</summary>
