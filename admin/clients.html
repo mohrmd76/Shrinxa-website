@@ -6,12 +6,14 @@
   <title>Admin – Clients</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="../admin.css" />
 <style>
     :root {
       /* Primary Palette */
       --primary: #6366f1;
       --primary-hover: #4f46e5;
+      
+      /* Header (shared admin theme) */
+      --brand: #111;
       --primary-light: rgba(99, 102, 241, 0.1);
       
       /* Semantic Colors */
@@ -77,7 +79,29 @@ body {
   min-height: 100vh;
 }
 
-    /* header styling comes from shared admin theme */
+
+
+
+    /* --- Header (match Orders / Income / Customers) --- */
+    header{
+      background: var(--brand);
+      position: sticky;
+      top: 0;
+      z-index: 60;
+      box-shadow: 0 10px 30px rgba(0,0,0,.18);
+    }
+    header a{
+      color:#fff;
+      text-decoration:none;
+      opacity:.85;
+      padding:6px 8px;
+      border-radius:10px;
+      white-space:nowrap;
+    }
+    header a:hover{ opacity:1; background:rgba(255,255,255,.08); text-decoration:none; }
+    header a.active{ opacity:1; background:rgba(255,255,255,.14); text-decoration:none; }
+    .nav-links{ gap:6px; flex-wrap:wrap; }
+
 .hidden { display: none !important; }
 
     /* --- PAGE LAYOUT --- */
@@ -788,7 +812,7 @@ body {
     </div>
 
     <div class="ms-auto d-flex align-items-center gap-2">
-      <span id="adminEmail" class="text-white small"></span>
+      <span id="adminEmail" class="text-white small opacity-75"></span>
       <button id="logoutBtn" class="btn btn-sm btn-outline-light">Logout</button>
     </div>
   </div>
