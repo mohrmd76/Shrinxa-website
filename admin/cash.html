@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin – Cash</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+
+      --brand: #111;
+      --primary-light: rgba(99, 102, 241, 0.10);
+
+      --success: #10b981;
+      --success-light: rgba(16, 185, 129, 0.10);
+
+      --warning: #f59e0b;
+      --warning-light: rgba(245, 158, 11, 0.10);
+
+      --danger: #ef4444;
+      --danger-light: rgba(239, 68, 68, 0.10);
+
+      --info: #0ea5e9;
+      --info-light: rgba(14, 165, 233, 0.10);
+
+      --bg-body: #f8fafc;
+      --bg-panel: #ffffff;
+      --bg-panel-header: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      --bg-input: #ffffff;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f8fafc;
+      --bg-badge: #f1f5f9;
+
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+
+      --border-color: #e2e8f0;
+      --border-light: #f1f5f9;
+
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+      --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.15);
+    }
+
+    [data-theme="dark"] {
+      --bg-body: #0f172a;
+      --bg-panel: #1e293b;
+      --bg-panel-header: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      --bg-input: #0f172a;
+      --bg-card: #1e293b;
+      --bg-card-hover: #334155;
+      --bg-badge: #334155;
+
+      --text-primary: #f1f5f9;
+      --text-secondary: #cbd5e1;
+      --text-muted: #64748b;
+
+      --border-color: #334155;
+      --border-light: #1e293b;
+
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.30), 0 2px 4px -1px rgba(0, 0, 0, 0.20);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.40), 0 4px 6px -2px rgba(0, 0, 0, 0.20);
+      --shadow-glow: 0 0 30px rgba(99, 102, 241, 0.20);
+      --primary-light: rgba(99, 102, 241, 0.20);
+      --success-light: rgba(16, 185, 129, 0.20);
+      --warning-light: rgba(245, 158, 11, 0.20);
+      --danger-light: rgba(239, 68, 68, 0.20);
+      --info-light: rgba(14, 165, 233, 0.20);
+    }
+
+    *{ box-sizing: border-box; }
+    body{
+      background: var(--bg-body);
+      color: var(--text-primary);
+      transition: background .25s ease, color .25s ease;
+      min-height: 100vh;
+    }
+
+    header{
+      background: var(--brand);
+      position: sticky;
+      top: 0;
+      z-index: 60;
+      box-shadow: 0 10px 30px rgba(0,0,0,.18);
+    }
+    header a{
+      color:#fff;
+      text-decoration:none;
+      opacity:.85;
+      padding:6px 8px;
+      border-radius:10px;
+      white-space:nowrap;
+    }
+    header a:hover{ opacity:1; background:rgba(255,255,255,.08); text-decoration:none; }
+    header a.active{ opacity:1; background:rgba(255,255,255,.14); text-decoration:none; }
+    .nav-links{ gap:6px; flex-wrap:wrap; }
+
+    .hidden{ display:none !important; }
+
+    .page-wrap{
+      padding: 24px 28px 40px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .page-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      flex-wrap:wrap;
+      margin-bottom: 22px;
+    }
+
+    .page-title-wrap{
+      display:flex;
+      align-items:center;
+      gap:16px;
+    }
+
+    .page-icon{
+      width: 52px;
+      height: 52px;
+      background: linear-gradient(135deg, var(--primary), #8b5cf6);
+      border-radius: 14px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 24px;
+      box-shadow: var(--shadow-glow);
+    }
+
+    .page-title{
+      font-size: 28px;
+      font-weight: 800;
+      margin: 0;
+      color: var(--text-primary);
+    }
+
+    .page-subtitle{
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .theme-toggle{
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-panel);
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 20px;
+      color: var(--text-primary);
+      transition: all .2s ease;
+    }
+    .theme-toggle:hover{
+      border-color: var(--primary);
+      box-shadow: var(--shadow-glow);
+      transform: scale(1.05);
+    }
+
+    .panel{
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .panel-hd{
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-panel-header);
+      font-weight: 800;
+      font-size: 15px;
+      color: var(--text-primary);
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
+    .panel-bd{ padding: 20px; }
+
+    .panel-hd-icon{
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 16px;
+    }
+    .panel-hd-icon.cash{ background: var(--success-light); }
+    .panel-hd-icon.products{ background: var(--info-light); }
+    .panel-hd-icon.order{ background: var(--primary-light); }
+
+    .input-compact{
+      height: 42px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-input);
+      color: var(--text-primary);
+      transition: all .2s ease;
+    }
+    .form-control, .form-select{
+      background: var(--bg-input);
+      color: var(--text-primary);
+      border-color: var(--border-color);
+    }
+    .form-control:focus, .form-select:focus{
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+      outline: none;
+    }
+
+    .btn{
+      border-radius: 10px;
+      font-weight: 700;
+    }
+    .btn-primary{
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+    .btn-primary:hover{
+      background: var(--primary-hover);
+      border-color: var(--primary-hover);
+    }
+    .btn-success{
+      background: var(--success);
+      border-color: var(--success);
+    }
+
+    .status-msg{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-top: 12px;
+    }
+    .status-msg.info{ background: var(--info-light); color: var(--info); }
+    .status-msg.success{ background: var(--success-light); color: var(--success); }
+    .status-msg.warning{ background: var(--warning-light); color: var(--warning); }
+    .status-msg.error{ background: var(--danger-light); color: var(--danger); }
+
+    .order-grid{
+      display:grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .products-grid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      max-height: 420px;
+      overflow-y:auto;
+      padding-right: 8px;
+    }
+
+    .prod-card{
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 14px;
+      background: var(--bg-card);
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items:center;
+      min-height: 98px;
+      transition: all .18s ease;
+    }
+    .prod-card:hover{
+      border-color: var(--primary);
+      background: var(--bg-card-hover);
+      box-shadow: var(--shadow-glow);
+      transform: translateY(-2px);
+    }
+    .prod-name{ font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+    .prod-price{ font-size: 16px; font-weight: 900; color: var(--primary); }
+    .badge-stock{
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-weight: 800;
+      display:inline-flex;
+      align-items:center;
+      gap: 6px;
+    }
+    .badge-stock::before{
+      content:"";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+    .badge-ok{ background: var(--success-light); color: var(--success); }
+    .badge-ok::before{ background: var(--success); }
+    .badge-low{ background: var(--warning-light); color: var(--warning); }
+    .badge-low::before{ background: var(--warning); }
+    .badge-out{ background: var(--danger-light); color: var(--danger); }
+    .badge-out::before{ background: var(--danger); }
+
+    .btn-add-prod{
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 2px solid var(--primary);
+      background: transparent;
+      color: var(--primary);
+      font-size: 20px;
+      font-weight: 900;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      transition: all .18s ease;
+    }
+    .btn-add-prod:hover:not(:disabled){
+      background: var(--primary);
+      color: #fff;
+      transform: scale(1.08);
+    }
+    .btn-add-prod:disabled{ opacity:.35; cursor:not-allowed; }
+
+    .order-table th{
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--text-muted);
+      border-bottom: 2px solid var(--border-color);
+      background: transparent;
+      padding: 12px 8px;
+    }
+    .order-table td{
+      border-bottom: 1px solid var(--border-light);
+      background: transparent;
+      padding: 12px 8px;
+      vertical-align: middle;
+    }
+
+    .qty-btn{
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-panel);
+      font-weight: 900;
+      cursor:pointer;
+      color: var(--text-primary);
+    }
+    .qty-btn:hover{ background: var(--primary); border-color: var(--primary); color:#fff; }
+    .qty-box{
+      width: 56px;
+      height: 34px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-input);
+      text-align:center;
+      font-weight: 900;
+      color: var(--text-primary);
+    }
+    .price-box{
+      width: 92px;
+      height: 34px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-input);
+      text-align:right;
+      font-weight: 900;
+      padding-right: 10px;
+      color: var(--text-primary);
+    }
+
+    .totals{
+      margin-top: 14px;
+      background: var(--bg-panel-header);
+      border-radius: 14px;
+      padding: 14px;
+      border: 1px solid var(--border-color);
+    }
+    .tot-row{
+      display:flex;
+      justify-content:space-between;
+      padding: 9px 0;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    .tot-row:not(:last-child){
+      border-bottom: 1px dashed var(--border-color);
+    }
+    .tot-row.total{
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--text-primary);
+      border-bottom:none;
+      padding-top: 12px;
+      margin-top: 6px;
+      border-top: 2px solid var(--border-color);
+    }
+
+    .btn-create{
+      height: 54px;
+      font-weight: 900;
+      font-size: 16px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--success), #059669);
+      border:none;
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+      box-shadow: 0 4px 14px rgba(16,185,129,.35);
+      transition: all .18s ease;
+    }
+    .btn-create:hover:not(:disabled){
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(16,185,129,.45);
+    }
+    .btn-create:disabled{ background: var(--bg-badge); color: var(--text-muted); box-shadow:none; cursor:not-allowed; }
+
+    @media (max-width: 1100px){
+      .order-grid{ grid-template-columns: 1fr; }
+      .products-grid{ grid-template-columns: 1fr; max-height: 320px; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Admin Auth Gate -->
+  <div id="loading">Checking access...</div>
+  <div id="denied" class="hidden">Access denied</div>
+
+  <div id="admin" class="hidden">
+    <header class="py-3">
+      <div class="container-fluid px-4 d-flex align-items-center gap-3">
+        <div class="text-white fw-bold">Shrinxa Admin</div>
+
+        <div class="d-flex nav-links">
+          <a href="./dashboard.html">Dashboard</a>
+          <a href="./orders.html">Orders</a>
+          <a href="./customers.html">Customers</a>
+          <a href="./products-admin.html">Products</a>
+          <a href="./platinum.html">Platinum</a>
+          <a href="./delivery-admin.html">Delivery Rules</a>
+          <a href="./inventory.html">Inventory</a>
+          <a href="./income.html">Income</a>
+          <a href="./clients.html">Clients</a>
+          <a href="./cash.html" class="active">Cash</a>
+        </div>
+
+        <div class="ms-auto d-flex align-items-center gap-2">
+          <span id="adminEmail" class="text-white small opacity-75"></span>
+          <button id="logoutBtn" class="btn btn-sm btn-outline-light">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="page-wrap">
+      <div class="page-header">
+        <div class="page-title-wrap">
+          <div class="page-icon">💵</div>
+          <div>
+            <h1 class="page-title">Cash</h1>
+            <div class="page-subtitle">Create cash customers and record cash sales (no emails, no HST).</div>
+          </div>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+          <button id="themeToggle" class="theme-toggle" title="Toggle Dark Mode">🌙</button>
+        </div>
+      </div>
+
+      <div class="order-grid">
+        <!-- LEFT -->
+        <div class="d-grid gap-4">
+          <div class="panel">
+            <div class="panel-hd">
+              <div class="panel-hd-icon cash">👤</div>
+              Cash Customer
+            </div>
+            <div class="panel-bd">
+              <div class="d-flex gap-3 align-items-center flex-wrap">
+                <select id="cashCustomerSelect" class="form-select input-compact" style="min-width: 360px; flex: 1;">
+                  <option value="">Select a cash customer…</option>
+                </select>
+                <button id="refreshCashCustomersBtn" class="btn btn-primary" style="height:42px;">🔄 Refresh</button>
+                <button id="openCreateCashCustomerBtn" class="btn btn-success" style="height:42px;">➕ New Cash Customer</button>
+              </div>
+
+              <div id="cashCustomerStatus" class="status-msg info">
+                <span>ℹ️</span><span class="status-text">Ready.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-hd">
+              <div class="panel-hd-icon products">📦</div>
+              Products (Cash pricing editable per order)
+            </div>
+            <div class="panel-bd">
+              <div class="d-flex gap-2 flex-wrap">
+                <input id="productSearch" class="form-control input-compact" placeholder="Search products…" style="min-width:240px; flex:1;">
+                <button id="clearProductSearch" class="btn btn-outline-secondary" style="height:42px;">Clear</button>
+              </div>
+
+              <div class="mt-3 products-grid" id="productsGrid"></div>
+
+              <div id="productsStatus" class="status-msg info mt-3">
+                <span>⏳</span><span class="status-text">Loading products…</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="panel" style="position: sticky; top: 92px;">
+          <div class="panel-hd">
+            <div class="panel-hd-icon order">🧾</div>
+            Cash Order Builder
+          </div>
+          <div class="panel-bd">
+            <table class="table order-table">
+              <thead>
+                <tr>
+                  <th style="width: 40%;">Product</th>
+                  <th style="width: 25%;">Qty</th>
+                  <th style="width: 18%;">Unit</th>
+                  <th style="width: 17%;">Total</th>
+                </tr>
+              </thead>
+              <tbody id="orderLines">
+                <tr><td colspan="4" class="text-center" style="color:var(--text-muted); padding: 18px 8px;">No items selected yet</td></tr>
+              </tbody>
+            </table>
+
+            <div class="totals">
+              <div class="tot-row">
+                <div>📦 Subtotal</div>
+                <div id="subTotalText">$0.00</div>
+              </div>
+
+              <div class="tot-row" style="align-items:center;">
+                <div>🚚 Delivery (manual)</div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="text-muted" style="font-weight:800;">$</span>
+                  <input id="deliveryInput" class="price-box" type="number" step="0.01" value="0" />
+                </div>
+              </div>
+
+              <div class="tot-row">
+                <div>🧾 HST</div>
+                <div id="taxText">$0.00</div>
+              </div>
+
+              <div class="tot-row total">
+                <div>💰 Total</div>
+                <div id="totalText">$0.00</div>
+              </div>
+            </div>
+
+            <button id="createCashSaleBtn" class="btn btn-create w-100 mt-3" disabled>
+              ✅ Create Cash Sale (Paid)
+            </button>
+
+            <div id="orderStatus" class="status-msg info">
+              <span>👆</span><span class="status-text">Select a cash customer to begin.</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Cash Customer Modal -->
+  <div class="modal fade" id="createCashCustomerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content" style="border-radius:16px;">
+        <div class="modal-header" style="background: var(--bg-panel-header); border-bottom: 1px solid var(--border-color);">
+          <h5 class="modal-title" style="font-weight:900;">➕ Create Cash Customer</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body" style="color: var(--text-primary);">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" style="font-weight:800;">Full Name <span class="text-danger">*</span></label>
+              <input id="cc_full_name" class="form-control input-compact" placeholder="Full name" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" style="font-weight:800;">Email (optional)</label>
+              <input id="cc_email" class="form-control input-compact" placeholder="email@example.com" />
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label" style="font-weight:800;">Phone (optional)</label>
+              <input id="cc_phone" class="form-control input-compact" placeholder="Phone" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" style="font-weight:800;">Address (optional)</label>
+              <input id="cc_address" class="form-control input-compact" placeholder="Address" />
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label" style="font-weight:800;">Company (optional)</label>
+              <input id="cc_company" class="form-control input-compact" placeholder="Company" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" style="font-weight:800;">City (optional)</label>
+              <input id="cc_city" class="form-control input-compact" placeholder="City" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" style="font-weight:800;">Province (optional)</label>
+              <input id="cc_province" class="form-control input-compact" placeholder="Province" />
+            </div>
+          </div>
+
+          <div id="createCashCustomerStatus" class="status-msg info mt-3">
+            <span>ℹ️</span><span class="status-text">Full name is required. All other fields optional.</span>
+          </div>
+        </div>
+
+        <div class="modal-footer" style="background: var(--bg-panel-header); border-top: 1px solid var(--border-color);">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-success" id="createCashCustomerConfirmBtn">✅ Create</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script type="module">
+    import "./admin-auth.js";
+    import { supabase } from "../supabaseClient.js";
+
+    // ---------------------------
+    // Helpers
+    // ---------------------------
+    const $ = (id) => document.getElementById(id);
+
+    function money(n) {
+      const v = Number(n || 0);
+      return new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD" }).format(v);
+    }
+
+    function setStatus(el, type, text) {
+      el.className = `status-msg ${type}`;
+      const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+      el.innerHTML = `<span>${icon}</span><span class="status-text">${text}</span>`;
+    }
+
+    function escapeHtml(s) {
+      return String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function pickField(obj, keys, fallback = null) {
+      for (const k of keys) {
+        if (obj && Object.prototype.hasOwnProperty.call(obj, k) && obj[k] !== null && obj[k] !== undefined) return obj[k];
+      }
+      return fallback;
+    }
+
+    function reqNum(v, def = 0) {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : def;
+    }
+
+    function round2(n) {
+      return Math.round((Number(n || 0)) * 100) / 100;
+    }
+
+    // ---------------------------
+    // Theme
+    // ---------------------------
+    const THEME_KEY = "shrinxa-theme";
+    const themeToggle = $("themeToggle");
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute("data-theme", theme);
+      localStorage.setItem(THEME_KEY, theme);
+      if (themeToggle) themeToggle.textContent = theme === "dark" ? "☀️" : "🌙";
+    }
+    function toggleTheme() {
+      const cur = document.documentElement.getAttribute("data-theme") || "light";
+      setTheme(cur === "dark" ? "light" : "dark");
+    }
+    function initTheme() {
+      const saved = localStorage.getItem(THEME_KEY);
+      if (saved) setTheme(saved);
+      else {
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        setTheme(prefersDark ? "dark" : "light");
+      }
+    }
+    themeToggle?.addEventListener("click", toggleTheme);
+
+    // ---------------------------
+    // Admin gating (wait until #admin visible)
+    // ---------------------------
+    async function waitForAdminReady() {
+      for (let i = 0; i < 50; i++) {
+        const adminWrap = $("admin");
+        if (adminWrap && !adminWrap.classList.contains("hidden")) return true;
+        await new Promise(r => setTimeout(r, 100));
+      }
+      return false;
+    }
+
+    // ---------------------------
+    // State
+    // ---------------------------
+    let CASH_CUSTOMERS = [];
+    let PRODUCTS = [];
+    let SELECTED_CUSTOMER = null;
+
+    // Cart keyed by products.id (uuid)
+    // value: { product, qty, unit_price }
+    const CART = new Map();
+
+    // ---------------------------
+    // Elements
+    // ---------------------------
+    const logoutBtn = $("logoutBtn");
+    const adminEmailEl = $("adminEmail");
+
+    const cashCustomerSelect = $("cashCustomerSelect");
+    const refreshCashCustomersBtn = $("refreshCashCustomersBtn");
+    const openCreateCashCustomerBtn = $("openCreateCashCustomerBtn");
+    const cashCustomerStatus = $("cashCustomerStatus");
+
+    const productsGrid = $("productsGrid");
+    const productsStatus = $("productsStatus");
+    const productSearch = $("productSearch");
+    const clearProductSearch = $("clearProductSearch");
+
+    const orderLines = $("orderLines");
+    const subTotalText = $("subTotalText");
+    const deliveryInput = $("deliveryInput");
+    const taxText = $("taxText");
+    const totalText = $("totalText");
+
+    const createCashSaleBtn = $("createCashSaleBtn");
+    const orderStatus = $("orderStatus");
+
+    // modal
+    const modalEl = document.getElementById("createCashCustomerModal");
+    const createCashCustomerModal = modalEl ? new bootstrap.Modal(modalEl) : null;
+
+    const createCashCustomerConfirmBtn = $("createCashCustomerConfirmBtn");
+    const createCashCustomerStatus = $("createCashCustomerStatus");
+
+    const cc_full_name = $("cc_full_name");
+    const cc_email = $("cc_email");
+    const cc_phone = $("cc_phone");
+    const cc_address = $("cc_address");
+    const cc_company = $("cc_company");
+    const cc_city = $("cc_city");
+    const cc_province = $("cc_province");
+
+    // ---------------------------
+    // Auth: logout
+    // ---------------------------
+    logoutBtn?.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      window.location.href = "../login.html";
+    });
+
+    // ---------------------------
+    // Load admin email display (optional)
+    // ---------------------------
+    async function loadAdminEmail() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (adminEmailEl) adminEmailEl.textContent = user?.email || "";
+    }
+
+    // ---------------------------
+    // Cash customers
+    // ---------------------------
+    async function loadCashCustomers() {
+      setStatus(cashCustomerStatus, "info", "Loading cash customers…");
+      cashCustomerSelect.innerHTML = `<option value="">Select a cash customer…</option>`;
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, phone, customer_type")
+        .eq("is_admin", false)
+        .eq("customer_type", "cash")
+        .order("full_name", { ascending: true });
+
+      if (error) {
+        setStatus(cashCustomerStatus, "error", "ERROR: " + error.message);
+        CASH_CUSTOMERS = [];
+        return;
+      }
+
+      CASH_CUSTOMERS = Array.isArray(data) ? data : [];
+      for (const c of CASH_CUSTOMERS) {
+        const name = c.full_name || "—";
+        const email = c.email || "";
+        const phone = c.phone || "";
+        const opt = document.createElement("option");
+        opt.value = c.id;
+        opt.textContent = `${name}${email ? " — " + email : ""}${phone ? " — " + phone : ""}`;
+        cashCustomerSelect.appendChild(opt);
+      }
+
+      setStatus(cashCustomerStatus, "success", `Loaded ${CASH_CUSTOMERS.length} cash customers.`);
+    }
+
+    cashCustomerSelect?.addEventListener("change", () => {
+      const id = (cashCustomerSelect.value || "").trim();
+      SELECTED_CUSTOMER = CASH_CUSTOMERS.find(c => String(c.id) === id) || null;
+      CART.clear();
+      renderOrder();
+      if (SELECTED_CUSTOMER) setStatus(orderStatus, "success", "Customer selected. Add products to build cash sale.");
+      else setStatus(orderStatus, "info", "Select a cash customer to begin.");
+    });
+
+    refreshCashCustomersBtn?.addEventListener("click", loadCashCustomers);
+
+    // ---------------------------
+    // Create cash customer modal
+    // ---------------------------
+    openCreateCashCustomerBtn?.addEventListener("click", () => {
+      cc_full_name.value = "";
+      cc_email.value = "";
+      cc_phone.value = "";
+      cc_address.value = "";
+      cc_company.value = "";
+      cc_city.value = "";
+      cc_province.value = "";
+      setStatus(createCashCustomerStatus, "info", "Full name is required. All other fields optional.");
+      createCashCustomerModal?.show();
+    });
+
+    createCashCustomerConfirmBtn?.addEventListener("click", async () => {
+      const full_name = (cc_full_name.value || "").trim();
+      if (!full_name) {
+        setStatus(createCashCustomerStatus, "warning", "Full name is required.");
+        return;
+      }
+
+      setStatus(createCashCustomerStatus, "info", "Creating…");
+
+      const body = {
+        full_name,
+        email: (cc_email.value || "").trim() || null,
+        phone: (cc_phone.value || "").trim() || null,
+        address: (cc_address.value || "").trim() || null,
+        company_name: (cc_company.value || "").trim() || null,
+        city: (cc_city.value || "").trim() || null,
+        province: (cc_province.value || "").trim() || null,
+      };
+
+      const { data, error } = await supabase.functions.invoke("admin-create-cash-customer", { body });
+      if (error) {
+        setStatus(createCashCustomerStatus, "error", "ERROR: " + error.message);
+        return;
+      }
+      if (!data?.ok) {
+        setStatus(createCashCustomerStatus, "error", "ERROR: " + (data?.error || "Unknown"));
+        return;
+      }
+
+      setStatus(createCashCustomerStatus, "success", "Cash customer created ✅");
+      await loadCashCustomers();
+      cashCustomerSelect.value = data.id;
+      cashCustomerSelect.dispatchEvent(new Event("change"));
+      setTimeout(() => createCashCustomerModal?.hide(), 450);
+    });
+
+    // ---------------------------
+    // Products
+    // ---------------------------
+    function productToVM(r) {
+      const id = String(pickField(r, ["id"], ""));
+      const public_id = String(pickField(r, ["public_id", "publicId", "slug"], "") || "");
+      const name = String(pickField(r, ["name", "product_name", "title"], "") || "");
+      const stock = Number(pickField(r, ["stock_on_hand", "stock", "qty_on_hand", "quantity_on_hand"], 0)) || 0;
+      const retail = Number(pickField(r, ["retail_price", "std_retail", "price_retail"], 0)) || 0;
+      return { id, public_id, name, stock, retail, raw: r };
+    }
+
+    async function loadProducts() {
+      setStatus(productsStatus, "info", "Loading products…");
+      productsGrid.innerHTML = "";
+
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .order("sort_order", { ascending: true });
+
+      if (error) {
+        setStatus(productsStatus, "error", "ERROR: " + error.message);
+        PRODUCTS = [];
+        return;
+      }
+
+      const rows = Array.isArray(data) ? data : [];
+      PRODUCTS = rows.filter(r => {
+        const v = (r?.is_active ?? r?.active);
+        if (v === null || v === undefined) return true;
+        return v === true;
+      });
+
+      setStatus(productsStatus, "success", `Loaded ${PRODUCTS.length} products.`);
+      renderProductsGrid();
+    }
+
+    function renderProductsGrid() {
+      const q = (productSearch.value || "").trim().toLowerCase();
+
+      const filtered = PRODUCTS
+        .map(productToVM)
+        .filter(vm => {
+          if (!vm.id || !vm.name) return false;
+          if (q && !vm.name.toLowerCase().includes(q)) return false;
+          return true;
+        });
+
+      productsGrid.innerHTML = filtered.map(vm => {
+        const out = vm.stock <= 0;
+        const low = vm.stock > 0 && vm.stock <= 5;
+
+        const badgeClass = out ? "badge-out" : (low ? "badge-low" : "badge-ok");
+        const badgeText = out ? "Out of stock" : (low ? `Low: ${vm.stock}` : `Stock: ${vm.stock}`);
+
+        return `
+          <div class="prod-card" data-id="${escapeHtml(vm.id)}">
+            <div>
+              <div class="prod-name">${escapeHtml(vm.name)}</div>
+              <div class="prod-price">${money(vm.retail)}<span class="text-muted" style="font-size:12px; font-weight:700;"> / box</span></div>
+              <div class="mt-2"><span class="badge-stock ${badgeClass}">${escapeHtml(badgeText)}</span></div>
+            </div>
+            <button class="btn-add-prod" ${out ? "disabled" : ""}>+</button>
+          </div>
+        `;
+      }).join("");
+
+      productsGrid.querySelectorAll(".btn-add-prod").forEach(btn => {
+        btn.addEventListener("click", () => {
+          if (!SELECTED_CUSTOMER) {
+            setStatus(orderStatus, "warning", "Select a cash customer first.");
+            return;
+          }
+          const card = btn.closest(".prod-card");
+          const id = card?.getAttribute("data-id") || "";
+          const raw = PRODUCTS.find(r => String(r.id) === id);
+          const vm = raw ? productToVM(raw) : null;
+          if (!vm?.id) return;
+
+          addToCart(vm, 1);
+        });
+      });
+    }
+
+    productSearch?.addEventListener("input", renderProductsGrid);
+    clearProductSearch?.addEventListener("click", () => {
+      productSearch.value = "";
+      renderProductsGrid();
+    });
+
+    // ---------------------------
+    // Cart / Order
+    // ---------------------------
+    function addToCart(vm, addQty) {
+      const existing = CART.get(vm.id);
+      const curQty = existing ? existing.qty : 0;
+      const nextQty = curQty + addQty;
+
+      if (nextQty > vm.stock) {
+        setStatus(orderStatus, "error", `Cannot exceed stock. Available: ${vm.stock}`);
+        return;
+      }
+
+      const unit_price = existing ? existing.unit_price : round2(vm.retail);
+      CART.set(vm.id, { product: vm, qty: nextQty, unit_price });
+      renderOrder();
+    }
+
+    function setQty(pid, qty) {
+      const e = CART.get(pid);
+      if (!e) return;
+      const q = Math.max(1, parseInt(String(qty || "1"), 10) || 1);
+      if (q > e.product.stock) {
+        setStatus(orderStatus, "error", `Cannot exceed stock. Available: ${e.product.stock}`);
+        return;
+      }
+      e.qty = q;
+      CART.set(pid, e);
+      renderOrder();
+    }
+
+    function setUnitPrice(pid, v) {
+      const e = CART.get(pid);
+      if (!e) return;
+      const n = round2(reqNum(v, 0));
+      if (n < 0) {
+        setStatus(orderStatus, "warning", "Unit price cannot be negative.");
+        return;
+      }
+      e.unit_price = n;
+      CART.set(pid, e);
+      renderOrder();
+    }
+
+    function removeLine(pid) {
+      CART.delete(pid);
+      renderOrder();
+    }
+
+    function computeTotals() {
+      let sub = 0;
+      for (const { qty, unit_price } of CART.values()) {
+        sub = round2(sub + round2(qty * unit_price));
+      }
+      const del = round2(reqNum(deliveryInput.value, 0));
+      const tax = 0; // cash: no HST
+      const total = round2(sub + del + tax);
+      return { sub, del, tax, total };
+    }
+
+    function renderOrder() {
+      const items = Array.from(CART.values());
+
+      if (!items.length) {
+        orderLines.innerHTML = `<tr><td colspan="4" class="text-center" style="color:var(--text-muted); padding: 18px 8px;">No items selected yet</td></tr>`;
+      } else {
+        orderLines.innerHTML = items.map(({ product, qty, unit_price }) => {
+          const lineTotal = round2(qty * unit_price);
+          return `
+            <tr data-pid="${escapeHtml(product.id)}">
+              <td>
+                <div style="font-weight:900; font-size: 13px;">${escapeHtml(product.name)}</div>
+                <div class="text-muted" style="font-size: 12px;">Stock: ${product.stock}</div>
+              </td>
+
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <button class="qty-btn btn-dec" type="button">−</button>
+                  <input class="qty-box qty-input" value="${qty}" />
+                  <button class="qty-btn btn-inc" type="button">+</button>
+                </div>
+                <button class="btn btn-sm btn-outline-danger btn-remove mt-1" type="button" style="font-size:11px; border-radius:8px;">Remove</button>
+              </td>
+
+              <td>
+                <input class="price-box unit-input" type="number" step="0.01" value="${unit_price}" />
+              </td>
+
+              <td style="font-weight:900; color: var(--primary);">${money(lineTotal)}</td>
+            </tr>
+          `;
+        }).join("");
+
+        orderLines.querySelectorAll("tr[data-pid]").forEach(tr => {
+          const pid = tr.getAttribute("data-pid");
+          const entry = CART.get(pid);
+          if (!entry) return;
+
+          tr.querySelector(".btn-dec")?.addEventListener("click", () => setQty(pid, entry.qty - 1));
+          tr.querySelector(".btn-inc")?.addEventListener("click", () => setQty(pid, entry.qty + 1));
+          tr.querySelector(".btn-remove")?.addEventListener("click", () => removeLine(pid));
+
+          tr.querySelector(".qty-input")?.addEventListener("change", (e) => setQty(pid, e.target.value));
+          tr.querySelector(".unit-input")?.addEventListener("change", (e) => setUnitPrice(pid, e.target.value));
+        });
+      }
+
+      const { sub, del, tax, total } = computeTotals();
+      subTotalText.textContent = money(sub);
+      taxText.textContent = money(tax);
+      totalText.textContent = money(total);
+
+      const enable = !!SELECTED_CUSTOMER && CART.size > 0;
+      createCashSaleBtn.disabled = !enable;
+
+      if (!SELECTED_CUSTOMER) setStatus(orderStatus, "info", "Select a cash customer to begin.");
+      else if (!CART.size) setStatus(orderStatus, "info", "Add products to the cash order.");
+      else setStatus(orderStatus, "success", "Ready to create cash sale.");
+    }
+
+    deliveryInput?.addEventListener("change", renderOrder);
+
+    // ---------------------------
+    // Create cash sale
+    // ---------------------------
+    createCashSaleBtn?.addEventListener("click", async () => {
+      if (!SELECTED_CUSTOMER) return;
+      if (!CART.size) return;
+
+      setStatus(orderStatus, "info", "Creating cash sale…");
+
+      const { sub, del } = computeTotals();
+
+      const items = Array.from(CART.values()).map(({ product, qty, unit_price }) => ({
+        product_id: product.id,       // uuid
+        qty,
+        unit_price: round2(unit_price),
+      }));
+
+      const body = {
+        customer_id: SELECTED_CUSTOMER.id,
+        delivery_fee: round2(del),
+        items,
+      };
+
+      const { data, error } = await supabase.functions.invoke("admin-create-cash-sale", { body });
+      if (error) {
+        setStatus(orderStatus, "error", "ERROR: " + error.message);
+        return;
+      }
+      if (!data?.ok) {
+        setStatus(orderStatus, "error", "ERROR: " + (data?.error || "Unknown"));
+        return;
+      }
+
+      CART.clear();
+      deliveryInput.value = "0";
+      renderOrder();
+
+      const invNo = data.invoice_number || data.invoice_id;
+      setStatus(orderStatus, "success", `Cash sale created ✅ Reference: ${invNo}`);
+    });
+
+    // ---------------------------
+    // Init
+    // ---------------------------
+    async function init() {
+      initTheme();
+      const ok = await waitForAdminReady();
+      if (!ok) return;
+
+      await loadAdminEmail();
+      await loadCashCustomers();
+      await loadProducts();
+      renderOrder();
+    }
+
+    init();
+  </script>
+</body>
+</html>
