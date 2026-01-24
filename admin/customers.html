@@ -1,19 +1,164 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Admin – Customers</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shrinxa Admin – Customers</title>
 
-<style>
-  body { background:#f6f7fb; }
-  header { background:#111; }
-  header a { color:#fff; text-decoration:none; opacity:.9; }
-  header a:hover { opacity:1; text-decoration:underline; }
-  .nav-links { gap:14px; flex-wrap:wrap; }
-</style>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
+  <style>
+    :root{
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --ink: #111827;
+      --muted:#6b7280;
+      --brand:#111;
+      --ring: rgba(99,102,241,.25);
+    }
+
+    body{ background: var(--bg); color: var(--ink); }
+    header{
+      background: var(--brand);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: 0 8px 30px rgba(0,0,0,.18);
+    }
+    header a{
+      color:#fff;
+      text-decoration:none;
+      opacity:.85;
+      padding:6px 8px;
+      border-radius:10px;
+    }
+    header a:hover{ opacity:1; background: rgba(255,255,255,.08); }
+    header a.active{ opacity:1; background: rgba(255,255,255,.14); text-decoration:none; }
+    .nav-links{ gap:6px; flex-wrap:wrap; }
+
+    .page-title{
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+
+    .card{
+      border: 0;
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(17,24,39,.08);
+    }
+
+    .stat-pill{
+      background: #fff;
+      border: 1px solid rgba(17,24,39,.08);
+      border-radius: 999px;
+      padding: 6px 10px;
+      color: var(--muted);
+      font-size: .875rem;
+    }
+
+    .statusbar{
+      border-radius: 14px;
+      border: 1px solid rgba(17,24,39,.12);
+      padding: 10px 12px;
+      background: #fff;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .statusbar .hint{ color: var(--muted); font-size: .875rem; }
+
+    .form-control:focus, .form-select:focus{
+      box-shadow: 0 0 0 .25rem var(--ring);
+      border-color: rgba(99,102,241,.5);
+    }
+
+    table{
+      border-collapse: separate !important;
+      border-spacing: 0;
+      overflow: hidden;
+      border-radius: 14px;
+    }
+
+    thead th{
+      position: sticky;
+      top: 0; /* sticky within table container */
+      z-index: 5;
+      background: #f8fafc !important;
+      border-bottom: 1px solid rgba(17,24,39,.08) !important;
+      font-size: .8rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: #475569;
+      white-space: nowrap;
+    }
+
+    tbody td{ vertical-align: middle; }
+    tbody tr:hover{ background: #fafafa; }
+
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .truncate{
+      max-width: 220px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .badge-soft{
+      background: rgba(99,102,241,.12);
+      color: rgb(79,70,229);
+      border: 1px solid rgba(99,102,241,.18);
+      font-weight: 700;
+    }
+
+    .badge-admin{
+      background: rgba(16,185,129,.12);
+      color: rgb(5,150,105);
+      border: 1px solid rgba(16,185,129,.18);
+      font-weight: 800;
+    }
+
+    .actions-cell{
+      min-width: 260px;
+    }
+
+    .btn{
+      border-radius: 12px;
+    }
+
+    .btn-outline-danger{
+      border-color: rgba(220,38,38,.35);
+      color: rgb(185,28,28);
+    }
+    .btn-outline-danger:hover{
+      background: rgba(220,38,38,.08);
+      border-color: rgba(220,38,38,.45);
+      color: rgb(153,27,27);
+    }
+
+    .btn-outline-secondary{
+      border-color: rgba(100,116,139,.35);
+      color: rgb(51,65,85);
+    }
+    .btn-outline-secondary:hover{
+      background: rgba(100,116,139,.10);
+      border-color: rgba(100,116,139,.45);
+      color: rgb(30,41,59);
+    }
+
+    .table-wrap{
+      max-height: calc(100vh - 230px);
+      overflow: auto;
+      border-radius: 14px;
+      border: 1px solid rgba(17,24,39,.08);
+      background: #fff;
+    }
+
+    .muted-small{ color: var(--muted); font-size: .875rem; }
+  </style>
 </head>
+
 <body>
 <header class="py-3">
   <div class="container-fluid px-4 d-flex align-items-center gap-3">
@@ -22,7 +167,7 @@
     <div class="d-flex nav-links">
       <a href="./dashboard.html">Dashboard</a>
       <a href="./orders.html">Orders</a>
-      <a href="./customers.html" style="text-decoration:underline; opacity:1;">Customers</a>
+      <a href="./customers.html" class="active">Customers</a>
       <a href="./products-admin.html">Products</a>
       <a href="./platinum.html">Platinum</a>
       <a href="./delivery-admin.html">Delivery Rules</a>
@@ -32,25 +177,48 @@
     </div>
 
     <div class="ms-auto d-flex align-items-center gap-2">
-      <span id="adminEmail" class="text-white small"></span>
+      <span id="adminEmail" class="text-white small opacity-75"></span>
       <button id="logoutBtn" class="btn btn-sm btn-outline-light">Logout</button>
     </div>
-
   </div>
 </header>
 
-  <h2 class="px-4 pt-3">Customers</h2>
+<main class="container-fluid px-4 py-4">
+  <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
+    <div>
+      <div class="page-title h3 m-0">Customers</div>
+      <div class="muted-small">Edit customer profile fields, tiers, wholesale threshold, payment terms, and permanent deletion.</div>
+    </div>
 
-  <div id="status" class="mx-4" style="padding:8px;border:1px solid #ccc;display:inline-block;margin-bottom:10px;">
-    Loading…
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      <div class="stat-pill">
+        <span class="me-1">Rows:</span><span id="rowCount" class="fw-semibold">—</span>
+      </div>
+      <div class="stat-pill">
+        <span class="me-1">Search:</span>
+        <span class="fw-semibold">name / email / phone</span>
+      </div>
+    </div>
   </div>
 
-  <div class="px-4 pb-4">
-    <div class="table-responsive">
-      <table class="table table-sm table-bordered align-middle bg-white">
+  <div class="card p-3">
+    <div class="statusbar mb-3">
+      <div class="d-flex gap-3 align-items-center flex-wrap">
+        <div class="input-group" style="max-width: 520px;">
+          <span class="input-group-text">🔎</span>
+          <input id="searchInp" class="form-control" placeholder="Search customers (email, name, phone, company, city)..." />
+          <button id="clearSearchBtn" class="btn btn-outline-secondary" type="button">Clear</button>
+        </div>
+        <div class="hint">Tip: use Edit → Save to update info. Delete is permanent (profiles + Auth).</div>
+      </div>
+      <div id="status" class="text-nowrap fw-semibold text-muted">Loading…</div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table table-sm table-hover align-middle m-0">
         <thead class="table-light">
           <tr>
-            <th>ID</th>
+            <th class="mono">ID</th>
             <th>Email</th>
 
             <th>Full Name</th>
@@ -70,305 +238,359 @@
             <th>Save Terms</th>
 
             <th>Admin</th>
-            <th style="min-width:220px;">Actions</th>
+            <th class="actions-cell">Actions</th>
           </tr>
         </thead>
         <tbody id="rows"></tbody>
       </table>
     </div>
   </div>
+</main>
 
-  <script type="module">
-    import { supabase } from "../supabaseClient.js";
+<script type="module">
+  import { supabase } from "../supabaseClient.js";
 
-    // header: email + logout
-    const adminEmailEl = document.getElementById("adminEmail");
-    const logoutBtn = document.getElementById("logoutBtn");
+  const adminEmailEl = document.getElementById("adminEmail");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const status = document.getElementById("status");
+  const tbody = document.getElementById("rows");
+  const rowCount = document.getElementById("rowCount");
+  const searchInp = document.getElementById("searchInp");
+  const clearSearchBtn = document.getElementById("clearSearchBtn");
 
-    logoutBtn?.addEventListener("click", async () => {
-      await supabase.auth.signOut();
-      window.location.href = "../login.html";
+  logoutBtn?.addEventListener("click", async () => {
+    await supabase.auth.signOut();
+    window.location.href = "../login.html";
+  });
+
+  function show(msg) { status.textContent = msg; }
+
+  function esc(s) {
+    return String(s ?? "").replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    }[c]));
+  }
+
+  function tierSelect(current) {
+    const v = String(current ?? "standard").toLowerCase();
+    return `
+      <select class="tierSel form-select form-select-sm" style="width:140px;">
+        <option value="standard" ${v==="standard"?"selected":""}>standard</option>
+        <option value="gold" ${v==="gold"?"selected":""}>gold</option>
+        <option value="platinum" ${v==="platinum"?"selected":""}>platinum</option>
+      </select>
+    `;
+  }
+
+  function qtyInput(current) {
+    const v = Number.isFinite(Number(current)) ? Number(current) : 50;
+    return `<input class="qtyInp form-control form-control-sm" type="number" min="1" step="1" value="${v}" style="width:90px;">`;
+  }
+
+  function termsInput(current) {
+    const v = Number.isFinite(Number(current)) ? Number(current) : 2;
+    return `<input class="termsInp form-control form-control-sm" type="number" min="2" step="1" value="${v}" style="width:90px;">`;
+  }
+
+  function renderInfoCellsReadOnly(c) {
+    return `
+      <td class="c-full truncate" title="${esc(c.full_name ?? "")}">${esc(c.full_name ?? "")}</td>
+      <td class="c-company truncate" title="${esc(c.company_name ?? "")}">${esc(c.company_name ?? "")}</td>
+      <td class="c-phone">${esc(c.phone ?? "")}</td>
+      <td class="c-address truncate" title="${esc(c.address ?? "")}">${esc(c.address ?? "")}</td>
+      <td class="c-city">${esc(c.city ?? "")}</td>
+      <td class="c-province">${esc(c.province ?? "")}</td>
+    `;
+  }
+
+  function setInfoCellsEditMode(tr) {
+    const full = tr.querySelector(".c-full")?.textContent ?? "";
+    const company = tr.querySelector(".c-company")?.textContent ?? "";
+    const phone = tr.querySelector(".c-phone")?.textContent ?? "";
+    const address = tr.querySelector(".c-address")?.textContent ?? "";
+    const city = tr.querySelector(".c-city")?.textContent ?? "";
+    const province = tr.querySelector(".c-province")?.textContent ?? "";
+
+    tr.dataset.orig_full = full;
+    tr.dataset.orig_company = company;
+    tr.dataset.orig_phone = phone;
+    tr.dataset.orig_address = address;
+    tr.dataset.orig_city = city;
+    tr.dataset.orig_province = province;
+
+    tr.querySelector(".c-full").innerHTML = `<input class="editFull form-control form-control-sm" value="${esc(full)}">`;
+    tr.querySelector(".c-company").innerHTML = `<input class="editCompany form-control form-control-sm" value="${esc(company)}">`;
+    tr.querySelector(".c-phone").innerHTML = `<input class="editPhone form-control form-control-sm" value="${esc(phone)}">`;
+    tr.querySelector(".c-address").innerHTML = `<input class="editAddress form-control form-control-sm" value="${esc(address)}">`;
+    tr.querySelector(".c-city").innerHTML = `<input class="editCity form-control form-control-sm" value="${esc(city)}">`;
+    tr.querySelector(".c-province").innerHTML = `<input class="editProvince form-control form-control-sm" value="${esc(province)}">`;
+
+    tr.querySelector(".editInfoBtn")?.classList.add("d-none");
+    tr.querySelector(".saveInfoBtn")?.classList.remove("d-none");
+    tr.querySelector(".cancelInfoBtn")?.classList.remove("d-none");
+  }
+
+  function setInfoCellsReadOnlyMode(tr) {
+    const full = tr.dataset.orig_full ?? (tr.querySelector(".editFull")?.value ?? "");
+    const company = tr.dataset.orig_company ?? (tr.querySelector(".editCompany")?.value ?? "");
+    const phone = tr.dataset.orig_phone ?? (tr.querySelector(".editPhone")?.value ?? "");
+    const address = tr.dataset.orig_address ?? (tr.querySelector(".editAddress")?.value ?? "");
+    const city = tr.dataset.orig_city ?? (tr.querySelector(".editCity")?.value ?? "");
+    const province = tr.dataset.orig_province ?? (tr.querySelector(".editProvince")?.value ?? "");
+
+    tr.querySelector(".c-full").textContent = full;
+    tr.querySelector(".c-company").textContent = company;
+    tr.querySelector(".c-phone").textContent = phone;
+    tr.querySelector(".c-address").textContent = address;
+    tr.querySelector(".c-city").textContent = city;
+    tr.querySelector(".c-province").textContent = province;
+
+    tr.querySelector(".editInfoBtn")?.classList.remove("d-none");
+    tr.querySelector(".saveInfoBtn")?.classList.add("d-none");
+    tr.querySelector(".cancelInfoBtn")?.classList.add("d-none");
+  }
+
+  // Search filtering
+  function applyFilter() {
+    const q = String(searchInp?.value ?? "").trim().toLowerCase();
+    const rows = tbody.querySelectorAll("tr");
+    let visible = 0;
+
+    rows.forEach(tr => {
+      const hay = (tr.dataset.search || "").toLowerCase();
+      const ok = !q || hay.includes(q);
+      tr.classList.toggle("d-none", !ok);
+      if (ok) visible++;
     });
 
-    const status = document.getElementById("status");
-    const tbody = document.getElementById("rows");
+    if (rowCount) rowCount.textContent = String(visible);
+  }
 
-    function show(msg) { status.textContent = msg; }
+  clearSearchBtn?.addEventListener("click", () => {
+    if (searchInp) searchInp.value = "";
+    applyFilter();
+    show("Ready.");
+  });
 
-    function esc(s) {
-      return String(s ?? "").replace(/[&<>"']/g, (c) => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;",
-      }[c]));
+  searchInp?.addEventListener("input", () => {
+    applyFilter();
+  });
+
+  tbody.addEventListener("click", async (e) => {
+    const tierBtn = e.target?.closest?.(".saveTierBtn");
+    const qtyBtn = e.target?.closest?.(".saveQtyBtn");
+    const termsBtn = e.target?.closest?.(".saveTermsBtn");
+    const editInfoBtn = e.target?.closest?.(".editInfoBtn");
+    const saveInfoBtn = e.target?.closest?.(".saveInfoBtn");
+    const cancelInfoBtn = e.target?.closest?.(".cancelInfoBtn");
+    const deleteBtn = e.target?.closest?.(".deleteCustomerBtn");
+
+    if (!tierBtn && !qtyBtn && !termsBtn && !editInfoBtn && !saveInfoBtn && !cancelInfoBtn && !deleteBtn) return;
+
+    const tr = e.target.closest("tr");
+    const id = tr.dataset.id;
+
+    if (tierBtn) {
+      const sel = tr.querySelector(".tierSel");
+      const newTier = sel.value;
+
+      show("Saving tier…");
+      const { error } = await supabase.from("profiles").update({ tier: newTier }).eq("id", id);
+      if (error) return show("ERROR: " + error.message);
+      show("Tier saved ✅");
+      return;
     }
 
-    function tierSelect(current) {
-      const v = String(current ?? "standard").toLowerCase();
-      return `
-        <select class="tierSel form-select form-select-sm" style="width:140px;">
-          <option value="standard" ${v==="standard"?"selected":""}>standard</option>
-          <option value="gold" ${v==="gold"?"selected":""}>gold</option>
-          <option value="platinum" ${v==="platinum"?"selected":""}>platinum</option>
-        </select>
-      `;
-    }
+    if (qtyBtn) {
+      const inp = tr.querySelector(".qtyInp");
+      const newQty = parseInt(inp.value, 10);
+      if (!Number.isFinite(newQty) || newQty < 1) return show("ERROR: invalid qty");
 
-    function qtyInput(current) {
-      const v = Number.isFinite(Number(current)) ? Number(current) : 50;
-      return `<input class="qtyInp form-control form-control-sm" type="number" min="1" step="1" value="${v}" style="width:90px;">`;
-    }
-
-    function termsInput(current) {
-      const v = Number.isFinite(Number(current)) ? Number(current) : 2;
-      return `
-        <input class="termsInp form-control form-control-sm" type="number" min="2" step="1" value="${v}" style="width:90px;">
-      `;
-    }
-
-    function renderInfoCellsReadOnly(c) {
-      return `
-        <td class="c-full">${esc(c.full_name ?? "")}</td>
-        <td class="c-company">${esc(c.company_name ?? "")}</td>
-        <td class="c-phone">${esc(c.phone ?? "")}</td>
-        <td class="c-address">${esc(c.address ?? "")}</td>
-        <td class="c-city">${esc(c.city ?? "")}</td>
-        <td class="c-province">${esc(c.province ?? "")}</td>
-      `;
-    }
-
-    function setInfoCellsEditMode(tr) {
-      const full = tr.querySelector(".c-full")?.textContent ?? "";
-      const company = tr.querySelector(".c-company")?.textContent ?? "";
-      const phone = tr.querySelector(".c-phone")?.textContent ?? "";
-      const address = tr.querySelector(".c-address")?.textContent ?? "";
-      const city = tr.querySelector(".c-city")?.textContent ?? "";
-      const province = tr.querySelector(".c-province")?.textContent ?? "";
-
-      // store original values for cancel
-      tr.dataset.orig_full = full;
-      tr.dataset.orig_company = company;
-      tr.dataset.orig_phone = phone;
-      tr.dataset.orig_address = address;
-      tr.dataset.orig_city = city;
-      tr.dataset.orig_province = province;
-
-      tr.querySelector(".c-full").innerHTML = `<input class="editFull form-control form-control-sm" value="${esc(full)}">`;
-      tr.querySelector(".c-company").innerHTML = `<input class="editCompany form-control form-control-sm" value="${esc(company)}">`;
-      tr.querySelector(".c-phone").innerHTML = `<input class="editPhone form-control form-control-sm" value="${esc(phone)}">`;
-      tr.querySelector(".c-address").innerHTML = `<input class="editAddress form-control form-control-sm" value="${esc(address)}">`;
-      tr.querySelector(".c-city").innerHTML = `<input class="editCity form-control form-control-sm" value="${esc(city)}">`;
-      tr.querySelector(".c-province").innerHTML = `<input class="editProvince form-control form-control-sm" value="${esc(province)}">`;
-
-      tr.querySelector(".editInfoBtn")?.classList.add("d-none");
-      tr.querySelector(".saveInfoBtn")?.classList.remove("d-none");
-      tr.querySelector(".cancelInfoBtn")?.classList.remove("d-none");
-    }
-
-    function setInfoCellsReadOnlyMode(tr) {
-      const full = tr.dataset.orig_full ?? (tr.querySelector(".editFull")?.value ?? "");
-      const company = tr.dataset.orig_company ?? (tr.querySelector(".editCompany")?.value ?? "");
-      const phone = tr.dataset.orig_phone ?? (tr.querySelector(".editPhone")?.value ?? "");
-      const address = tr.dataset.orig_address ?? (tr.querySelector(".editAddress")?.value ?? "");
-      const city = tr.dataset.orig_city ?? (tr.querySelector(".editCity")?.value ?? "");
-      const province = tr.dataset.orig_province ?? (tr.querySelector(".editProvince")?.value ?? "");
-
-      tr.querySelector(".c-full").textContent = full;
-      tr.querySelector(".c-company").textContent = company;
-      tr.querySelector(".c-phone").textContent = phone;
-      tr.querySelector(".c-address").textContent = address;
-      tr.querySelector(".c-city").textContent = city;
-      tr.querySelector(".c-province").textContent = province;
-
-      tr.querySelector(".editInfoBtn")?.classList.remove("d-none");
-      tr.querySelector(".saveInfoBtn")?.classList.add("d-none");
-      tr.querySelector(".cancelInfoBtn")?.classList.add("d-none");
-    }
-
-    tbody.addEventListener("click", async (e) => {
-      const tierBtn = e.target?.closest?.(".saveTierBtn");
-      const qtyBtn = e.target?.closest?.(".saveQtyBtn");
-      const termsBtn = e.target?.closest?.(".saveTermsBtn");
-      const editInfoBtn = e.target?.closest?.(".editInfoBtn");
-      const saveInfoBtn = e.target?.closest?.(".saveInfoBtn");
-      const cancelInfoBtn = e.target?.closest?.(".cancelInfoBtn");
-      const deleteBtn = e.target?.closest?.(".deleteCustomerBtn");
-
-      if (!tierBtn && !qtyBtn && !termsBtn && !editInfoBtn && !saveInfoBtn && !cancelInfoBtn && !deleteBtn) return;
-
-      const tr = e.target.closest("tr");
-      const id = tr.dataset.id;
-
-      if (tierBtn) {
-        const sel = tr.querySelector(".tierSel");
-        const newTier = sel.value;
-
-        show("Saving tier…");
-        const { error } = await supabase.from("profiles").update({ tier: newTier }).eq("id", id);
-        if (error) return show("ERROR: " + error.message);
-        show("Tier saved ✅");
-        return;
-      }
-
-      if (qtyBtn) {
-        const inp = tr.querySelector(".qtyInp");
-        const newQty = parseInt(inp.value, 10);
-        if (!Number.isFinite(newQty) || newQty < 1) return show("ERROR: invalid qty");
-
-        show("Saving wholesale qty…");
-        const { error } = await supabase
-          .from("profiles")
-          .update({ wholesale_qty_threshold: newQty })
-          .eq("id", id);
-        if (error) return show("ERROR: " + error.message);
-        show("Wholesale qty saved ✅");
-        return;
-      }
-
-      if (termsBtn) {
-        const inp = tr.querySelector(".termsInp");
-        const days = parseInt(inp.value, 10);
-        if (!Number.isFinite(days) || days < 2) return show("ERROR: invalid days");
-
-        show("Saving payment terms…");
-        const { error } = await supabase
-          .from("profiles")
-          .update({ payment_terms_days: days })
-          .eq("id", id);
-        if (error) return show("ERROR: " + error.message);
-        show("Payment terms saved ✅");
-        return;
-      }
-
-      if (editInfoBtn) {
-        setInfoCellsEditMode(tr);
-        show("Editing customer info…");
-        return;
-      }
-
-      if (cancelInfoBtn) {
-        setInfoCellsReadOnlyMode(tr);
-        show("Canceled.");
-        return;
-      }
-
-      if (saveInfoBtn) {
-        const payload = {
-          full_name: tr.querySelector(".editFull")?.value ?? "",
-          company_name: tr.querySelector(".editCompany")?.value ?? "",
-          phone: tr.querySelector(".editPhone")?.value ?? "",
-          address: tr.querySelector(".editAddress")?.value ?? "",
-          city: tr.querySelector(".editCity")?.value ?? "",
-          province: tr.querySelector(".editProvince")?.value ?? "",
-        };
-
-        show("Saving customer info…");
-        const { error } = await supabase.from("profiles").update(payload).eq("id", id);
-        if (error) return show("ERROR: " + error.message);
-
-        // update display + exit edit mode
-        tr.dataset.orig_full = payload.full_name;
-        tr.dataset.orig_company = payload.company_name;
-        tr.dataset.orig_phone = payload.phone;
-        tr.dataset.orig_address = payload.address;
-        tr.dataset.orig_city = payload.city;
-        tr.dataset.orig_province = payload.province;
-
-        setInfoCellsReadOnlyMode(tr);
-        show("Customer info saved ✅");
-        return;
-      }
-
-      if (deleteBtn) {
-        const email = tr.dataset.email || "";
-        const ok = confirm(
-          `Permanently delete this customer?\n\n${email || id}\n\nThis will delete from:\n- profiles table\n- Supabase Auth (user account)\n\nWARNING: If this customer has invoices/orders linked, deletion may fail due to database constraints.`
-        );
-        if (!ok) return;
-
-        show("Deleting customer permanently…");
-
-        const { data, error } = await supabase.functions.invoke("admin-delete-customer", {
-          body: { customer_id: id },
-        });
-
-        if (error) return show("ERROR: " + error.message);
-        if (!data?.ok) return show("ERROR: " + (data?.error || "Delete failed"));
-
-        tr.remove();
-        show("Customer permanently deleted ✅");
-        return;
-      }
-    });
-
-    async function load() {
-      show("Checking login…");
-      const { data: { user }, error: userErr } = await supabase.auth.getUser();
-      if (userErr) throw new Error("getUser error: " + userErr.message);
-      if (!user) { location.href = "../login.html"; return; }
-      if (adminEmailEl) adminEmailEl.textContent = user.email || "";
-
-      show("Checking admin…");
-      const { data: me, error: meErr } = await supabase
+      show("Saving wholesale qty…");
+      const { error } = await supabase
         .from("profiles")
-        .select("is_admin")
-        .eq("id", user.id)
-        .single();
-
-      if (meErr) throw new Error("profiles check error: " + meErr.message);
-      if (!me?.is_admin) throw new Error("Access denied (not admin)");
-
-      show("Loading customers…");
-      const { data: customers, error: custErr } = await supabase
-        .from("profiles")
-        .select("id, email, full_name, company_name, phone, address, city, province, tier, wholesale_qty_threshold, payment_terms_days, is_admin")
-        .order("created_at", { ascending: false });
-
-      if (custErr) throw new Error("customers query error: " + custErr.message);
-
-      tbody.innerHTML = "";
-      for (const c of (customers || [])) {
-        const tr = document.createElement("tr");
-        tr.dataset.id = c.id;
-        tr.dataset.email = c.email ?? "";
-
-        tr.innerHTML = `
-          <td>${esc(c.id)}</td>
-          <td>${esc(c.email ?? "")}</td>
-
-          ${renderInfoCellsReadOnly(c)}
-
-          <td>${tierSelect(c.tier)}</td>
-          <td><button class="saveTierBtn btn btn-sm btn-outline-primary">Save</button></td>
-
-          <td>${qtyInput(c.wholesale_qty_threshold)}</td>
-          <td><button class="saveQtyBtn btn btn-sm btn-outline-primary">Save</button></td>
-
-          <td>${termsInput(c.payment_terms_days)}</td>
-          <td><button class="saveTermsBtn btn btn-sm btn-outline-primary">Save</button></td>
-
-          <td>${c.is_admin ? "YES" : "NO"}</td>
-
-          <td>
-            <div class="d-flex gap-2 flex-wrap">
-              <button class="editInfoBtn btn btn-sm btn-outline-secondary">Edit</button>
-              <button class="saveInfoBtn btn btn-sm btn-success d-none">Save</button>
-              <button class="cancelInfoBtn btn btn-sm btn-outline-secondary d-none">Cancel</button>
-              <button class="deleteCustomerBtn btn btn-sm btn-outline-danger">Delete</button>
-            </div>
-          </td>
-        `;
-
-        tbody.appendChild(tr);
-      }
-
-      show(`Done. Rows: ${(customers || []).length}`);
+        .update({ wholesale_qty_threshold: newQty })
+        .eq("id", id);
+      if (error) return show("ERROR: " + error.message);
+      show("Wholesale qty saved ✅");
+      return;
     }
 
-    load().catch(err => show("ERROR: " + err.message));
-  </script>
+    if (termsBtn) {
+      const inp = tr.querySelector(".termsInp");
+      const days = parseInt(inp.value, 10);
+      if (!Number.isFinite(days) || days < 2) return show("ERROR: invalid days");
 
+      show("Saving payment terms…");
+      const { error } = await supabase
+        .from("profiles")
+        .update({ payment_terms_days: days })
+        .eq("id", id);
+      if (error) return show("ERROR: " + error.message);
+      show("Payment terms saved ✅");
+      return;
+    }
+
+    if (editInfoBtn) {
+      setInfoCellsEditMode(tr);
+      show("Editing customer info…");
+      return;
+    }
+
+    if (cancelInfoBtn) {
+      setInfoCellsReadOnlyMode(tr);
+      show("Canceled.");
+      return;
+    }
+
+    if (saveInfoBtn) {
+      const payload = {
+        full_name: tr.querySelector(".editFull")?.value ?? "",
+        company_name: tr.querySelector(".editCompany")?.value ?? "",
+        phone: tr.querySelector(".editPhone")?.value ?? "",
+        address: tr.querySelector(".editAddress")?.value ?? "",
+        city: tr.querySelector(".editCity")?.value ?? "",
+        province: tr.querySelector(".editProvince")?.value ?? "",
+      };
+
+      show("Saving customer info…");
+      const { error } = await supabase.from("profiles").update(payload).eq("id", id);
+      if (error) return show("ERROR: " + error.message);
+
+      tr.dataset.orig_full = payload.full_name;
+      tr.dataset.orig_company = payload.company_name;
+      tr.dataset.orig_phone = payload.phone;
+      tr.dataset.orig_address = payload.address;
+      tr.dataset.orig_city = payload.city;
+      tr.dataset.orig_province = payload.province;
+
+      setInfoCellsReadOnlyMode(tr);
+      tr.dataset.search = [
+        tr.dataset.email || "",
+        payload.full_name || "",
+        payload.company_name || "",
+        payload.phone || "",
+        payload.city || "",
+        payload.province || "",
+      ].join(" ").toLowerCase();
+
+      applyFilter();
+      show("Customer info saved ✅");
+      return;
+    }
+
+    if (deleteBtn) {
+      const email = tr.dataset.email || "";
+      const ok = confirm(
+        `Permanently delete this customer?
+
+${email || id}
+
+This will delete from:
+- profiles table
+- Supabase Auth (user account)
+
+WARNING: If this customer has invoices/orders linked, deletion may fail due to database constraints.`
+      );
+      if (!ok) return;
+
+      show("Deleting customer permanently…");
+
+      const { data, error } = await supabase.functions.invoke("admin-delete-customer", {
+        body: { customer_id: id },
+      });
+
+      if (error) return show("ERROR: " + error.message);
+      if (!data?.ok) return show("ERROR: " + (data?.error || "Delete failed"));
+
+      tr.remove();
+      applyFilter();
+      show("Customer permanently deleted ✅");
+      return;
+    }
+  });
+
+  async function load() {
+    show("Checking login…");
+    const { data: { user }, error: userErr } = await supabase.auth.getUser();
+    if (userErr) throw new Error("getUser error: " + userErr.message);
+    if (!user) { location.href = "../login.html"; return; }
+    if (adminEmailEl) adminEmailEl.textContent = user.email || "";
+
+    show("Checking admin…");
+    const { data: me, error: meErr } = await supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .single();
+
+    if (meErr) throw new Error("profiles check error: " + meErr.message);
+    if (!me?.is_admin) throw new Error("Access denied (not admin)");
+
+    show("Loading customers…");
+    const { data: customers, error: custErr } = await supabase
+      .from("profiles")
+      .select("id, email, full_name, company_name, phone, address, city, province, tier, wholesale_qty_threshold, payment_terms_days, is_admin")
+      .order("created_at", { ascending: false });
+
+    if (custErr) throw new Error("customers query error: " + custErr.message);
+
+    tbody.innerHTML = "";
+    for (const c of (customers || [])) {
+      const tr = document.createElement("tr");
+      tr.dataset.id = c.id;
+      tr.dataset.email = c.email ?? "";
+
+      // used by search filter
+      tr.dataset.search = [
+        c.email ?? "",
+        c.full_name ?? "",
+        c.company_name ?? "",
+        c.phone ?? "",
+        c.city ?? "",
+        c.province ?? "",
+      ].join(" ").toLowerCase();
+
+      tr.innerHTML = `
+        <td class="mono truncate" title="${esc(c.id)}">${esc(c.id)}</td>
+        <td class="truncate" title="${esc(c.email ?? "")}">${esc(c.email ?? "")}</td>
+
+        ${renderInfoCellsReadOnly(c)}
+
+        <td>${tierSelect(c.tier)}</td>
+        <td><button class="saveTierBtn btn btn-sm btn-outline-primary">Save</button></td>
+
+        <td>${qtyInput(c.wholesale_qty_threshold)}</td>
+        <td><button class="saveQtyBtn btn btn-sm btn-outline-primary">Save</button></td>
+
+        <td>${termsInput(c.payment_terms_days)}</td>
+        <td><button class="saveTermsBtn btn btn-sm btn-outline-primary">Save</button></td>
+
+        <td>${c.is_admin ? '<span class="badge badge-admin">ADMIN</span>' : '<span class="text-muted">—</span>'}</td>
+
+        <td>
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="editInfoBtn btn btn-sm btn-outline-secondary">Edit</button>
+            <button class="saveInfoBtn btn btn-sm btn-success d-none">Save</button>
+            <button class="cancelInfoBtn btn btn-sm btn-outline-secondary d-none">Cancel</button>
+            <button class="deleteCustomerBtn btn btn-sm btn-outline-danger">Delete</button>
+          </div>
+        </td>
+      `;
+
+      tbody.appendChild(tr);
+    }
+
+    if (rowCount) rowCount.textContent = String((customers || []).length);
+    applyFilter();
+    show("Ready.");
+  }
+
+  load().catch(err => show("ERROR: " + err.message));
+</script>
 </body>
 </html>
