@@ -273,12 +273,14 @@
           <label>
             Status (optional)
             <select id="statusFilter" class="form-select">
-              <option value="">Any</option>
-              <option value="paid">paid</option>
-              <option value="unpaid">unpaid</option>
-              <option value="pending">pending</option>
-              <option value="cancelled">cancelled</option>
-            </select>
+  <option value="">Any</option>
+  <option value="paid">paid</option>
+  <option value="unpaid">unpaid</option>
+  <option value="pending">pending</option>
+  <option value="cash">cash</option>
+  <option value="cancelled">cancelled</option>
+</select>
+
           </label>
 
           <div class="d-flex gap-2">
@@ -419,7 +421,7 @@
 
     let query = supabase
       .from("invoices")
-      .select("*, qb_invoice_id, qb_sync_error")
+	.select("*, sale_type, qb_invoice_id, qb_sync_error")
       .order("created_at", { ascending: false })
       .limit(200);
 
@@ -430,7 +432,13 @@
 
     if (from) query = query.gte("created_at", from + "T00:00:00");
     if (to) query = query.lte("created_at", to + "T23:59:59");
-    if (st) query = query.eq("status", st);
+	if (st) {
+  if (st === "cash") {
+    query = query.eq("sale_type", "cash");
+  } else {
+    query = query.eq("status", st);
+  }
+}
 
     if (q) {
       const pat = `%${q}%`;
@@ -463,7 +471,8 @@
     for (const inv of rows) {
       const invoiceNum = inv.invoice_number ?? inv.number ?? inv.id ?? "";
       const created = inv.created_at ?? inv.created ?? "";
-      const stv = (inv.status ?? inv.payment_status ?? "") || "";
+	const isCash = String(inv.sale_type || "").toLowerCase() === "cash";
+	const stv = isCash ? "cash" : ((inv.status ?? inv.payment_status ?? "") || "");
       const total = inv.total_amount ?? inv.total ?? inv.amount_total ?? inv.grand_total ?? "";
       const company = inv.bill_to_company ?? "";
       const phone = inv.bill_to_phone ?? "";
@@ -486,10 +495,11 @@
         <td>
           <select class="stSel form-select form-select-sm" data-prev="${escapeHtml(stv)}">
             <option value="" ${!stv ? "selected" : ""}>(blank)</option>
-            <option value="paid" ${stv==="paid" ? "selected" : ""}>paid</option>
-            <option value="unpaid" ${stv==="unpaid" ? "selected" : ""}>unpaid</option>
-            <option value="pending" ${stv==="pending" ? "selected" : ""}>pending</option>
-            <option value="cancelled" ${stv==="cancelled" ? "selected" : ""}>cancelled</option>
+          <option value="paid" ${stv==="paid" ? "selected" : ""}>paid</option>
+<option value="unpaid" ${stv==="unpaid" ? "selected" : ""}>unpaid</option>
+<option value="pending" ${stv==="pending" ? "selected" : ""}>pending</option>
+<option value="cash" ${stv==="cash" ? "selected" : ""}>cash</option>
+<option value="cancelled" ${stv==="cancelled" ? "selected" : ""}>cancelled</option>
           </select>
         </td>
 
@@ -499,7 +509,7 @@
         <td>
           <div class="row-actions">
             <button type="button" class="btnOpen btn btn-sm btn-outline-secondary" data-id="${escapeHtml(inv.id)}">Open</button>
-            <button type="button" class="btnResend btn btn-sm btn-outline-primary" data-id="${escapeHtml(inv.id)}">Resend Email</button>
+	${isCash ? "" : `<button type="button" class="btnResend btn btn-sm btn-outline-primary" data-id="${escapeHtml(inv.id)}">Resend Email</button>`}
             <button type="button" class="btnSaveStatus btn btn-sm btn-success" data-id="${escapeHtml(inv.id)}">Save Status</button>
             <button type="button" class="btnCancel btn btn-sm btn-outline-danger" data-id="${escapeHtml(inv.id)}">Cancel Order</button>
           </div>
@@ -512,6 +522,7 @@
 
         <td>${qbBadge(inv)}</td>
       `;
+      tr.dataset.raw = JSON.stringify(inv);
       tbody.appendChild(tr);
     }
 
@@ -574,11 +585,18 @@
     const sel = row?.querySelector?.(".stSel");
     const currentStatus = (sel?.value || "").trim().toLowerCase();
 
-    if (currentStatus === "paid") {
-      alert("This order is PAID. If you need a refund, do not cancel/delete it here.");
-      show("Cancelled blocked (paid order).");
-      return;
-    }
+    const tr = cancelBtn.closest("tr");
+const rawJson = tr?.dataset?.raw || "{}";
+let invRow = {};
+try { invRow = JSON.parse(rawJson); } catch (_) {}
+
+const isCash = String(invRow.sale_type || "").toLowerCase() === "cash";
+
+if (currentStatus === "paid" && !isCash) {
+  alert("This order is PAID. If you need a refund, do not cancel/delete it here.");
+  show("Cancelled blocked (paid order).");
+  return;
+}
 
     const invoiceLabel = row?.querySelector?.("td .mono")?.textContent?.trim() || id;
 
