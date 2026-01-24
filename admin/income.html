@@ -7,33 +7,142 @@
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
+  
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Arial, sans-serif; margin: 0; }
-    .wrap { max-width: 100%; padding: 18px; }
-    .status { padding:8px 10px; border:1px solid #ccc; display:inline-block; }
-    .controls { display:flex; gap:10px; align-items:end; flex-wrap:wrap; margin-top:10px; }
-    label { font-size: 12px; color:#333; display:flex; flex-direction:column; gap:4px; }
-    input, select, textarea { padding:6px 8px; border:1px solid #bbb; border-radius:6px; min-width: 170px; }
-    textarea { min-width: 260px; }
-    button { padding:7px 10px; border:1px solid #888; border-radius:8px; background:#f6f6f6; cursor:pointer; }
-    button:hover { background:#efefef; }
-    .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-top:14px; }
-    .card { border:1px solid #e3e3e3; border-radius:14px; padding:12px; background:#fff; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
-    .k { color:#666; font-size:12px; }
-    .v { font-size:22px; font-weight:700; margin-top:6px; }
-    .muted { color:#666; font-size:12px; }
-    .row { display:grid; grid-template-columns: 1.2fr 1fr; gap:12px; margin-top:12px; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { border:1px solid #ddd; padding:8px; vertical-align: top; }
-    th { background:#fafafa; position: sticky; top: 0; z-index: 2; }
-    .right { text-align:right; white-space:nowrap; }
-    header { background:#111; }
-    header a { color:#fff; text-decoration:none; opacity:.9; }
-    header a:hover { opacity:1; text-decoration:underline; }
-    .nav-links { gap:14px; flex-wrap:wrap; }
-    .btnrow { display:flex; gap:8px; flex-wrap:wrap; }
-    @media (max-width: 1100px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .row { grid-template-columns: 1fr; } }
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --brand:#111;
+      --ring: rgba(99,102,241,.25);
+    }
+
+    body{ background:var(--bg); color:var(--ink); margin:0; font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif; }
+
+    header{
+      background:var(--brand);
+      position:sticky;
+      top:0;
+      z-index:60;
+      box-shadow:0 10px 30px rgba(0,0,0,.18);
+    }
+    header a{
+      color:#fff;
+      text-decoration:none;
+      opacity:.85;
+      padding:6px 8px;
+      border-radius:10px;
+      white-space:nowrap;
+    }
+    header a:hover{ opacity:1; background:rgba(255,255,255,.08); text-decoration:none; }
+    header a.active{ opacity:1; background:rgba(255,255,255,.14); text-decoration:none; }
+    .nav-links{ gap:6px; flex-wrap:wrap; }
+
+    .page-title{ font-weight:800; letter-spacing:.2px; }
+
+    .card{
+      border:0;
+      border-radius:18px;
+      box-shadow:0 10px 30px rgba(17,24,39,.08);
+    }
+
+    .statusbar{
+      border-radius:14px;
+      border:1px solid rgba(17,24,39,.12);
+      padding:10px 12px;
+      background:#fff;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .statusbar .hint{ color:var(--muted); font-size:.875rem; }
+
+    .form-control:focus, .form-select:focus, textarea:focus{
+      box-shadow:0 0 0 .25rem var(--ring);
+      border-color:rgba(99,102,241,.5);
+    }
+
+    .wrap{ padding:18px 18px 28px; }
+
+    .k{ color:#475569; font-size:12px; text-transform:uppercase; letter-spacing:.06em; }
+    .v{ font-size:24px; font-weight:800; margin-top:6px; }
+    .muted{ color:var(--muted); font-size:.875rem; }
+
+    .grid{ display:grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap:12px; margin-top:14px; }
+    @media (max-width: 1400px){ .grid{ grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (max-width: 900px){ .grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+    .controls{
+      display:flex;
+      gap:10px;
+      align-items:end;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+    label{ font-size:12px; color:#334155; display:flex; flex-direction:column; gap:6px; margin:0; }
+    input, select, textarea{ border-radius:12px !important; }
+    textarea{ min-width: 260px; }
+
+    .btnrow{ display:flex; gap:8px; flex-wrap:wrap; }
+    button, .btn{ border-radius:12px; }
+
+    .row{ display:grid; grid-template-columns: 1.2fr 1fr; gap:12px; margin-top:12px; }
+    @media (max-width: 1100px){ .row{ grid-template-columns: 1fr; } }
+
+    .table-wrap{
+      overflow:auto;
+      border-radius:14px;
+      border:1px solid rgba(17,24,39,.08);
+      background:#fff;
+      max-height: 420px;
+    }
+
+    table{ border-collapse:separate !important; border-spacing:0; width:100%; margin:0; }
+    th, td{ border-bottom:1px solid rgba(17,24,39,.08); padding:10px 10px; vertical-align:top; }
+    th{
+      background:#f8fafc !important;
+      position:sticky;
+      top:0;
+      z-index:2;
+      font-size:.8rem;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      color:#475569;
+      white-space:nowrap;
+    }
+    tr:hover td{ background:#fafafa; }
+    .right{ text-align:right; white-space:nowrap; }
+
+    .status-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border:1px solid rgba(17,24,39,.12);
+      border-radius:999px;
+      padding:6px 10px;
+      background:#fff;
+      color:#334155;
+      font-size:.875rem;
+      font-weight:700;
+    }
+
+    .panel-title{
+      font-weight:800;
+      letter-spacing:.2px;
+      margin:0;
+    }
+
+    .two-btn{
+      display:flex;
+      gap:10px;
+      align-items:end;
+      flex-wrap:wrap;
+    }
   </style>
+
 </head>
 <body>
 
@@ -49,7 +158,7 @@
       <a href="./platinum.html">Platinum</a>
       <a href="./delivery-admin.html">Delivery Rules</a>
       <a href="./inventory.html">Inventory</a>
-      <a href="./income.html" style="text-decoration:underline; opacity:1;">Income</a>
+      <a href="./income.html" class="active">Income</a>
 	<a href="./clients.html">Clients</a>
 
     </div>
@@ -62,13 +171,13 @@
 </header>
 
 <div class="wrap">
-  <h2>Income</h2>
-  <div class="status" id="status">Loading…</div>
+  <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-2"><div><div class="page-title h3 m-0">Income</div><div class="muted">Revenue, COGS, profit, delivery income, and expenses.</div></div><div class="d-flex gap-2 align-items-center"><span class="status-pill">Exports: CSV</span></div></div>
+  <div class="status-pill" id="status">Loading…</div>
 
   <div class="controls">
     <label>
       Preset
-      <select id="range">
+      <select id="range" class="form-select">
         <option value="month" selected>This month</option>
         <option value="today">Today</option>
         <option value="week">This week</option>
@@ -81,17 +190,17 @@
 
     <label>
       Date from
-      <input id="from" type="date">
+      <input id="from" type="date" class="form-control">
     </label>
 
     <label>
       Date to
-      <input id="to" type="date">
+      <input id="to" type="date" class="form-control">
     </label>
 
     <label>
       Currency
-      <select id="currency">
+      <select id="currency" class="form-select">
         <option value="">All</option>
         <option value="CAD" selected>CAD</option>
         <option value="USD">USD</option>
@@ -99,11 +208,11 @@
     </label>
 
     <div class="btnrow">
-      <button id="btnReload" type="button">Reload</button>
-      <button id="btnExportExpenses" type="button">Export Expenses CSV</button>
-      <button id="btnExportMonthlyWide" type="button">Export Monthly Breakdown CSV</button>
-		<button id="btnExportMonthlyByCat" type="button">Export Monthly Expenses by Category CSV</button>
-		<button id="btnExportYearlyWide" type="button">Export Yearly Breakdown CSV</button>
+      <button id="btnReload" type="button" class="btn btn-primary">Reload</button>
+      <button id="btnExportExpenses" type="button" class="btn btn-outline-secondary">Export Expenses CSV</button>
+      <button id="btnExportMonthlyWide" type="button" class="btn btn-outline-secondary">Export Monthly Breakdown CSV</button>
+		<button id="btnExportMonthlyByCat" type="button" class="btn btn-outline-secondary">Export Monthly Expenses by Category CSV</button>
+		<button id="btnExportYearlyWide" type="button" class="btn btn-outline-secondary">Export Yearly Breakdown CSV</button>
 
     </div>
   </div>
@@ -139,7 +248,7 @@
     <div class="card" style="text-align:center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
       <div class="k">Analytics & Insights</div>
       <a href="./income-analytics.html" target="_blank" style="margin-top: 8px;">
-        <button type="button" style="padding:8px 16px; font-size:13px;">
+        <button type="button" class="btn btn-outline-primary">
           📊 Open Analytics
         </button>
       </a>
@@ -156,32 +265,32 @@
 
         <label>
           Date
-          <input id="expDate" type="date">
+          <input id="expDate" type="date" class="form-control">
         </label>
 
         <label>
           Category
-         <select id="expCategory"></select>
+         <select id="expCategory" class="form-select"></select>
         </label>
 
 <label>
   New Category
-  <input id="newCategoryName" type="text" placeholder="e.g. parking">
+  <input id="newCategoryName" type="text" placeholder="e.g. parking" class="form-control">
 </label>
 
 <div style="display:flex; gap:10px; align-items:end;">
-  <button id="btnAddCategory" type="button" style="flex:1;">Add Category</button>
-  <button id="btnDeleteCategory" type="button" style="flex:1; border-color:#c33;">Delete Category</button>
+  <button id="btnAddCategory" type="button" class="btn btn-outline-secondary" style="flex:1;">Add Category</button>
+  <button id="btnDeleteCategory" type="button" class="btn btn-outline-danger" style="flex:1;">Delete Category</button>
 </div>
 
         <label>
           Amount
-          <input id="expAmount" type="number" step="0.01" min="0" placeholder="0.00">
+          <input id="expAmount" type="number" step="0.01" min="0" placeholder="0.00" class="form-control">
         </label>
 
         <label>
           Currency
-          <select id="expCurrency">
+          <select id="expCurrency" class="form-select">
             <option value="CAD" selected>CAD</option>
             <option value="USD">USD</option>
           </select>
@@ -189,24 +298,24 @@
 
         <label>
           Vendor (optional)
-          <input id="expVendor" type="text" placeholder="e.g., Shell, Rogers, Landlord">
+          <input id="expVendor" type="text" placeholder="e.g., Shell, Rogers, Landlord" class="form-control">
         </label>
 
         <label>
           Receipt URL (optional)
-          <input id="expReceipt" type="text" placeholder="https://...">
+          <input id="expReceipt" type="text" placeholder="https://..." class="form-control">
         </label>
 
         <label style="grid-column: 1 / -1;">
           Notes (optional)
-          <textarea id="expNotes" rows="3" placeholder="Short note..."></textarea>
+          <textarea id="expNotes" rows="3" placeholder="Short note..." class="form-control"></textarea>
         </label>
       </div>
 
       <div class="btnrow" style="margin-top:10px;">
-        <button id="btnSaveExpense" type="button">Save</button>
-        <button id="btnClearExpense" type="button">Clear</button>
-        <button id="btnDeleteExpense" type="button" style="border-color:#c33;">Delete</button>
+        <button id="btnSaveExpense" type="button" class="btn btn-primary">Save</button>
+        <button id="btnClearExpense" type="button" class="btn btn-outline-secondary">Clear</button>
+        <button id="btnDeleteExpense" type="button" class="btn btn-outline-danger">Delete</button>
       </div>
 
       <div class="muted" style="margin-top:8px;">
@@ -218,7 +327,7 @@
       <div class="card">
         <div class="k">Monthly Summary</div>
         <div class="muted">From v_monthly_financials</div>
-        <div style="overflow:auto; max-height: 420px; margin-top:10px;">
+        <div class="table-wrap" style="margin-top:10px;">
           <table>
             <thead>
               <tr>
@@ -244,7 +353,7 @@
     <div class="card">
       <div class="k">Expenses (range)</div>
       <div class="muted">Click row to edit</div>
-      <div style="overflow:auto; max-height: 420px; margin-top:10px;">
+      <div class="table-wrap" style="margin-top:10px;">
         <table>
           <thead>
             <tr>
@@ -264,7 +373,7 @@
     <div class="card">
       <div class="k">Yearly Summary</div>
       <div class="muted">From v_yearly_financials</div>
-      <div style="overflow:auto; max-height: 420px; margin-top:10px;">
+      <div class="table-wrap" style="margin-top:10px;">
         <table>
           <thead>
             <tr>
