@@ -3,227 +3,344 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Admin – Dashboard</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>Shrinxa Admin – Dashboard</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Arial, sans-serif; margin: 0; }
-   .wrap { max-width: 100%; padding: 18px; }
-    .nav { margin: 6px 0 14px; }
-    .nav a { margin-right: 10px; }
-    .status { padding:8px 10px; border:1px solid #ccc; display:inline-block; }
-    .controls { display:flex; gap:10px; align-items:end; flex-wrap:wrap; margin-top:10px; }
-    label { font-size: 12px; color:#333; display:flex; flex-direction:column; gap:4px; }
-    input, select { padding:6px 8px; border:1px solid #bbb; border-radius:6px; min-width: 170px; }
-    button { padding:7px 10px; border:1px solid #888; border-radius:8px; background:#f6f6f6; cursor:pointer; }
-    button:hover { background:#efefef; }
-    .btnrow { display:flex; gap:8px; flex-wrap:wrap; }
-    .grid { display:grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap:12px; margin-top:14px; }
-    .card { border:1px solid #e3e3e3; border-radius:14px; padding:12px; background:#fff; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
-    .k { color:#666; font-size:12px; }
-    .v { font-size:22px; font-weight:700; margin-top:6px; }
-    .muted { color:#666; font-size:12px; }
-    .row { display:grid; grid-template-columns: 1.4fr 1fr; gap:12px; margin-top:12px; }
-    .row3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; margin-top:12px; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { border:1px solid #ddd; padding:8px; vertical-align: top; }
-    th { background:#fafafa; position: sticky; top: 0; z-index: 2; }
-    canvas { width: 100% !important; height: 320px !important; }
-    .clickrow tbody tr { cursor: pointer; }
-    .right { text-align:right; white-space:nowrap; }
-    @media (max-width: 1100px) {
-      .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-      .row3 { grid-template-columns: 1fr; }
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --brand:#111;
+      --ring: rgba(99,102,241,.25);
     }
-    @media (max-width: 700px) {
-      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .row { grid-template-columns: 1fr; }
-    }
-header { background:#111; }
-header a { color:#fff; text-decoration:none; opacity:.9; }
-header a:hover { opacity:1; text-decoration:underline; }
-.nav-links { gap:14px; flex-wrap:wrap; }
 
+    body{ background:var(--bg); color:var(--ink); margin:0; font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif; }
+
+    header{
+      background:var(--brand);
+      position:sticky;
+      top:0;
+      z-index:60;
+      box-shadow:0 10px 30px rgba(0,0,0,.18);
+    }
+    header a{
+      color:#fff;
+      text-decoration:none;
+      opacity:.85;
+      padding:6px 8px;
+      border-radius:10px;
+      white-space:nowrap;
+    }
+    header a:hover{ opacity:1; background:rgba(255,255,255,.08); text-decoration:none; }
+    header a.active{ opacity:1; background:rgba(255,255,255,.14); text-decoration:none; }
+    .nav-links{ gap:6px; flex-wrap:wrap; }
+
+    .page-title{ font-weight:800; letter-spacing:.2px; }
+
+    .card{
+      border:0;
+      border-radius:18px;
+      box-shadow:0 10px 30px rgba(17,24,39,.08);
+      background: var(--card);
+    }
+
+    .statusbar{
+      border-radius:14px;
+      border:1px solid rgba(17,24,39,.12);
+      padding:10px 12px;
+      background:#fff;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .statusbar .hint{ color:var(--muted); font-size:.875rem; }
+
+    .form-control:focus, .form-select:focus{
+      box-shadow:0 0 0 .25rem var(--ring);
+      border-color:rgba(99,102,241,.5);
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border:1px solid rgba(17,24,39,.12);
+      border-radius:999px;
+      padding:6px 10px;
+      background:#fff;
+      color:#334155;
+      font-size:.875rem;
+      font-weight:700;
+      white-space:nowrap;
+    }
+
+    .kpi-grid{
+      display:grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap:12px;
+      margin-top:12px;
+    }
+    @media (max-width: 1400px){ .kpi-grid{ grid-template-columns: repeat(3, minmax(0,1fr)); } }
+    @media (max-width: 800px){ .kpi-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
+
+    .kpi-card{
+      text-align:center;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      padding:14px 12px;
+      min-height: 86px;
+    }
+    .k{ color:#475569; font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; width:100%; }
+    .v{ font-size:22px; font-weight:800; margin-top:6px; width:100%; }
+    .muted{ color:var(--muted); font-size:.875rem; }
+
+    .grid-2{
+      display:grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap:12px;
+      margin-top:12px;
+    }
+    @media (max-width: 1100px){ .grid-2{ grid-template-columns: 1fr; } }
+
+    .grid-3{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap:12px;
+      margin-top:12px;
+    }
+    @media (max-width: 1100px){ .grid-3{ grid-template-columns: 1fr; } }
+
+    .table-wrap{
+      overflow:auto;
+      border-radius:14px;
+      border:1px solid rgba(17,24,39,.08);
+      background:#fff;
+      max-height: 360px;
+      margin-top:10px;
+    }
+
+    table{ border-collapse:separate !important; border-spacing:0; width:100%; margin:0; }
+    th, td{ border-bottom:1px solid rgba(17,24,39,.08); padding:10px 10px; vertical-align:top; }
+    th{
+      background:#f8fafc !important;
+      position:sticky;
+      top:0;
+      z-index:2;
+      font-size:.8rem;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      color:#475569;
+      white-space:nowrap;
+    }
+    tr:hover td{ background:#fafafa; }
+    .clickrow tbody tr{ cursor:pointer; }
+    .right{ text-align:right; white-space:nowrap; }
+
+    canvas{ width: 100% !important; height: 320px !important; }
+
+    .wrap{ padding:18px 18px 28px; }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
-<body>
-  
 
-   <header class="py-3">
+<body>
+<header class="py-3">
   <div class="container-fluid px-4 d-flex align-items-center gap-3">
     <div class="text-white fw-bold">Shrinxa Admin</div>
 
     <div class="d-flex nav-links">
-      <a href="./dashboard.html" style="text-decoration:underline; opacity:1;">Dashboard</a>
+      <a href="./dashboard.html" class="active">Dashboard</a>
       <a href="./orders.html">Orders</a>
       <a href="./customers.html">Customers</a>
       <a href="./products-admin.html">Products</a>
       <a href="./platinum.html">Platinum</a>
       <a href="./delivery-admin.html">Delivery Rules</a>
       <a href="./inventory.html">Inventory</a>
-	<a href="./income.html">Income</a>
-	<a href="./clients.html">Clients</a>
+      <a href="./income.html">Income</a>
+      <a href="./clients.html">Clients</a>
     </div>
 
     <div class="ms-auto d-flex align-items-center gap-2">
-      <span id="adminEmail" class="text-white small"></span>
+      <span id="adminEmail" class="text-white small opacity-75"></span>
       <button id="logoutBtn" class="btn btn-sm btn-outline-light">Logout</button>
     </div>
   </div>
 </header>
-<div class="wrap">
-    <h2>Dashboard</h2>
 
-    <div class="status" id="status">Loading…</div>
-
-    <div class="controls">
-      <label>
-        Preset
-        <select id="range">
-          <option value="today">Today</option>
-          <option value="week">This week</option>
-          <option value="month">This month</option>
-          <option value="7">Last 7 days</option>
-          <option value="30" selected>Last 30 days</option>
-          <option value="90">Last 90 days</option>
-        </select>
-      </label>
-
-      <label>
-        Date from
-        <input id="from" type="date">
-      </label>
-
-      <label>
-        Date to
-        <input id="to" type="date">
-      </label>
-
-      <label>
-        Currency
-        <select id="currency">
-          <option value="">All</option>
-          <option value="CAD" selected>CAD</option>
-          <option value="USD">USD</option>
-        </select>
-      </label>
-
-      <div class="btnrow">
-        <button id="btnReload" type="button">Reload</button>
-        <button id="btnExportInvoices" type="button">Export Invoices CSV</button>
-        <button id="btnExportTopProducts" type="button">Export Top Products CSV</button>
-      </div>
+<main class="container-fluid px-4 py-4">
+  <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
+    <div>
+      <div class="page-title h3 m-0">Dashboard</div>
+      <div class="muted">Revenue, status breakdown, customers, products, and recent orders.</div>
     </div>
-
-    <div class="grid">
-      <div class="card">
-        <div class="k">Orders (range)</div>
-        <div class="v" id="kpiOrders">—</div>
-      </div>
-      <div class="card">
-        <div class="k">Revenue (range)</div>
-        <div class="v" id="kpiRevenue">—</div>
-        <div class="muted" id="kpiRevenue2"></div>
-      </div>
-      <div class="card">
-        <div class="k">Paid revenue</div>
-        <div class="v" id="kpiPaidRev">—</div>
-      </div>
-      <div class="card">
-        <div class="k">Unpaid/Pending revenue</div>
-        <div class="v" id="kpiUnpaidRev">—</div>
-      </div>
-      <div class="card">
-        <div class="k">Paid orders</div>
-        <div class="v" id="kpiPaid">—</div>
-      </div>
-      <div class="card">
-        <div class="k">Avg order value</div>
-        <div class="v" id="kpiAov">—</div>
-      </div>
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+      <span id="status" class="pill">Loading…</span>
     </div>
+  </div>
 
-    <div class="row">
-      <div class="card">
+  <div class="card p-3 mb-3">
+    <div class="statusbar">
+      <div class="d-flex gap-3 align-items-end flex-wrap">
+        <label class="m-0" style="font-size:.8rem; color:#334155;">
+          Preset
+          <select id="range" class="form-select">
+            <option value="today">Today</option>
+            <option value="week">This week</option>
+            <option value="month">This month</option>
+            <option value="7">Last 7 days</option>
+            <option value="30" selected>Last 30 days</option>
+            <option value="90">Last 90 days</option>
+          </select>
+        </label>
+
+        <label class="m-0" style="font-size:.8rem; color:#334155;">
+          Date from
+          <input id="from" type="date" class="form-control">
+        </label>
+
+        <label class="m-0" style="font-size:.8rem; color:#334155;">
+          Date to
+          <input id="to" type="date" class="form-control">
+        </label>
+
+        <label class="m-0" style="font-size:.8rem; color:#334155;">
+          Currency
+          <select id="currency" class="form-select">
+            <option value="">All</option>
+            <option value="CAD" selected>CAD</option>
+            <option value="USD">USD</option>
+          </select>
+        </label>
+
+        <div class="d-flex gap-2 flex-wrap align-items-end">
+          <button id="btnReload" type="button" class="btn btn-primary">Reload</button>
+          <button id="btnExportInvoices" type="button" class="btn btn-outline-secondary">Export Invoices CSV</button>
+          <button id="btnExportTopProducts" type="button" class="btn btn-outline-secondary">Export Top Products CSV</button>
+        </div>
+      </div>
+
+      <div class="hint">Tip: click rows in tables to jump to Orders / Invoice.</div>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="card kpi-card">
+      <div class="k">Orders (range)</div>
+      <div class="v" id="kpiOrders">—</div>
+    </div>
+    <div class="card kpi-card">
+      <div class="k">Revenue (range)</div>
+      <div class="v" id="kpiRevenue">—</div>
+      <div class="muted" id="kpiRevenue2"></div>
+    </div>
+    <div class="card kpi-card">
+      <div class="k">Paid revenue</div>
+      <div class="v" id="kpiPaidRev">—</div>
+    </div>
+    <div class="card kpi-card">
+      <div class="k">Unpaid/Pending revenue</div>
+      <div class="v" id="kpiUnpaidRev">—</div>
+    </div>
+    <div class="card kpi-card">
+      <div class="k">Paid orders</div>
+      <div class="v" id="kpiPaid">—</div>
+    </div>
+    <div class="card kpi-card">
+      <div class="k">Avg order value</div>
+      <div class="v" id="kpiAov">—</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card p-3">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
         <div>
           <div class="k">Revenue by day</div>
           <div class="muted">Sum of invoice totals</div>
         </div>
-        <canvas id="chartDaily"></canvas>
       </div>
-
-      <div class="card">
-        <div class="k">Status breakdown</div>
-        <div class="muted">Count of invoices</div>
-        <canvas id="chartStatus"></canvas>
-      </div>
+      <canvas id="chartDaily"></canvas>
     </div>
 
-    <div class="row3">
-      <div class="card clickrow">
-        <div class="k">Top customers (by revenue)</div>
-        <div class="muted">Tap a row to open Orders filtered</div>
-        <div style="overflow:auto; max-height: 360px; margin-top:10px;">
-          <table>
-            <thead>
-              <tr>
-                <th>Customer</th>
-                <th class="right">Orders</th>
-                <th class="right">Revenue</th>
-              </tr>
-            </thead>
-            <tbody id="topCustomers"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="card clickrow">
-        <div class="k">All Products (by revenue)</div>
-        <div class="muted">From invoice_items</div>
-	<div style="height:260px;">
-  <canvas id="chartProducts"></canvas>
-</div>
-
-        <div style="overflow:auto; max-height: 360px; margin-top:10px;">
-          <table>
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th class="right">Qty</th>
-                <th class="right">Revenue</th>
-		<th class="right">Total Cost</th>
-		<th class="right">Total Profit</th>
-		<th class="right">Profit %</th>
-              </tr>
-            </thead>
-            <tbody id="topProducts"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="card clickrow">
-        <div class="k">Recent orders</div>
-        <div class="muted">Tap a row to open invoice</div>
-        <div style="overflow:auto; max-height: 360px; margin-top:10px;">
-          <table>
-            <thead>
-              <tr>
-                <th>Invoice</th>
-                <th>Customer</th>
-                <th>Status</th>
-                <th class="right">Total</th>
-              </tr>
-            </thead>
-            <tbody id="recentOrders"></tbody>
-          </table>
-        </div>
-      </div>
+    <div class="card p-3">
+      <div class="k">Status breakdown</div>
+      <div class="muted">Count of invoices</div>
+      <canvas id="chartStatus"></canvas>
     </div>
   </div>
 
-  <script type="module">
-    import { supabase } from "../supabaseClient.js";
+  <div class="grid-3">
+    <div class="card p-3 clickrow">
+      <div class="k">Top customers (by revenue)</div>
+      <div class="muted">Tap a row to open Orders filtered</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th class="right">Orders</th>
+              <th class="right">Revenue</th>
+            </tr>
+          </thead>
+          <tbody id="topCustomers"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card p-3 clickrow">
+      <div class="k">All Products (by revenue)</div>
+      <div class="muted">From invoice_items</div>
+
+      <div style="height:260px; margin-top:6px;">
+        <canvas id="chartProducts"></canvas>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th class="right">Qty</th>
+              <th class="right">Revenue</th>
+              <th class="right">Total Cost</th>
+              <th class="right">Total Profit</th>
+              <th class="right">Profit %</th>
+            </tr>
+          </thead>
+          <tbody id="topProducts"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card p-3 clickrow">
+      <div class="k">Recent orders</div>
+      <div class="muted">Tap a row to open invoice</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Invoice</th>
+              <th>Customer</th>
+              <th>Status</th>
+              <th class="right">Total</th>
+            </tr>
+          </thead>
+          <tbody id="recentOrders"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script type="module">
+import { supabase } from "../supabaseClient.js";
 const adminEmailEl = document.getElementById("adminEmail");
 const logoutBtn = document.getElementById("logoutBtn");
 
@@ -678,6 +795,6 @@ buildProductsChart(lastTopProducts);
       setPreset(rangeEl.value);
       await loadDashboard();
     })();
-  </script>
+</script>
 </body>
 </html>
