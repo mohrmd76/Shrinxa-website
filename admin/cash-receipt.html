@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Cash Receipt / Details</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --brand:#111;
+      --ring: rgba(99,102,241,.25);
+      --line: rgba(17,24,39,.10);
+    }
+
+    body{ background:var(--bg); color:var(--ink); margin:0; font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif; }
+
+    header{
+      background:var(--brand);
+      position:sticky;
+      top:0;
+      z-index:60;
+      box-shadow:0 10px 30px rgba(0,0,0,.18);
+    }
+    header a{
+      color:#fff;
+      text-decoration:none;
+      opacity:.85;
+      padding:6px 8px;
+      border-radius:10px;
+      white-space:nowrap;
+    }
+    header a:hover{ opacity:1; background:rgba(255,255,255,.08); }
+    header a.active{ opacity:1; background:rgba(255,255,255,.14); }
+    .nav-links{ gap:6px; flex-wrap:wrap; }
+
+    .card{
+      border:0;
+      border-radius:18px;
+      box-shadow:0 10px 30px rgba(17,24,39,.08);
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:3px 10px;
+      border:1px solid rgba(17,24,39,.12);
+      border-radius:999px;
+      font-size:.78rem;
+      background:#fff;
+      color:#334155;
+      font-weight:800;
+    }
+
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .muted{ color: var(--muted); }
+    .right{ text-align:right; white-space:nowrap; }
+
+    .topgrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+    @media (max-width: 900px){ .topgrid{ grid-template-columns: 1fr; } }
+
+    table{ width:100%; }
+    thead th{
+      font-size:.8rem;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      color:#475569;
+      border-bottom:2px solid var(--line) !important;
+      background:#f8fafc !important;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      white-space: nowrap;
+    }
+    tbody td{
+      border-bottom:1px solid var(--line) !important;
+      vertical-align: top;
+    }
+
+    .btn{ border-radius:12px; }
+
+    @media print{
+      header, .no-print{ display:none !important; }
+      body{ background:#fff !important; }
+      .card{ box-shadow:none !important; }
+      .container-fluid{ padding:0 !important; }
+    }
+  </style>
+</head>
+
+<body>
+<header class="py-3 no-print">
+  <div class="container-fluid px-4 d-flex align-items-center gap-3">
+    <div class="text-white fw-bold">Shrinxa Admin</div>
+
+    <div class="d-flex nav-links">
+      <a href="./dashboard.html">Dashboard</a>
+      <a href="./orders.html">Orders</a>
+      <a href="./cash.html" class="active">Cash</a>
+    </div>
+
+    <div class="ms-auto d-flex align-items-center gap-2">
+      <span id="adminEmail" class="text-white small opacity-75"></span>
+      <button id="btnPrint" class="btn btn-sm btn-outline-light">Print</button>
+      <button id="btnClose" class="btn btn-sm btn-outline-light">Close</button>
+    </div>
+  </div>
+</header>
+
+<main class="container-fluid px-4 py-4">
+  <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
+    <div>
+      <div class="h3 m-0" style="font-weight:900;">Cash Receipt / Details</div>
+      <div class="muted">Admin-only. Not public. No emails. No HST.</div>
+    </div>
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+      <span class="pill">CASH</span>
+      <span class="pill mono" id="invNoPill">—</span>
+    </div>
+  </div>
+
+  <div class="card p-3">
+    <div id="status" class="muted fw-semibold">Loading…</div>
+
+    <div id="content" style="display:none;">
+      <div class="topgrid mt-3">
+        <div>
+          <div class="fw-bold">Customer</div>
+          <div id="custName"></div>
+          <div class="muted" id="custEmail"></div>
+          <div class="muted" id="custPhone"></div>
+          <div class="muted" id="custCompany"></div>
+          <div class="muted" id="custAddr"></div>
+        </div>
+
+        <div>
+          <div class="fw-bold">Receipt Info</div>
+          <div><span class="muted">Invoice ID:</span> <span class="mono" id="invId"></span></div>
+          <div><span class="muted">Invoice #:</span> <span class="mono" id="invNo"></span></div>
+          <div><span class="muted">Date:</span> <span id="invDate"></span></div>
+          <div><span class="muted">Payment:</span> <span id="invPay"></span></div>
+          <div><span class="muted">Sale Type:</span> <span id="invSaleType"></span></div>
+        </div>
+      </div>
+
+      <hr class="my-3"/>
+
+      <div class="table-responsive" style="max-height: calc(100vh - 420px); overflow:auto; border:1px solid var(--line); border-radius:14px;">
+        <table class="table table-sm table-hover align-middle m-0">
+          <thead>
+            <tr>
+              <th style="min-width:260px;">Item</th>
+              <th style="min-width:80px;" class="right">Qty</th>
+              <th style="min-width:130px;" class="right">Unit Price</th>
+              <th style="min-width:130px;" class="right">Line Total</th>
+              <th style="min-width:130px;" class="right">Unit Cost</th>
+              <th style="min-width:130px;" class="right">Line Profit</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-end mt-3">
+        <table style="width: 420px;">
+          <tbody>
+            <tr>
+              <td class="muted">Subtotal</td>
+              <td class="right fw-bold" id="tSubtotal">$0.00</td>
+            </tr>
+            <tr>
+              <td class="muted">Delivery</td>
+              <td class="right fw-bold" id="tDelivery">$0.00</td>
+            </tr>
+            <tr>
+              <td class="muted">HST</td>
+              <td class="right fw-bold" id="tTax">$0.00</td>
+            </tr>
+            <tr style="border-top:2px solid var(--line);">
+              <td class="fw-bold">Total</td>
+              <td class="right fw-bold" id="tTotal">$0.00</td>
+            </tr>
+            <tr>
+              <td class="muted">Profit</td>
+              <td class="right fw-bold" id="tProfit">$0.00</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<script type="module">
+  import { supabase } from "../supabaseClient.js";
+
+  const $ = (id) => document.getElementById(id);
+
+  const statusEl = $("status");
+  const contentEl = $("content");
+  const rowsEl = $("rows");
+
+  const adminEmailEl = $("adminEmail");
+  $("btnClose")?.addEventListener("click", () => window.close());
+  $("btnPrint")?.addEventListener("click", () => window.print());
+
+  function show(msg){ statusEl.textContent = msg; }
+
+  function money(v){
+    const n = Number(v || 0);
+    return new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD" }).format(n);
+  }
+
+  function qparam(name){
+    const u = new URL(window.location.href);
+    return u.searchParams.get(name);
+  }
+
+  function escapeHtml(str){
+    return String(str ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;");
+  }
+
+  async function requireAdmin(){
+    show("Checking login…");
+    const { data: { user }, error: userErr } = await supabase.auth.getUser();
+    if (userErr) throw new Error(userErr.message);
+    if (!user) { location.href = "../login.html"; return null; }
+
+    if (adminEmailEl) adminEmailEl.textContent = user.email || "";
+
+    const { data: me, error: meErr } = await supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .single();
+
+    if (meErr) throw new Error(meErr.message);
+    if (!me?.is_admin) throw new Error("Not admin");
+    return user;
+  }
+
+  async function load(){
+    await requireAdmin();
+
+    const invoice_id = qparam("id");
+    if (!invoice_id) { show("Missing id in URL."); return; }
+
+    show("Loading receipt…");
+
+    const { data, error } = await supabase.functions.invoke("admin-invoice-details", {
+      body: { invoice_id }
+    });
+
+    if (error) { show("ERROR: " + error.message); return; }
+    if (!data?.ok) { show("ERROR: " + (data?.error || "Unknown")); return; }
+
+    const inv = data.invoice;
+    const items = data.items || [];
+
+    const isCash = String(inv.sale_type || "").toLowerCase() === "cash";
+    if (!isCash) {
+      show("This page is for CASH sales only.");
+      return;
+    }
+
+    $("invId").textContent = inv.id || "";
+    $("invNo").textContent = inv.invoice_number || inv.number || "";
+    $("invNoPill").textContent = inv.invoice_number || inv.number || "—";
+    $("invDate").textContent = inv.invoice_date || inv.created_at || "";
+    $("invPay").textContent = (inv.payment_method || "cash") + " / " + (inv.payment_status || "paid");
+    $("invSaleType").textContent = inv.sale_type || "";
+
+    $("custName").textContent = inv.bill_to_name || "—";
+    $("custEmail").textContent = inv.bill_to_email || "";
+    $("custPhone").textContent = inv.bill_to_phone || "";
+    $("custCompany").textContent = inv.bill_to_company || "";
+    $("custAddr").textContent = [inv.bill_to_address, inv.bill_to_city].filter(Boolean).join(" · ");
+
+    rowsEl.innerHTML = "";
+    for (const it of items) {
+      const qty = Number(it.qty ?? 0);
+      const unit_price = Number(it.unit_price ?? 0);
+      const line_total = Number(it.line_total ?? (qty * unit_price));
+      const unit_cost = Number(it.unit_cost ?? 0);
+      const line_profit = Number(it.line_profit ?? (line_total - qty * unit_cost));
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>
+          <div class="fw-semibold">${escapeHtml(it.item_name ?? "")}</div>
+          <div class="muted" style="font-size:.85rem;">${escapeHtml(it.item_desc ?? "")}</div>
+        </td>
+        <td class="right">${qty}</td>
+        <td class="right">${money(unit_price)}</td>
+        <td class="right fw-semibold">${money(line_total)}</td>
+        <td class="right">${money(unit_cost)}</td>
+        <td class="right fw-semibold">${money(line_profit)}</td>
+      `;
+      rowsEl.appendChild(tr);
+    }
+
+    const subtotal = Number(inv.subtotal ?? 0);
+    const delivery = Number(inv.delivery ?? 0);
+    const tax = Number(inv.tax ?? 0);
+    const total = Number(inv.total ?? 0);
+
+    let profit = Number(inv.invoice_profit ?? NaN);
+    if (!Number.isFinite(profit)) {
+      profit = items.reduce((a, it) => a + Number(it.line_profit ?? 0), 0);
+    }
+
+    $("tSubtotal").textContent = money(subtotal);
+    $("tDelivery").textContent = money(delivery);
+    $("tTax").textContent = money(tax);
+    $("tTotal").textContent = money(total);
+    $("tProfit").textContent = money(profit);
+
+    contentEl.style.display = "";
+    show("Ready ✅");
+  }
+
+  load().catch((e) => {
+    console.error(e);
+    show("ERROR: " + (e?.message || String(e)));
+  });
+</script>
+</body>
+</html>
