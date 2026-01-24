@@ -246,8 +246,18 @@
       <div class="d-flex gap-3 align-items-center flex-wrap">
         <div class="filters">
           <label>
-            Search (invoice/email)
-            <input id="q" class="form-control" type="text" placeholder="INV-... or customer email">
+            Search
+            <div class="input-group">
+              <select id="scope" class="form-select" style="max-width: 190px;">
+                <option value="all" selected>All fields</option>
+                <option value="invoice">Invoice #</option>
+                <option value="email">Email</option>
+                <option value="name">Customer name</option>
+                <option value="company">Company</option>
+                <option value="phone">Phone</option>
+              </select>
+              <input id="q" class="form-control" type="text" placeholder="Type to search… (debounced)">
+            </div>
           </label>
 
           <label>
@@ -325,11 +335,22 @@
   const toEl = document.getElementById("to");
   const statusFilterEl = document.getElementById("statusFilter");
 
+  const scopeEl = document.getElementById("scope");
+
   const btnLoad = document.getElementById("btnLoad");
   const btnToday = document.getElementById("btnToday");
   const btnClear = document.getElementById("btnClear");
 
   function show(msg) { statusEl.textContent = msg; }
+
+  // Live (debounced) search like customers page
+  let _loadTimer = null;
+  function scheduleLoad(delayMs = 500){
+    if (_loadTimer) clearTimeout(_loadTimer);
+    _loadTimer = setTimeout(() => {
+      loadOrders();
+    }, delayMs);
+  }
 
   function fmtMoney(v) {
     const n = Number(v);
@@ -376,6 +397,7 @@
     fromEl.value = "";
     toEl.value = "";
     statusFilterEl.value = "";
+    if (scopeEl) scopeEl.value = "all";
   }
 
   function escapeHtml(str) {
@@ -412,9 +434,23 @@
 
     if (q) {
       const pat = `%${q}%`;
-      query = query.or(
-        `invoice_number.ilike.${pat},number.ilike.${pat},bill_to_email.ilike.${pat},bill_to_name.ilike.${pat},bill_to_company.ilike.${pat}`
-      );
+      const scope = (scopeEl?.value || "all").trim();
+
+      if (scope === "invoice") {
+        query = query.or(`invoice_number.ilike.${pat},number.ilike.${pat}`);
+      } else if (scope === "email") {
+        query = query.or(`bill_to_email.ilike.${pat}`);
+      } else if (scope === "name") {
+        query = query.or(`bill_to_name.ilike.${pat}`);
+      } else if (scope === "company") {
+        query = query.or(`bill_to_company.ilike.${pat}`);
+      } else if (scope === "phone") {
+        query = query.or(`bill_to_phone.ilike.${pat}`);
+      } else {
+        query = query.or(
+          `invoice_number.ilike.${pat},number.ilike.${pat},bill_to_email.ilike.${pat},bill_to_name.ilike.${pat},bill_to_company.ilike.${pat},bill_to_phone.ilike.${pat}`
+        );
+      }
     }
 
     const { data, error } = await query;
@@ -581,7 +617,29 @@
     }
   });
 
-  btnLoad.addEventListener("click", loadOrders);
+  // Live search (debounced)
+  qEl.addEventListener("input", () => {
+    const v = (qEl.value || "").trim();
+    scheduleLoad(v ? 550 : 150);
+  });
+
+  qEl.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter") {
+      ev.preventDefault();
+      if (_loadTimer) clearTimeout(_loadTimer);
+      loadOrders();
+    }
+    if (ev.key === "Escape") {
+      qEl.value = "";
+      scheduleLoad(120);
+    }
+  });
+
+  scopeEl?.addEventListener("change", () => {
+    scheduleLoad(200);
+  });
+
+btnLoad.addEventListener("click", loadOrders);
   btnToday.addEventListener("click", () => { setToday(); loadOrders(); });
   btnClear.addEventListener("click", () => { clearFilters(); loadOrders(); });
 
