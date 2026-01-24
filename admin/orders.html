@@ -3,41 +3,207 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Admin – Orders</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>Shrinxa Admin – Orders</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Arial, sans-serif; margin: 0; }
-    .topbar { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
-    .nav { margin: 6px 0 14px; }
-    .nav a { margin-right: 10px; }
-    .status { padding:8px 10px; border:1px solid #ccc; display:inline-block; }
-    .filters { display:flex; gap:10px; align-items:end; flex-wrap:wrap; }
-    label { font-size: 12px; color:#333; display:flex; flex-direction:column; gap:4px; }
-    input, select { padding:6px 8px; border:1px solid #bbb; border-radius:6px; min-width: 170px; }
-    button { padding:7px 10px; border:1px solid #888; border-radius:8px; background:#f6f6f6; cursor:pointer; }
-    button:hover { background:#efefef; }
-   table { border-collapse: collapse; width: 100%; min-width: 1200px; }
-    th, td { border:1px solid #ddd; padding:8px; vertical-align: top; }
-    th { background:#fafafa; position: sticky; top: 0; z-index: 2; }
-    .wrap { max-width: 100%; }
-    .muted { color:#666; font-size:12px; }
-    .pill { display:inline-block; padding:2px 8px; border:1px solid #ccc; border-radius:999px; font-size:12px; }
-    .right { text-align:right; white-space:nowrap; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
-    .row-actions { display:flex; gap:8px; flex-wrap:wrap; }
-    details summary { cursor:pointer; }
-    pre { white-space: pre-wrap; word-break: break-word; background:#f7f7f7; border:1px solid #e2e2e2; padding:10px; border-radius:10px; margin:8px 0 0; }
-  
-    select.stSel { padding:6px 8px; border:1px solid #bbb; border-radius:6px; background:#fff; }
-header { background:#111; }
-header a { color:#fff; text-decoration:none; opacity:.9; }
-header a:hover { opacity:1; text-decoration:underline; }
-.nav-links { gap:14px; flex-wrap:wrap; }
-.wrap { max-width: 100%; margin: 0; padding: 18px; }
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --brand:#111;
+      --ring: rgba(99,102,241,.25);
+    }
 
+    body{ background:var(--bg); color:var(--ink); margin:0; font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif; }
+
+    header{
+      background:var(--brand);
+      position:sticky;
+      top:0;
+      z-index:60;
+      box-shadow:0 10px 30px rgba(0,0,0,.18);
+    }
+    header a{
+      color:#fff;
+      text-decoration:none;
+      opacity:.85;
+      padding:6px 8px;
+      border-radius:10px;
+      white-space:nowrap;
+    }
+    header a:hover{ opacity:1; background:rgba(255,255,255,.08); }
+    header a.active{ opacity:1; background:rgba(255,255,255,.14); }
+
+    .nav-links{ gap:6px; flex-wrap:wrap; }
+
+    .page-title{ font-weight:800; letter-spacing:.2px; }
+
+    .card{
+      border:0;
+      border-radius:18px;
+      box-shadow:0 10px 30px rgba(17,24,39,.08);
+    }
+
+    .statusbar{
+      border-radius:14px;
+      border:1px solid rgba(17,24,39,.12);
+      padding:10px 12px;
+      background:#fff;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .statusbar .hint{ color:var(--muted); font-size:.875rem; }
+
+    .form-control:focus, .form-select:focus{
+      box-shadow:0 0 0 .25rem var(--ring);
+      border-color:rgba(99,102,241,.5);
+    }
+
+    .filters{
+      display:flex;
+      gap:10px;
+      align-items:end;
+      flex-wrap:wrap;
+    }
+    .filters label{
+      font-size:.8rem;
+      color:#334155;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      margin:0;
+    }
+    .filters input, .filters select{
+      min-width: 180px;
+    }
+
+    .table-wrap{
+      max-height: calc(100vh - 270px);
+      overflow:auto;
+      border-radius:14px;
+      border:1px solid rgba(17,24,39,.08);
+      background:#fff;
+    }
+
+    table{
+      border-collapse:separate !important;
+      border-spacing:0;
+      width:100%;
+      min-width:1250px;
+    }
+
+    thead th{
+      position:sticky;
+      top:0;
+      z-index:5;
+      background:#f8fafc !important;
+      border-bottom:1px solid rgba(17,24,39,.08) !important;
+      font-size:.8rem;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      color:#475569;
+      white-space:nowrap;
+    }
+
+    tbody tr:hover{ background:#fafafa; }
+    td{ vertical-align:top; }
+
+    .muted{ color:var(--muted); font-size:.875rem; }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .82rem; }
+    .right{ text-align:right; white-space:nowrap; }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:3px 10px;
+      border:1px solid rgba(17,24,39,.12);
+      border-radius:999px;
+      font-size:.78rem;
+      background:#fff;
+      color:#334155;
+    }
+
+    .row-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    details summary{
+      cursor:pointer;
+      user-select:none;
+    }
+
+    pre{
+      white-space: pre-wrap;
+      word-break: break-word;
+      background:#0b1220;
+      color:#e5e7eb;
+      border:1px solid rgba(255,255,255,.10);
+      padding:12px;
+      border-radius:12px;
+      margin:8px 0 0;
+      font-size:.78rem;
+    }
+
+    .stSel{
+      width: 140px;
+    }
+
+    .btn{
+      border-radius:12px;
+    }
+
+    .btn-outline-danger{
+      border-color: rgba(220,38,38,.35);
+      color: rgb(185,28,28);
+    }
+    .btn-outline-danger:hover{
+      background: rgba(220,38,38,.08);
+      border-color: rgba(220,38,38,.45);
+      color: rgb(153,27,27);
+    }
+
+    .btn-outline-secondary{
+      border-color: rgba(100,116,139,.35);
+      color: rgb(51,65,85);
+    }
+    .btn-outline-secondary:hover{
+      background: rgba(100,116,139,.10);
+      border-color: rgba(100,116,139,.45);
+      color: rgb(30,41,59);
+    }
+
+    .badge-soft{
+      background: rgba(99,102,241,.12);
+      color: rgb(79,70,229);
+      border: 1px solid rgba(99,102,241,.18);
+      font-weight: 700;
+    }
+    .badge-ok{
+      background: rgba(16,185,129,.12);
+      color: rgb(5,150,105);
+      border: 1px solid rgba(16,185,129,.18);
+      font-weight: 800;
+    }
+    .badge-bad{
+      background: rgba(239,68,68,.12);
+      color: rgb(185,28,28);
+      border: 1px solid rgba(239,68,68,.18);
+      font-weight: 800;
+    }
+
+    .wrap{ padding: 18px; }
   </style>
 </head>
+
 <body>
 <header class="py-3">
   <div class="container-fluid px-4 d-flex align-items-center gap-3">
@@ -45,380 +211,384 @@ header a:hover { opacity:1; text-decoration:underline; }
 
     <div class="d-flex nav-links">
       <a href="./dashboard.html">Dashboard</a>
-      <a href="./orders.html" style="text-decoration:underline; opacity:1;">Orders</a>
+      <a href="./orders.html" class="active">Orders</a>
       <a href="./customers.html">Customers</a>
       <a href="./products-admin.html">Products</a>
       <a href="./platinum.html">Platinum</a>
       <a href="./delivery-admin.html">Delivery Rules</a>
       <a href="./inventory.html">Inventory</a>
-	<a href="./income.html">Income</a>
-	<a href="./clients.html">Clients</a>
+      <a href="./income.html">Income</a>
+      <a href="./clients.html">Clients</a>
     </div>
 
     <div class="ms-auto d-flex align-items-center gap-2">
-      <span id="adminEmail" class="text-white small"></span>
+      <span id="adminEmail" class="text-white small opacity-75"></span>
       <button id="logoutBtn" class="btn btn-sm btn-outline-light">Logout</button>
     </div>
   </div>
 </header>
 
-  <div class="wrap">
-    <h2>Orders</h2>
-
-        <div class="topbar">
-      <div id="status" class="status">Loading…</div>
-      <div class="muted">Table used: <span class="mono">public.invoices</span> (if your table name is different, tell me and I will adjust)</div>
+<main class="container-fluid px-4 py-4">
+  <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
+    <div>
+      <div class="page-title h3 m-0">Orders</div>
+      <div class="muted">Browse invoices, resend emails, update status, and review details.</div>
     </div>
 
-    <div class="filters">
-      <label>
-        Search (invoice/email)
-        <input id="q" type="text" placeholder="INV-... or customer email">
-      </label>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      <span class="pill"><span class="mono">public.invoices</span></span>
+      <span class="pill">Max: 200 rows</span>
+    </div>
+  </div>
 
-      <label>
-        Date from
-        <input id="from" type="date">
-      </label>
+  <div class="card p-3">
+    <div class="statusbar mb-3">
+      <div class="d-flex gap-3 align-items-center flex-wrap">
+        <div class="filters">
+          <label>
+            Search (invoice/email)
+            <input id="q" class="form-control" type="text" placeholder="INV-... or customer email">
+          </label>
 
-      <label>
-        Date to
-        <input id="to" type="date">
-      </label>
+          <label>
+            Date from
+            <input id="from" class="form-control" type="date">
+          </label>
 
-      <label>
-        Status (optional)
-        <select id="statusFilter">
-          <option value="">Any</option>
-          <option value="paid">paid</option>
-          <option value="unpaid">unpaid</option>
-          <option value="pending">pending</option>
-          <option value="cancelled">cancelled</option>
-        </select>
-      </label>
+          <label>
+            Date to
+            <input id="to" class="form-control" type="date">
+          </label>
 
-      <button id="btnLoad" type="button">Load</button>
-      <button id="btnToday" type="button">Today</button>
-      <button id="btnClear" type="button">Clear</button>
+          <label>
+            Status (optional)
+            <select id="statusFilter" class="form-select">
+              <option value="">Any</option>
+              <option value="paid">paid</option>
+              <option value="unpaid">unpaid</option>
+              <option value="pending">pending</option>
+              <option value="cancelled">cancelled</option>
+            </select>
+          </label>
+
+          <div class="d-flex gap-2">
+            <button id="btnLoad" type="button" class="btn btn-primary">Load</button>
+            <button id="btnToday" type="button" class="btn btn-outline-secondary">Today</button>
+            <button id="btnClear" type="button" class="btn btn-outline-secondary">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="status" class="text-nowrap fw-semibold text-muted">Loading…</div>
     </div>
 
-    <div style="margin-top:14px; overflow:auto; max-height: 70vh;">
-      <table>
+    <div class="table-wrap">
+      <table class="table table-sm table-hover align-middle m-0">
         <thead>
           <tr>
             <th style="min-width:190px;">Invoice</th>
-            <th style="min-width:220px;">Customer</th>
-            <th style="min-width:120px;">Created</th>
-            <th style="min-width:120px;">Status</th>
+            <th style="min-width:240px;">Customer</th>
+            <th style="min-width:160px;">Created</th>
+            <th style="min-width:160px;">Status</th>
             <th style="min-width:120px;" class="right">Total</th>
-	<th style="min-width:120px;" class="right">Profit</th>
-	<th style="min-width:220px;">Actions / Details</th>
-            <th style="min-width:120px;">QB Sync</th> 
-	 </tr>
+            <th style="min-width:120px;" class="right">Profit</th>
+            <th style="min-width:260px;">Actions / Details</th>
+            <th style="min-width:140px;">QB Sync</th>
+          </tr>
         </thead>
         <tbody id="rows"></tbody>
       </table>
     </div>
   </div>
+</main>
 
-  <script type="module">
-    import { supabase } from "../supabaseClient.js";
-const adminEmailEl = document.getElementById("adminEmail");
-const logoutBtn = document.getElementById("logoutBtn");
+<script type="module">
+  import { supabase } from "../supabaseClient.js";
 
-logoutBtn?.addEventListener("click", async () => {
-  await supabase.auth.signOut();
-  window.location.href = "../login.html";
-});
+  const adminEmailEl = document.getElementById("adminEmail");
+  const logoutBtn = document.getElementById("logoutBtn");
 
-    // Actions config
-    // If your invoice page has a different path, change INVOICE_PAGE.
-    const INVOICE_PAGE = "/invoice.html"; // opens as /invoice.html?id=...
-    // Edge Function (optional): implement a function that resends invoice emails.
-    // Expected: supabase.functions.invoke(RESEND_FUNCTION, { body: { action: "resend", invoice_id } })
-    const RESEND_FUNCTION = "create-invoice";
+  logoutBtn?.addEventListener("click", async () => {
+    await supabase.auth.signOut();
+    window.location.href = "../login.html";
+  });
 
-    const statusEl = document.getElementById("status");
-    const tbody = document.getElementById("rows");
+  // Actions config
+  const INVOICE_PAGE = "/invoice.html"; // opens as /invoice.html?id=...
+  const RESEND_FUNCTION = "create-invoice";
 
-    const qEl = document.getElementById("q");
-    const fromEl = document.getElementById("from");
-    const toEl = document.getElementById("to");
-    const statusFilterEl = document.getElementById("statusFilter");
+  const statusEl = document.getElementById("status");
+  const tbody = document.getElementById("rows");
 
-    const btnLoad = document.getElementById("btnLoad");
-    const btnToday = document.getElementById("btnToday");
-    const btnClear = document.getElementById("btnClear");
+  const qEl = document.getElementById("q");
+  const fromEl = document.getElementById("from");
+  const toEl = document.getElementById("to");
+  const statusFilterEl = document.getElementById("statusFilter");
 
-    function show(msg) { statusEl.textContent = msg; }
+  const btnLoad = document.getElementById("btnLoad");
+  const btnToday = document.getElementById("btnToday");
+  const btnClear = document.getElementById("btnClear");
 
-    function fmtMoney(v) {
-      const n = Number(v);
-      if (!Number.isFinite(n)) return "";
-      return n.toFixed(2);
-    }
+  function show(msg) { statusEl.textContent = msg; }
 
-    function fmtDate(iso) {
-      if (!iso) return "";
-      try { return new Date(iso).toLocaleString(); } catch { return iso; }
-    }
+  function fmtMoney(v) {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return "";
+    return n.toFixed(2);
+  }
 
-    async function requireAdmin() {
-      show("Checking login…");
-      const { data: { user }, error: userErr } = await supabase.auth.getUser();
-      if (userErr) throw new Error("getUser error: " + userErr.message);
-      if (!user) { location.href = "../login.html"; return null; }
-if (adminEmailEl) adminEmailEl.textContent = user.email || "";
+  function fmtDate(iso) {
+    if (!iso) return "";
+    try { return new Date(iso).toLocaleString(); } catch { return iso; }
+  }
 
-      show("Checking admin…");
-      const { data: me, error: meErr } = await supabase
-        .from("profiles")
-        .select("is_admin")
-        .eq("id", user.id)
-        .single();
-      if (meErr) throw new Error("profiles check error: " + meErr.message);
-      if (!me?.is_admin) throw new Error("Access denied (not admin)");
-      return user;
-    }
+  async function requireAdmin() {
+    show("Checking login…");
+    const { data: { user }, error: userErr } = await supabase.auth.getUser();
+    if (userErr) throw new Error("getUser error: " + userErr.message);
+    if (!user) { location.href = "../login.html"; return null; }
+    if (adminEmailEl) adminEmailEl.textContent = user.email || "";
 
-    function setToday() {
-      const d = new Date();
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth()+1).padStart(2,"0");
-      const dd = String(d.getDate()).padStart(2,"0");
-      const s = `${yyyy}-${mm}-${dd}`;
-      fromEl.value = s;
-      toEl.value = s;
-    }
+    show("Checking admin…");
+    const { data: me, error: meErr } = await supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .single();
 
-    function clearFilters() {
-      qEl.value = "";
-      fromEl.value = "";
-      toEl.value = "";
-      statusFilterEl.value = "";
-    }
+    if (meErr) throw new Error("profiles check error: " + meErr.message);
+    if (!me?.is_admin) throw new Error("Access denied (not admin)");
+    return user;
+  }
 
-    async function loadOrders() {
-      tbody.innerHTML = "";
-      show("Loading orders…");
+  function setToday() {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth()+1).padStart(2,"0");
+    const dd = String(d.getDate()).padStart(2,"0");
+    const s = `${yyyy}-${mm}-${dd}`;
+    fromEl.value = s;
+    toEl.value = s;
+  }
 
-      let query = supabase
-        .from("invoices")
-        .select("*, qb_invoice_id, qb_sync_error")
-        .order("created_at", { ascending: false })
-        .limit(200);
+  function clearFilters() {
+    qEl.value = "";
+    fromEl.value = "";
+    toEl.value = "";
+    statusFilterEl.value = "";
+  }
 
-      const q = (qEl.value || "").trim();
-      const from = (fromEl.value || "").trim();
-      const to = (toEl.value || "").trim();
-      const st = (statusFilterEl.value || "").trim();
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;");
+  }
 
-      if (from) query = query.gte("created_at", from + "T00:00:00");
-      if (to) query = query.lte("created_at", to + "T23:59:59");
-      if (st) query = query.eq("status", st);
+  function qbBadge(inv){
+    if (inv.qb_invoice_id) return '<span class="badge badge-ok">✅ Synced</span>';
+    if (inv.qb_sync_error) return '<span class="badge badge-bad">❌ Error</span>';
+    return '<span class="text-muted">—</span>';
+  }
 
-      if (q) {
-        const pat = `%${q}%`;
-        query = query.or(
-          `invoice_number.ilike.${pat},number.ilike.${pat},bill_to_email.ilike.${pat},bill_to_name.ilike.${pat},bill_to_company.ilike.${pat}`
-        );
-      }
+  async function loadOrders() {
+    tbody.innerHTML = "";
+    show("Loading orders…");
 
-      const { data, error } = await query;
-      if (error) {
-        show("ERROR: " + error.message);
-        return;
-      }
+    let query = supabase
+      .from("invoices")
+      .select("*, qb_invoice_id, qb_sync_error")
+      .order("created_at", { ascending: false })
+      .limit(200);
 
-      const rows = data || [];
-      for (const inv of rows) {
-        const invoiceNum = inv.invoice_number ?? inv.number ?? inv.id ?? "";
-        const customer = inv.bill_to_email ?? inv.bill_to_name ?? "";
-        const created = inv.created_at ?? inv.created ?? "";
-        const stv = inv.status ?? inv.payment_status ?? "";
-        const total = inv.total_amount ?? inv.total ?? inv.amount_total ?? inv.grand_total ?? "";
-        const company = inv.bill_to_company ?? "";
-        const phone = inv.bill_to_phone ?? "";
+    const q = (qEl.value || "").trim();
+    const from = (fromEl.value || "").trim();
+    const to = (toEl.value || "").trim();
+    const st = (statusFilterEl.value || "").trim();
 
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>
-            <div class="mono">${invoiceNum}</div>
-            <div class="muted mono">${inv.id ?? ""}</div>
-          </td>
-          <td>
-            <div>${inv.bill_to_email ?? ""}</div><div class="muted">${inv.bill_to_name ?? ""}</div>
-            <div class="muted">${company}${company && phone ? " · " : ""}${phone}</div>
-          </td>
-          <td>${fmtDate(created)}</td>
-          <td>
-            <select class="stSel" data-prev="${stv}">
-              <option value="" ${!stv ? "selected" : ""}>(blank)</option>
-              <option value="paid" ${stv==="paid" ? "selected" : ""}>paid</option>
-              <option value="unpaid" ${stv==="unpaid" ? "selected" : ""}>unpaid</option>
-              <option value="pending" ${stv==="pending" ? "selected" : ""}>pending</option>
-              <option value="cancelled" ${stv==="cancelled" ? "selected" : ""}>cancelled</option>
-            </select>
-          </td>
-          <td class="right">${fmtMoney(total)}</td>
-	<td class="right">${fmtMoney(inv.invoice_profit)}</td>
-          <td>
-            <div class="row-actions">
-              <button type="button" class="btnOpen" data-id="${inv.id}">Open</button>
-              <button type="button" class="btnResend" data-id="${inv.id}">Resend Email</button>
-              <button type="button" class="btnSaveStatus" data-id="${inv.id}">Save Status</button>
-              <button type="button" class="btnCancel" data-id="${inv.id}">Cancel Order</button>
-            </div>
-            <details>
-              <summary class="muted">details</summary>
-              <pre class="mono">${escapeHtml(JSON.stringify(inv, null, 2))}</pre>
-            </details>
-          </td>
-<td>
-  ${inv.qb_invoice_id ? "✅ Synced" : (inv.qb_sync_error ? "❌ Error" : "—")}
-</td>
+    if (from) query = query.gte("created_at", from + "T00:00:00");
+    if (to) query = query.lte("created_at", to + "T23:59:59");
+    if (st) query = query.eq("status", st);
 
-        `;
-        tbody.appendChild(tr);
-      }
-
-      show(`Done. Rows: ${rows.length}`);
-    }
-
-    function escapeHtml(str) {
-      return String(str)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;");
-    }
-
-    tbody.addEventListener("click", async (e) => {
-
-      
-      const openBtn = e.target?.closest?.(".btnOpen");
-      if (openBtn) {
-        const id = openBtn.getAttribute("data-id");
-        const url = `${INVOICE_PAGE}?id=${encodeURIComponent(id)}`;
-        window.open(url, "_blank");
-        return;
-      }
-
-      const resendBtn = e.target?.closest?.(".btnResend");
-      if (resendBtn) {
-        const id = resendBtn.getAttribute("data-id");
-        show("Resending invoice email…");
-        const { data, error } = await supabase.functions.invoke(RESEND_FUNCTION, {
- 	 body: { action: "resend", invoice_id: id }
-	});
-
-        if (error) { show("ERROR: " + error.message); return; }
-        // If function returns { ok: true } or similar, still show success.
-        show("Resend requested ✅");
-        return;
-      }
-
-	const saveBtn = e.target?.closest?.(".btnSaveStatus");
-if (saveBtn) {
-  const id = saveBtn.getAttribute("data-id");
-  const tr = saveBtn.closest("tr");
-  const sel = tr?.querySelector?.(".stSel");
-
-  const prevStatus = (sel?.dataset?.prev || "").trim().toLowerCase();
-  const newStatus = (sel?.value || "").trim().toLowerCase();
-
-  show("Saving status…");
-
-  // 1) Update invoice in DB
-  const { error: upErr } = await supabase
-    .from("invoices")
-	.update({
-  status: newStatus || null,
-  payment_status: newStatus || null,
-  qb_sync_error: null
-})
-
-
-    .eq("id", id);
-
-  if (upErr) { show("ERROR: " + upErr.message); return; }
-
-	  // 2) If it JUST became paid, trigger paid email in background (NO await)
- if (upErr) { show("ERROR: " + upErr.message); return; }
-show("Status saved ✅"); 
-
-
-
-  // update prev status so we don't duplicate
-  if (sel) sel.dataset.prev = newStatus;
-
-  
-
-  return;
-}
-
-      const cancelBtn = e.target?.closest?.(".btnCancel");
-      if (!cancelBtn) return;
-
-      const id = cancelBtn.getAttribute("data-id");
-      const row = cancelBtn.closest("tr");
-      const sel = row?.querySelector?.(".stSel");
-      const currentStatus = (sel?.value || "").trim().toLowerCase();
-
-      // Safety: don't allow cancelling paid orders from the UI.
-      if (currentStatus === "paid") {
-        alert("This order is PAID. If you need a refund, do not cancel/delete it here.");
-        show("Cancelled blocked (paid order).");
-        return;
-      }
-
-      const invoiceLabel = row?.querySelector?.("td .mono")?.textContent?.trim() || id;
-
-      const ok = confirm(
-        `Cancel + delete this order?\n\nInvoice: ${invoiceLabel}\n\nThis will remove it from Admin list and the customer's purchase history.`
+    if (q) {
+      const pat = `%${q}%`;
+      query = query.or(
+        `invoice_number.ilike.${pat},number.ilike.${pat},bill_to_email.ilike.${pat},bill_to_name.ilike.${pat},bill_to_company.ilike.${pat}`
       );
-      if (!ok) return;
+    }
 
-      try {
-        show("Cancelling…");
+    const { data, error } = await query;
+    if (error) {
+      show("ERROR: " + error.message);
+      return;
+    }
 
-        // 1) Mark as cancelled (helps if delete fails due to RLS/policies)
-        const { error: upErr } = await supabase
-          .from("invoices")
-          .update({ status: "cancelled" })
-          .eq("id", id);
+    const rows = data || [];
+    for (const inv of rows) {
+      const invoiceNum = inv.invoice_number ?? inv.number ?? inv.id ?? "";
+      const created = inv.created_at ?? inv.created ?? "";
+      const stv = (inv.status ?? inv.payment_status ?? "") || "";
+      const total = inv.total_amount ?? inv.total ?? inv.amount_total ?? inv.grand_total ?? "";
+      const company = inv.bill_to_company ?? "";
+      const phone = inv.bill_to_phone ?? "";
 
-        if (upErr) {
-          show("ERROR (update): " + upErr.message);
-          return;
-        }
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>
+          <div class="mono fw-semibold">${escapeHtml(invoiceNum)}</div>
+          <div class="muted mono">${escapeHtml(inv.id ?? "")}</div>
+        </td>
 
-        // 2) Delete invoice row
-        const { error: delErr } = await supabase
-          .from("invoices")
-          .delete()
-          .eq("id", id);
+        <td>
+          <div class="fw-semibold">${escapeHtml(inv.bill_to_email ?? "")}</div>
+          <div class="muted">${escapeHtml(inv.bill_to_name ?? "")}</div>
+          <div class="muted">${escapeHtml(company)}${company && phone ? " · " : ""}${escapeHtml(phone)}</div>
+        </td>
 
-        if (delErr) {
-          show("ERROR (delete): " + delErr.message);
-          return;
-        }
+        <td>${escapeHtml(fmtDate(created))}</td>
 
-        // Remove from UI immediately
-        row?.remove?.();
-        show("Order cancelled + deleted ✅");
-      } catch (err) {
-        show("ERROR: " + (err?.message || String(err)));
+        <td>
+          <select class="stSel form-select form-select-sm" data-prev="${escapeHtml(stv)}">
+            <option value="" ${!stv ? "selected" : ""}>(blank)</option>
+            <option value="paid" ${stv==="paid" ? "selected" : ""}>paid</option>
+            <option value="unpaid" ${stv==="unpaid" ? "selected" : ""}>unpaid</option>
+            <option value="pending" ${stv==="pending" ? "selected" : ""}>pending</option>
+            <option value="cancelled" ${stv==="cancelled" ? "selected" : ""}>cancelled</option>
+          </select>
+        </td>
+
+        <td class="right fw-semibold">${escapeHtml(fmtMoney(total))}</td>
+        <td class="right">${escapeHtml(fmtMoney(inv.invoice_profit))}</td>
+
+        <td>
+          <div class="row-actions">
+            <button type="button" class="btnOpen btn btn-sm btn-outline-secondary" data-id="${escapeHtml(inv.id)}">Open</button>
+            <button type="button" class="btnResend btn btn-sm btn-outline-primary" data-id="${escapeHtml(inv.id)}">Resend Email</button>
+            <button type="button" class="btnSaveStatus btn btn-sm btn-success" data-id="${escapeHtml(inv.id)}">Save Status</button>
+            <button type="button" class="btnCancel btn btn-sm btn-outline-danger" data-id="${escapeHtml(inv.id)}">Cancel Order</button>
+          </div>
+
+          <details>
+            <summary class="muted">details</summary>
+            <pre class="mono">${escapeHtml(JSON.stringify(inv, null, 2))}</pre>
+          </details>
+        </td>
+
+        <td>${qbBadge(inv)}</td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    show(`Done. Rows: ${rows.length}`);
+  }
+
+  tbody.addEventListener("click", async (e) => {
+    const openBtn = e.target?.closest?.(".btnOpen");
+    if (openBtn) {
+      const id = openBtn.getAttribute("data-id");
+      const url = `${INVOICE_PAGE}?id=${encodeURIComponent(id)}`;
+      window.open(url, "_blank");
+      return;
+    }
+
+    const resendBtn = e.target?.closest?.(".btnResend");
+    if (resendBtn) {
+      const id = resendBtn.getAttribute("data-id");
+      show("Resending invoice email…");
+      const { data, error } = await supabase.functions.invoke(RESEND_FUNCTION, {
+        body: { action: "resend", invoice_id: id }
+      });
+      if (error) { show("ERROR: " + error.message); return; }
+      show("Resend requested ✅");
+      return;
+    }
+
+    const saveBtn = e.target?.closest?.(".btnSaveStatus");
+    if (saveBtn) {
+      const id = saveBtn.getAttribute("data-id");
+      const tr = saveBtn.closest("tr");
+      const sel = tr?.querySelector?.(".stSel");
+
+      const prevStatus = (sel?.dataset?.prev || "").trim().toLowerCase();
+      const newStatus = (sel?.value || "").trim().toLowerCase();
+
+      show("Saving status…");
+
+      const { error: upErr } = await supabase
+        .from("invoices")
+        .update({
+          status: newStatus || null,
+          payment_status: newStatus || null,
+          qb_sync_error: null
+        })
+        .eq("id", id);
+
+      if (upErr) { show("ERROR: " + upErr.message); return; }
+
+      show("Status saved ✅");
+      if (sel) sel.dataset.prev = newStatus;
+      return;
+    }
+
+    const cancelBtn = e.target?.closest?.(".btnCancel");
+    if (!cancelBtn) return;
+
+    const id = cancelBtn.getAttribute("data-id");
+    const row = cancelBtn.closest("tr");
+    const sel = row?.querySelector?.(".stSel");
+    const currentStatus = (sel?.value || "").trim().toLowerCase();
+
+    if (currentStatus === "paid") {
+      alert("This order is PAID. If you need a refund, do not cancel/delete it here.");
+      show("Cancelled blocked (paid order).");
+      return;
+    }
+
+    const invoiceLabel = row?.querySelector?.("td .mono")?.textContent?.trim() || id;
+
+    const ok = confirm(
+      `Cancel + delete this order?\n\nInvoice: ${invoiceLabel}\n\nThis will remove it from Admin list and the customer's purchase history.`
+    );
+    if (!ok) return;
+
+    try {
+      show("Cancelling…");
+
+      const { error: upErr } = await supabase
+        .from("invoices")
+        .update({ status: "cancelled" })
+        .eq("id", id);
+
+      if (upErr) {
+        show("ERROR (update): " + upErr.message);
+        return;
       }
-    });
 
-    btnLoad.addEventListener("click", loadOrders);
-    btnToday.addEventListener("click", () => { setToday(); loadOrders(); });
-    btnClear.addEventListener("click", () => { clearFilters(); loadOrders(); });
+      const { error: delErr } = await supabase
+        .from("invoices")
+        .delete()
+        .eq("id", id);
 
-    (async () => {
-      await requireAdmin();
-      await loadOrders();
-    })();
-  </script>
+      if (delErr) {
+        show("ERROR (delete): " + delErr.message);
+        return;
+      }
+
+      row?.remove?.();
+      show("Order cancelled + deleted ✅");
+    } catch (err) {
+      show("ERROR: " + (err?.message || String(err)));
+    }
+  });
+
+  btnLoad.addEventListener("click", loadOrders);
+  btnToday.addEventListener("click", () => { setToday(); loadOrders(); });
+  btnClear.addEventListener("click", () => { clearFilters(); loadOrders(); });
+
+  (async () => {
+    await requireAdmin();
+    await loadOrders();
+  })();
+</script>
 </body>
 </html>
