@@ -72,8 +72,15 @@ function lineItemRow(item) {
 }
 
 function renderInvoice(inv, items) {
+  const isCash = String(inv.sale_type || "").toLowerCase() === "cash";
+
   setText("invoiceNumber", inv.invoice_number || inv.number || "INV-");
   setText("invoiceDate", fmtDate(inv.invoice_date || inv.date));
+
+  // If cash sale, change the title label (internal only)
+  const titleEl = document.querySelector(".invoice-title");
+  if (titleEl && isCash) titleEl.textContent = "Cash Sale (Internal)";
+
 
   // Seller (optional)
   if (inv.seller_name) setText("sellerName", inv.seller_name);
@@ -143,9 +150,16 @@ if (termsTitle) termsTitle.style.display = isPaid ? "none" : "inline";
   );
 
   const taxPct = Math.round(taxRate * 10000) / 100;
-  setText("taxLabel", `${inv.tax_name || "HST"} (${taxPct}%)`);
+
+  if (isCash) {
+    setText("taxLabel", "HST (0%)");
+  } else {
+    setText("taxLabel", `${inv.tax_name || "HST"} (${taxPct}%)`);
+  }
+
   setText("tax", money(tax, currency));
   setText("grandTotal", money(total, currency));
+
 
   if (inv.terms_text) setHtml("termsText", escapeHtml(inv.terms_text).replace(/\n/g, "<br>"));
 
