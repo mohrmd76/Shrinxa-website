@@ -1707,9 +1707,18 @@ async function loadDeliveryRule(sb){
     const t = String(tier || "standard").trim().toLowerCase();
     const allowPayLater = (t === "std_pay_later" || t === "gold" || t === "platinum");
 
+    // Reset styling (in case tier changed)
+    sel.disabled = false;
+    sel.style.appearance = "";
+    sel.style.webkitAppearance = "";
+    sel.style.mozAppearance = "";
+    sel.style.backgroundImage = "";
+    sel.style.pointerEvents = "";
+    sel.style.paddingRight = "";
+
     const prev = String(sel.value || "").trim() || "pay_now";
 
-    // rebuild options cleanly
+    // Rebuild options
     sel.innerHTML = "";
 
     const optNow = document.createElement("option");
@@ -1722,36 +1731,22 @@ async function loadDeliveryRule(sb){
       optLater.value = "pay_later";
       optLater.textContent = "Pay later at delivery";
       sel.appendChild(optLater);
-      sel.disabled = false;
 
-      // keep previous selection if still valid
       sel.value = (prev === "pay_later") ? "pay_later" : "pay_now";
-   } else {
-  // standard: show as locked text field (no dropdown arrow)
-  const wrap = sel.parentElement;
-  if (!wrap) {
-    sel.disabled = true;
+      sel.disabled = false;
+      return;
+    }
+
+    // STANDARD: Pay now only + hide arrow
     sel.value = "pay_now";
-    return;
-  }
+    sel.disabled = true;
 
-  // If we already swapped it before, do nothing
-  if (wrap.querySelector(".paymentLocked")) return;
-
-  // Hide select (keep it in DOM so existing code reading sel.value still works)
-  sel.classList.add("d-none");
-  sel.disabled = true;
-  sel.value = "pay_now";
-
-  const locked = document.createElement("input");
-  locked.type = "text";
-  locked.value = "Pay now";
-  locked.disabled = true;
-  locked.className = "paymentLocked payment-select"; // reuse your styling
-
-  wrap.appendChild(locked);
-}
-
+    sel.style.appearance = "none";
+    sel.style.webkitAppearance = "none";
+    sel.style.mozAppearance = "none";
+    sel.style.backgroundImage = "none";
+    sel.style.pointerEvents = "none";
+    sel.style.paddingRight = "12px";
   }
 
   function getImagePath(name) {
