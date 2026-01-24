@@ -530,13 +530,27 @@
   }
 
   tbody.addEventListener("click", async (e) => {
-    const openBtn = e.target?.closest?.(".btnOpen");
-    if (openBtn) {
-      const id = openBtn.getAttribute("data-id");
-      const url = `${INVOICE_PAGE}?id=${encodeURIComponent(id)}`;
-      window.open(url, "_blank");
+  const openBtn = e.target?.closest?.(".btnOpen");
+  if (openBtn) {
+    const id = openBtn.getAttribute("data-id");
+
+    const tr = openBtn.closest("tr");
+    const rawJson = tr?.dataset?.raw || "{}";
+    let invRow = {};
+    try { invRow = JSON.parse(rawJson); } catch (_) {}
+
+    const isCash = String(invRow.sale_type || "").toLowerCase() === "cash";
+
+    if (isCash) {
+      alert("This is a CASH sale (internal only). There is no public invoice page.");
       return;
     }
+
+    const url = `${INVOICE_PAGE}?id=${encodeURIComponent(id)}`;
+    window.open(url, "_blank");
+    return;
+  }
+
 
     const resendBtn = e.target?.closest?.(".btnResend");
     if (resendBtn) {
