@@ -1365,8 +1365,7 @@
             <span style="font-size:0.85rem;opacity:.9;">Payment:</span>
             <select id="paymentMethod" style="min-width:190px;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.2);color:#fff;">
               <option value="pay_now">Pay now</option>
-              <option value="pay_later">Pay later at delivery</option>
-            </select>
+</select>
           </div>
           <button id="buyNowBtn" class="btn btn-primary" type="button" style="width:100%;">Buy now</button>
           <div id="checkoutMsg" style="text-align:right;font-size:0.85rem;color:#c7d2fe;"></div>
@@ -1817,6 +1816,10 @@ async function loadDeliveryRule(sb){
 
     const userId = session.user.id;
 
+    // Tier controls payment options
+    CUSTOMER_TIER = await loadCustomerTier(sb, userId);
+    applyPaymentMethodOptions(CUSTOMER_TIER);
+
     WHOLESALE_THRESHOLD = await loadWholesaleThreshold(sb, userId);
 await loadDeliveryRule(sb);
 
@@ -2228,7 +2231,7 @@ for (const r of (items || [])) {
           return;
         }
 
-        window.location.href = `invoice.html?id=${encodeURIComponent(out.invoice_id)}`;
+        window.location.href = `/invoice.html?id=${encodeURIComponent(out.invoice_id)}`;
       } catch (e) {
         console.error(e);
         if (checkoutMsg) checkoutMsg.textContent = String(e && e.message ? e.message : e);
