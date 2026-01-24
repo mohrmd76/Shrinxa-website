@@ -3,21 +3,115 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Delivery Rules - Admin</title>
+  <title>Shrinxa Admin – Delivery Rules</title>
 
-  <!-- Bootstrap (restored) -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
   <style>
-    body { background:#f6f7fb; }
-    header { background:#111; }
-    header a { color:#fff; text-decoration:none; opacity:.9; }
-    header a:hover { opacity:1; text-decoration:underline; }
-    .nav-links { gap:14px; flex-wrap:wrap; }
-    .card { border-radius: 14px; }
-    .table td, .table th { vertical-align: middle; }
-    .muted { color:#6c757d; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --brand:#111;
+      --ring: rgba(99,102,241,.25);
+    }
+
+    body{ background:var(--bg); color:var(--ink); margin:0; font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif; }
+
+    header{
+      background:var(--brand);
+      position:sticky;
+      top:0;
+      z-index:60;
+      box-shadow:0 10px 30px rgba(0,0,0,.18);
+    }
+    header a{
+      color:#fff;
+      text-decoration:none;
+      opacity:.85;
+      padding:6px 8px;
+      border-radius:10px;
+      white-space:nowrap;
+    }
+    header a:hover{ opacity:1; background:rgba(255,255,255,.08); }
+    header a.active{ opacity:1; background:rgba(255,255,255,.14); }
+    .nav-links{ gap:6px; flex-wrap:wrap; }
+
+    .page-title{ font-weight:800; letter-spacing:.2px; }
+
+    .card{
+      border:0;
+      border-radius:18px;
+      box-shadow:0 10px 30px rgba(17,24,39,.08);
+    }
+
+    .statusbar{
+      border-radius:14px;
+      border:1px solid rgba(17,24,39,.12);
+      padding:10px 12px;
+      background:#fff;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .statusbar .hint{ color:var(--muted); font-size:.875rem; }
+
+    .form-control:focus, .form-select:focus{
+      box-shadow:0 0 0 .25rem var(--ring);
+      border-color:rgba(99,102,241,.5);
+    }
+
+    .table-wrap{
+      max-height: calc(100vh - 320px);
+      overflow:auto;
+      border-radius:14px;
+      border:1px solid rgba(17,24,39,.08);
+      background:#fff;
+    }
+
+    table{
+      border-collapse:separate !important;
+      border-spacing:0;
+      width:100%;
+      min-width: 780px;
+    }
+
+    thead th{
+      position:sticky;
+      top:0;
+      z-index:5;
+      background:#f8fafc !important;
+      border-bottom:1px solid rgba(17,24,39,.08) !important;
+      font-size:.8rem;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      color:#475569;
+      white-space:nowrap;
+    }
+
+    tbody tr:hover{ background:#fafafa; }
+
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .82rem; }
+    .muted{ color:var(--muted); font-size:.875rem; }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:3px 10px;
+      border:1px solid rgba(17,24,39,.12);
+      border-radius:999px;
+      font-size:.78rem;
+      background:#fff;
+      color:#334155;
+    }
+
+    .btn{ border-radius:12px; }
+
+    h2{ margin:0; font-weight:800; letter-spacing:.2px; }
   </style>
 </head>
 <body>
@@ -32,123 +126,142 @@
       <a href="./customers.html">Customers</a>
       <a href="./products-admin.html">Products</a>
       <a href="./platinum.html">Platinum</a>
-      <a href="./delivery-admin.html" style="text-decoration:underline; opacity:1;">Delivery Rules</a>
+      <a href="./delivery-admin.html" class="active">Delivery Rules</a>
       <a href="./inventory.html">Inventory</a>
-	<a href="./income.html">Income</a>
-	<a href="./clients.html">Clients</a>
+      <a href="./income.html">Income</a>
+      <a href="./clients.html">Clients</a>
     </div>
 
     <div class="ms-auto d-flex align-items-center gap-2">
-      <span id="adminEmail" class="text-white small"></span>
+      <span id="adminEmail" class="text-white small opacity-75"></span>
       <button id="logoutBtn" class="btn btn-sm btn-outline-light">Logout</button>
     </div>
   </div>
 </header>
 
-<div class="wrap">
-  <h2>Delivery Rule</h2>
-
 <main class="container-fluid px-4 py-4">
+  <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
+    <div>
+      <div class="page-title h3 m-0">Delivery Rules</div>
+      <div class="muted">Control default delivery threshold/fee and customer-specific overrides.</div>
+    </div>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      <span class="pill"><span class="mono">public.delivery_rules</span></span>
+      <span class="pill">Active rules only</span>
+    </div>
+  </div>
 
-  <!-- Status messages (restored) -->
+  <!-- Status messages -->
   <div id="statusArea" class="mb-3"></div>
 
   <div class="row g-3">
     <div class="col-12 col-lg-6">
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <h5 class="card-title mb-3">Default Rule</h5>
+      <div class="card p-3">
+        <div class="statusbar mb-3">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="fw-bold">Default Rule</div>
+            <span class="pill">customer_id = <span class="mono">NULL</span></span>
+          </div>
+          <div class="hint">Used by checkout when no customer override exists.</div>
+        </div>
 
-          <div class="mb-3">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
             <label for="defMin" class="form-label">Charge fee under ($)</label>
             <input id="defMin" type="number" class="form-control" min="0" step="1" />
           </div>
 
-          <div class="mb-3">
+          <div class="col-12 col-md-6">
             <label for="defFee" class="form-label">Delivery fee ($)</label>
             <input id="defFee" type="number" class="form-control" min="0" step="1" />
           </div>
+        </div>
 
-          <div class="d-flex gap-2">
-            <button type="button" class="btn btn-dark" id="saveDefault">Save</button>
-            <button type="button" class="btn btn-outline-secondary" id="loadDefault">Reload</button>
-          </div>
+        <div class="d-flex gap-2 mt-3">
+          <button type="button" class="btn btn-primary" id="saveDefault">Save</button>
+          <button type="button" class="btn btn-outline-secondary" id="loadDefault">Reload</button>
+        </div>
 
-          <div class="mt-3 small muted">
-            Tip: This is your global rule (customer_id is NULL). The newest saved default rule will be used.
-          </div>
+        <div class="mt-3 small muted">
+          Tip: Checkout reads the <b>newest active</b> default rule.
         </div>
       </div>
     </div>
 
     <div class="col-12 col-lg-6">
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <h5 class="card-title mb-3">Customer Override</h5>
-
-          <div class="mb-3">
-            <label for="cust" class="form-label">Customer</label>
-            <select id="cust" class="form-select"></select>
+      <div class="card p-3">
+        <div class="statusbar mb-3">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="fw-bold">Customer Override</div>
+            <span class="pill">customer_id = <span class="mono">profiles.id</span></span>
           </div>
+          <div class="hint">Overrides default for the selected customer.</div>
+        </div>
 
-          <div class="mb-3">
+        <div class="mb-3">
+          <label for="cust" class="form-label">Customer</label>
+          <select id="cust" class="form-select"></select>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
             <label for="custMin" class="form-label">Charge fee under ($)</label>
             <input id="custMin" type="number" class="form-control" min="0" step="1" />
           </div>
 
-          <div class="mb-3">
+          <div class="col-12 col-md-6">
             <label for="custFee" class="form-label">Delivery fee ($)</label>
             <input id="custFee" type="number" class="form-control" min="0" step="1" />
           </div>
+        </div>
 
-          <div class="d-flex gap-2">
-            <button type="button" class="btn btn-dark" id="saveCust">Save</button>
-            <button type="button" class="btn btn-danger" id="delCust">Delete</button>
-          </div>
+        <div class="d-flex gap-2 mt-3">
+          <button type="button" class="btn btn-primary" id="saveCust">Save</button>
+          <button type="button" class="btn btn-outline-danger" id="delCust">Delete</button>
+        </div>
 
-          <div class="mt-3 small muted">
-            This overrides the default rule for a specific customer.
-          </div>
+        <div class="mt-3 small muted">
+          Deleting removes all override rows for this customer.
         </div>
       </div>
     </div>
 
     <div class="col-12">
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
-            <h5 class="card-title mb-0">Overrides</h5>
-            <button type="button" class="btn btn-outline-secondary btn-sm" id="refreshList">Refresh list</button>
+      <div class="card p-3">
+        <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-2">
+          <div>
+            <div class="fw-bold">Overrides List</div>
+            <div class="muted small">Latest 200 customer overrides.</div>
           </div>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="refreshList">Refresh</button>
+        </div>
 
-          <div class="table-responsive mt-3">
-            <table class="table table-striped table-hover align-middle mb-0">
-              <thead>
-                <tr>
-                  <th style="width:40%;">Customer</th>
-                  <th style="width:20%;">Under ($)</th>
-                  <th style="width:20%;">Fee ($)</th>
-                  <th style="width:20%;">Customer ID</th>
-                </tr>
-              </thead>
-              <tbody id="list"></tbody>
-            </table>
-          </div>
+        <div class="table-wrap">
+          <table class="table table-sm table-hover align-middle m-0">
+            <thead>
+              <tr>
+                <th style="width:40%;">Customer</th>
+                <th style="width:20%;">Under ($)</th>
+                <th style="width:20%;">Fee ($)</th>
+                <th style="width:20%;">Customer ID</th>
+              </tr>
+            </thead>
+            <tbody id="list"></tbody>
+          </table>
+        </div>
 
-          <div class="mt-2 small muted">
-            Note: Customer ID is shown for debugging.
-          </div>
+        <div class="mt-2 small muted">
+          Note: Customer ID is shown for debugging only.
         </div>
       </div>
     </div>
   </div>
 </main>
 
-<!-- Bootstrap JS (restored) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script type="module">
-  import { supabase } from "../supabaseClient.js";
+import { supabase } from "../supabaseClient.js";
   import "./admin-auth.js";
 const adminEmailEl = document.getElementById("adminEmail");
 const logoutBtn = document.getElementById("logoutBtn");
