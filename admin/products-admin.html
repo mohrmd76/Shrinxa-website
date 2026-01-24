@@ -3,68 +3,138 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Admin – Products</title>
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>Shrinxa Admin – Products</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Arial, sans-serif; margin: 0; }
-    .wrap { max-width: none; width: 100%; }
-    .nav { margin: 6px 0 14px; }
-    .nav a { margin-right: 10px; }
-    .status { padding:8px 10px; border:1px solid #ccc; display:inline-block; }
-    .top { display:flex; gap:12px; align-items:end; flex-wrap:wrap; margin-top:12px; }
-    label { font-size: 12px; color:#333; display:flex; flex-direction:column; gap:4px; }
-    input, select, textarea { padding:6px 8px; border:1px solid #bbb; border-radius:8px; min-width: 170px; }
-    textarea { min-height: 90px; resize: vertical; }
-    button { padding:7px 10px; border:1px solid #888; border-radius:10px; background:#f6f6f6; cursor:pointer; }
-    button:hover { background:#efefef; }
-    .btnrow { display:flex; gap:8px; flex-wrap:wrap; }
-    table { border-collapse: separate; border-spacing: 0; width: 100%; margin-top: 14px; }
-    th, td { border:1px solid #ddd; padding:8px; vertical-align: top; }
-    th { background:#fafafa; position: sticky; top: 0; z-index: 2; }
-    table { width: 100%; table-layout: fixed; }
-th, td {
-  font-size: 13px;
-}
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --brand:#111;
+      --ring: rgba(99,102,241,.25);
+    }
+
+    body{ background:var(--bg); color:var(--ink); margin:0; font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif; }
+
+    header{
+      background:var(--brand);
+      position:sticky;
+      top:0;
+      z-index:60;
+      box-shadow:0 10px 30px rgba(0,0,0,.18);
+    }
+    header a{
+      color:#fff;
+      text-decoration:none;
+      opacity:.85;
+      padding:6px 8px;
+      border-radius:10px;
+      white-space:nowrap;
+    }
+    header a:hover{ opacity:1; background:rgba(255,255,255,.08); }
+    header a.active{ opacity:1; background:rgba(255,255,255,.14); }
+    .nav-links{ gap:6px; flex-wrap:wrap; }
+
+    .page-title{ font-weight:800; letter-spacing:.2px; }
+
+    .card{
+      border:0;
+      border-radius:18px;
+      box-shadow:0 10px 30px rgba(17,24,39,.08);
+    }
+
+    .statusbar{
+      border-radius:14px;
+      border:1px solid rgba(17,24,39,.12);
+      padding:10px 12px;
+      background:#fff;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .statusbar .hint{ color:var(--muted); font-size:.875rem; }
+
+    .form-control:focus, .form-select:focus, textarea:focus{
+      box-shadow:0 0 0 .25rem var(--ring);
+      border-color:rgba(99,102,241,.5);
+    }
+
+    .table-wrap{
+      max-height: calc(100vh - 270px);
+      overflow:auto;
+      border-radius:14px;
+      border:1px solid rgba(17,24,39,.08);
+      background:#fff;
+    }
+
+    table{
+      border-collapse:separate !important;
+      border-spacing:0;
+      width:100%;
+      min-width: 1600px;
+    }
+
+    thead th{
+      position:sticky;
+      top:0;
+      z-index:5;
+      background:#f8fafc !important;
+      border-bottom:1px solid rgba(17,24,39,.08) !important;
+      font-size:.8rem;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      color:#475569;
+      white-space:nowrap;
+    }
+
+    th, td{ padding:10px 10px; vertical-align:top; font-size:13px; }
+    tbody tr:hover{ background:#fafafa; }
+
     /* Sticky first column (Product) */
     th.sticky-col, td.sticky-col {
       position: sticky;
       left: 0;
       background: #fff;
-      z-index: 3;
+      z-index: 6;
       box-shadow: 2px 0 0 rgba(0,0,0,0.06);
     }
-    thead th.sticky-col { z-index: 6; }
-	.nowrap { white-space: nowrap; }
+    thead th.sticky-col{ z-index: 8; background:#f8fafc !important; }
 
-    .right { text-align:right; white-space:nowrap; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
-    .pill { display:inline-block; padding:2px 8px; border:1px solid #ccc; border-radius:999px; font-size:12px; }
-    .muted { color:#666; font-size:12px; }
-    
-.row-actions {
-  display: flex;
-  gap: 6px;
-  flex-wrap: nowrap;
-  white-space: nowrap;
-}
+    .right{ text-align:right; white-space:nowrap; }
+    .nowrap{ white-space:nowrap; }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+    .muted{ color:var(--muted); font-size:12px; }
 
-    dialog { border:1px solid #ddd; border-radius:16px; padding:0; width: min(920px, 96vw); }
-    .dlgHead { padding:14px 14px 10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; gap:10px; }
-    .dlgBody { padding:14px; }
-    .grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
-    .grid3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; }
-    .dlgFoot { padding:12px 14px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px; }
-    .w100 { min-width: 0; width: 100%; }
-    .small { font-size: 12px; }
-    @media (max-width: 900px) {
-      .grid, .grid3 { grid-template-columns: 1fr; }
+    .row-actions{ display:flex; gap:8px; flex-wrap:nowrap; white-space:nowrap; }
+
+    dialog{ border:1px solid rgba(17,24,39,.18); border-radius:18px; padding:0; width: min(980px, 96vw); }
+    .dlgHead{ padding:14px 14px 10px; border-bottom:1px solid rgba(17,24,39,.10); display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .dlgBody{ padding:14px; }
+    .dlgFoot{ padding:12px 14px; border-top:1px solid rgba(17,24,39,.10); display:flex; justify-content:flex-end; gap:10px; }
+    .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+    .grid3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; }
+    .w100{ min-width: 0; width: 100%; }
+    .small{ font-size: 12px; }
+    @media (max-width: 900px){ .grid, .grid3{ grid-template-columns: 1fr; } table{ min-width: 1100px; } }
+
+    .btn{ border-radius:12px; }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:3px 10px;
+      border:1px solid rgba(17,24,39,.12);
+      border-radius:999px;
+      font-size:.78rem;
+      background:#fff;
+      color:#334155;
     }
-header { background:#111; }
-header a { color:#fff; text-decoration:none; opacity:.9; }
-header a:hover { opacity:1; text-decoration:underline; }
-.nav-links { gap:14px; flex-wrap:wrap; }
-
   </style>
 </head>
 <body>
@@ -76,60 +146,85 @@ header a:hover { opacity:1; text-decoration:underline; }
       <a href="./dashboard.html">Dashboard</a>
       <a href="./orders.html">Orders</a>
       <a href="./customers.html">Customers</a>
-      <a href="./products-admin.html" style="text-decoration:underline; opacity:1;">Products</a>
+      <a href="./products-admin.html" class="active">Products</a>
       <a href="./platinum.html">Platinum</a>
       <a href="./delivery-admin.html">Delivery Rules</a>
       <a href="./inventory.html">Inventory</a>
-	<a href="./income.html">Income</a>
-	<a href="./clients.html">Clients</a>
+      <a href="./income.html">Income</a>
+      <a href="./clients.html">Clients</a>
     </div>
 
     <div class="ms-auto d-flex align-items-center gap-2">
-      <span id="adminEmail" class="text-white small"></span>
+      <span id="adminEmail" class="text-white small opacity-75"></span>
       <button id="logoutBtn" class="btn btn-sm btn-outline-light">Logout</button>
     </div>
   </div>
 </header>
 
-  <div class="wrap">
-    <h2>Products</h2>
+<main class="container-fluid px-4 py-4">
+  <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
+    <div>
+      <div class="page-title h3 m-0">Products</div>
+      <div class="text-muted" style="font-size:.95rem;">Manage catalog, pricing tiers, content, images, and activation.</div>
+    </div>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      <span class="pill"><span class="mono">public.products</span></span>
+      <span class="pill">Max: 2000 rows</span>
+    </div>
+  </div>
 
-    <div class="status" id="status">Loading…</div>
+  <div class="card p-3">
+    <div class="statusbar mb-3">
+      <div class="d-flex gap-3 align-items-center flex-wrap">
+        <div class="input-group" style="max-width: 620px;">
+          <span class="input-group-text">🔎</span>
+          <select id="scope" class="form-select" style="max-width: 200px;">
+            <option value="all" selected>All fields</option>
+            <option value="name">Name</option>
+            <option value="description">Description</option>
+            <option value="spec">Specification</option>
+            <option value="features">Features</option>
+            <option value="category">Category</option>
+          </select>
+          <input id="q" type="text" class="form-control" placeholder="Type to search… (debounced)">
+          <button id="btnLoad" type="button" class="btn btn-primary">Load</button>
+        </div>
 
-    <div class="top">
-      <label>
-        Search
-        <input id="q" type="text" placeholder="name / description">
-      </label>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+          <label class="m-0" style="font-size:.8rem; color:#334155;">
+            Active
+            <select id="activeFilter" class="form-select form-select-sm" style="min-width: 150px;">
+              <option value="">All</option>
+              <option value="true" selected>Active</option>
+              <option value="false">Inactive</option>
+            </select>
+          </label>
 
-      <label>
-        Active
-        <select id="activeFilter">
-          <option value="">All</option>
-          <option value="true" selected>Active</option>
-          <option value="false">Inactive</option>
-        </select>
-      </label>
+          <button id="btnNew" type="button" class="btn btn-outline-secondary">New Product</button>
+          <button id="btnExport" type="button" class="btn btn-outline-secondary">Export CSV</button>
+        </div>
 
-      <div class="btnrow">
-        <button id="btnLoad" type="button">Load</button>
-        <button id="btnNew" type="button">New Product</button>
-        <button id="btnExport" type="button">Export CSV</button>
+        <div class="hint">Live search: type to filter. Enter = load now, Esc = clear.</div>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <div class="text-nowrap fw-semibold text-muted" id="status">Loading…</div>
       </div>
     </div>
 
-    <div class="muted small" style="margin-top:8px;">
+    <div class="text-muted small mb-2">
       Platinum prices are managed in <b>Platinum</b> page (no Platinum column here).
     </div>
 
-	<div style="overflow:auto; width:100%; margin-top:10px;">
-      <table>
+    <div class="table-wrap">
+      <!-- Table markup kept identical to your original columns -->
+      <table class="table table-sm table-hover align-middle m-0">
         <thead>
           <tr>
             <th style="width:135px;" class="sticky-col">Product</th>
             <th style="width:70px;">Category</th>
             <th style="width:60px;">Active</th>
-	    <th style="width:45px;">Sort</th>
+            <th style="width:45px;">Sort</th>
 
             <th style="width:85px;" class="right">Std Retail</th>
             <th style="width:110px;" class="right">Std Wholesale</th>
@@ -149,64 +244,67 @@ header a:hover { opacity:1; text-decoration:underline; }
       </table>
     </div>
 
+    <!-- Dialog kept (IDs unchanged) -->
     <dialog id="dlg">
       <div class="dlgHead">
         <div>
           <div class="mono" id="dlgId"></div>
-          <div style="font-weight:700;" id="dlgTitle">Product</div>
-          <div class="muted">Table: <span class="mono">public.products</span></div>
+          <div style="font-weight:800;" id="dlgTitle">Product</div>
+          <div class="text-muted small">Table: <span class="mono">public.products</span></div>
         </div>
-        <button id="btnClose" type="button">Close</button>
+        <button id="btnClose" type="button" class="btn btn-sm btn-outline-secondary">Close</button>
       </div>
 
       <div class="dlgBody">
         <div class="grid">
-          <label class="w100">
+          <label class="w100" style="font-size:.8rem; color:#334155;">
             Name
-            <input id="f_name" class="w100" type="text" placeholder="Product name">
+            <input id="f_name" class="form-control w100" type="text" placeholder="Product name">
           </label>
-          <label class="w100">
-  Product image (upload)
-  <input id="f_image_file" class="w100" type="file" accept="image/*">
-</label>
-<div class="w100" style="display:flex; flex-direction:column; gap:6px;">
-  <label class="w100" style="min-width:0;">
-    Image URL (auto)
-    <input id="f_image" class="w100" type="text" placeholder="Upload an image to auto-fill" readonly>
-  </label>
-  <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-    <button id="btnUploadImg" type="button">Upload</button>
-    <span class="muted small" id="imgUploadStatus"></span>
-  </div>
-</div>
+
+          <label class="w100" style="font-size:.8rem; color:#334155;">
+            Product image (upload)
+            <input id="f_image_file" class="form-control w100" type="file" accept="image/*">
+          </label>
+
+          <div class="w100" style="display:flex; flex-direction:column; gap:6px;">
+            <label class="w100" style="min-width:0; font-size:.8rem; color:#334155;">
+              Image URL (auto)
+              <input id="f_image" class="form-control w100" type="text" placeholder="Upload an image to auto-fill" readonly>
+            </label>
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+              <button id="btnUploadImg" type="button" class="btn btn-outline-secondary">Upload</button>
+              <span class="text-muted small" id="imgUploadStatus"></span>
+            </div>
+          </div>
         </div>
 
         <div class="grid3" style="margin-top:12px;">
-          <label class="w100">
+          <label class="w100" style="font-size:.8rem; color:#334155;">
             Active
-            <select id="f_active" class="w100">
+            <select id="f_active" class="form-select w100">
               <option value="true" selected>true</option>
               <option value="false">false</option>
             </select>
           </label>
-          <label class="w100">
+          <label class="w100" style="font-size:.8rem; color:#334155;">
             Sort order
-            <input id="f_sort" class="w100" type="number" step="1" placeholder="0">
+            <input id="f_sort" class="form-control w100" type="number" step="1" placeholder="0">
           </label>
-          <label class="w100">
+          <label class="w100" style="font-size:.8rem; color:#334155;">
             Rolls / Box
-            <input id="f_rolls" class="w100" type="number" step="1" placeholder="0">
+            <input id="f_rolls" class="form-control w100" type="number" step="1" placeholder="0">
           </label>
         </div>
 
         <div class="grid3" style="margin-top:12px;">
-          <label class="w100">
+          <label class="w100" style="font-size:.8rem; color:#334155;">
             Currency
-            <input id="f_currency" class="w100" type="text" placeholder="CAD" value="CAD">
+            <input id="f_currency" class="form-control w100" type="text" placeholder="CAD" value="CAD">
           </label>
-          <label class="w100">
+          <label class="w100" style="font-size:.8rem; color:#334155;">
             Category
-            <select id="f_category" class="w100">
+            <select id="f_category" class="form-select w100">
               <option value="">-- select --</option>
               <option value="Stretch Wrap">Stretch Wrap</option>
               <option value="Pre-Stretch Wrap">Pre-Stretch Wrap</option>
@@ -217,59 +315,60 @@ header a:hover { opacity:1; text-decoration:underline; }
         </div>
 
         <div class="grid" style="margin-top:12px;">
-          <label class="w100">
+          <label class="w100" style="font-size:.8rem; color:#334155;">
             Std Retail price
-            <input id="f_std_retail" class="w100" type="number" step="0.01" placeholder="0.00">
+            <input id="f_std_retail" class="form-control w100" type="number" step="0.01" placeholder="0.00">
           </label>
-          <label class="w100">
+          <label class="w100" style="font-size:.8rem; color:#334155;">
             Std Wholesale price
-            <input id="f_std_wholesale" class="w100" type="number" step="0.01" placeholder="0.00">
+            <input id="f_std_wholesale" class="form-control w100" type="number" step="0.01" placeholder="0.00">
           </label>
         </div>
 
         <div class="grid" style="margin-top:12px;">
-          <label class="w100">
+          <label class="w100" style="font-size:.8rem; color:#334155;">
             Gold Retail price
-            <input id="f_gold_retail" class="w100" type="number" step="0.01" placeholder="0.00">
+            <input id="f_gold_retail" class="form-control w100" type="number" step="0.01" placeholder="0.00">
           </label>
-          <label class="w100">
+          <label class="w100" style="font-size:.8rem; color:#334155;">
             Gold Wholesale price
-            <input id="f_gold_wholesale" class="w100" type="number" step="0.01" placeholder="0.00">
+            <input id="f_gold_wholesale" class="form-control w100" type="number" step="0.01" placeholder="0.00">
           </label>
         </div>
 
         <div class="grid" style="margin-top:12px;">
-          <label class="w100">
+          <label class="w100" style="font-size:.8rem; color:#334155;">
             Description
-            <textarea id="f_desc" class="w100" placeholder="Description..."></textarea>
+            <textarea id="f_desc" class="form-control w100" placeholder="Description..."></textarea>
           </label>
-          <label class="w100">
+          <label class="w100" style="font-size:.8rem; color:#334155;">
             Specification
-            <textarea id="f_spec" class="w100" placeholder="Specification..."></textarea>
+            <textarea id="f_spec" class="form-control w100" placeholder="Specification..."></textarea>
           </label>
         </div>
+
         <div style="margin-top:12px;">
-          <label class="w100">
+          <label class="w100" style="font-size:.8rem; color:#334155;">
             Features
-            <textarea id="f_features" class="w100" placeholder="Features..."></textarea>
+            <textarea id="f_features" class="form-control w100" placeholder="Features..."></textarea>
           </label>
         </div>
 
-
-        <div class="muted small" style="margin-top:10px;">
+        <div class="text-muted small" style="margin-top:10px;">
           Platinum custom prices are per-customer in <b>Platinum</b> page.
         </div>
       </div>
 
       <div class="dlgFoot">
-        <button id="btnDelete" type="button">Delete</button>
-        <button id="btnSave" type="button">Save</button>
+        <button id="btnDelete" type="button" class="btn btn-outline-danger">Delete</button>
+        <button id="btnSave" type="button" class="btn btn-primary">Save</button>
       </div>
     </dialog>
   </div>
+</main>
 
-  <script type="module">
-    import { supabase } from "../supabaseClient.js";
+<script type="module">
+import { supabase } from "../supabaseClient.js";
 const adminEmailEl = document.getElementById("adminEmail");
 const logoutBtn = document.getElementById("logoutBtn");
 
@@ -283,6 +382,7 @@ logoutBtn?.addEventListener("click", async () => {
     const tbody = document.getElementById("rows");
 
     const qEl = document.getElementById("q");
+    const scopeEl = document.getElementById("scope");
     const activeFilterEl = document.getElementById("activeFilter");
     const btnLoad = document.getElementById("btnLoad");
     const btnNew = document.getElementById("btnNew");
@@ -487,6 +587,13 @@ logoutBtn?.addEventListener("click", async () => {
 
 function show(msg) { statusEl.textContent = msg; }
 
+    // Live (debounced) search
+    let _loadTimer = null;
+    function scheduleLoad(delayMs = 500){
+      if (_loadTimer) clearTimeout(_loadTimer);
+      _loadTimer = setTimeout(() => loadProducts(), delayMs);
+    }
+
     function n(v) {
       const x = Number(v);
       return Number.isFinite(x) ? x : null;
@@ -603,6 +710,12 @@ btnUploadImg?.addEventListener("click", async () => {
 
     function buildSearchOr(query) {
       const pat = `%${query}%`;
+      const scope = (scopeEl?.value || "all").trim();
+      if (scope === "name") return `name.ilike.${pat}`;
+      if (scope === "description") return `description.ilike.${pat}`;
+      if (scope === "spec") return `specification.ilike.${pat}`;
+      if (scope === "features") return `features.ilike.${pat}`;
+      if (scope === "category") return `category.ilike.${pat}`;
       return `name.ilike.${pat},description.ilike.${pat},specification.ilike.${pat},features.ilike.${pat},category.ilike.${pat}`;
     }
     async function loadProducts() {
@@ -862,7 +975,29 @@ if (String(f_active.value) === "true") {
       }
     });
 
-    btnLoad.addEventListener("click", loadProducts);
+    // Live search (debounced)
+    qEl.addEventListener("input", () => {
+      const v = (qEl.value || "").trim();
+      scheduleLoad(v ? 550 : 150);
+    });
+
+    qEl.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter") {
+        ev.preventDefault();
+        if (_loadTimer) clearTimeout(_loadTimer);
+        loadProducts();
+      }
+      if (ev.key === "Escape") {
+        qEl.value = "";
+        scheduleLoad(120);
+      }
+    });
+
+    scopeEl?.addEventListener("change", () => {
+      scheduleLoad(200);
+    });
+
+btnLoad.addEventListener("click", loadProducts);
     btnNew.addEventListener("click", () => openDialog(null));
     btnExport.addEventListener("click", exportCsvFromTable);
 
@@ -874,6 +1009,6 @@ if (String(f_active.value) === "true") {
       await requireAdmin();
       await loadProducts();
     })();
-  </script>
+</script>
 </body>
 </html>
