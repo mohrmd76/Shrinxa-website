@@ -141,6 +141,25 @@
       align-items:end;
       flex-wrap:wrap;
     }
+  
+    .kpi-card{
+      text-align:center;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      padding:14px 12px;
+      min-height: 84px;
+    }
+    .kpi-card .k{ width:100%; text-align:center; }
+    .kpi-card .v{ width:100%; text-align:center; }
+
+    .summary-head{
+      text-align:center;
+      padding-top:2px;
+      margin-bottom:10px;
+    }
+
   </style>
 
 </head>
@@ -218,29 +237,29 @@
   </div>
 
   <div class="grid">
-		<div class="card">
+		<div class="card kpi-card">
 	  <div class="k">Revenue</div>
 	  <div class="v" id="kpiRevenue">—</div>
 	</div>
 
-<div class="card">
+<div class="card kpi-card">
   <div class="k">COGS</div>
   <div class="v" id="kpiCOGS">—</div>
 </div>
-    <div class="card">
+    <div class="card kpi-card">
       <div class="k">Invoice Profit (range)</div>
       <div class="v" id="kpiInvoiceProfit">—</div>
       <div class="muted" id="kpiCurrency1"></div>
     </div>
-    <div class="card">
+    <div class="card kpi-card">
     <div class="k">Delivery Income</div>
       <div class="v" id="kpiDeliveryIncome">—</div>
     </div>
-    <div class="card">
+    <div class="card kpi-card">
       <div class="k">Total Expenses</div>
       <div class="v" id="kpiExpenses">—</div>
     </div>
-    <div class="card">
+    <div class="card kpi-card">
       <div class="k">Net Profit</div>
       <div class="v" id="kpiNetProfit">—</div>
     </div>
@@ -325,8 +344,10 @@
 
     <div class="d-flex flex-column gap-3">
       <div class="card">
-        <div class="k">Monthly Summary</div>
-        <div class="muted">From v_monthly_financials</div>
+        <div class="summary-head">
+          <div class="k">Monthly Summary</div>
+          <div class="muted">From v_monthly_financials</div>
+        </div>
         <div class="table-wrap" style="margin-top:10px;">
           <table>
             <thead>
@@ -371,8 +392,10 @@
     </div>
 
     <div class="card">
-      <div class="k">Yearly Summary</div>
-      <div class="muted">From v_yearly_financials</div>
+      <div class="summary-head">
+        <div class="k">Yearly Summary</div>
+        <div class="muted">From v_yearly_financials</div>
+      </div>
       <div class="table-wrap" style="margin-top:10px;">
         <table>
           <thead>
