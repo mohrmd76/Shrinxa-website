@@ -201,7 +201,7 @@ async function ensureAuth(){
     if(error){ console.error(error); showStatus("danger", "Failed to load customers."); return; }
 
     customerMap.clear();
-    data.forEach(c => customerMap.set(c.id, (c.full_name || c.email || c.id)));
+    data.forEach(c => customerMap.set(c.id, `${(c.full_name || "").trim()} — ${(c.email || "").trim()}`.replace(/^\s*—\s*$/, c.id)));
 
     $("cust").innerHTML =
       '<option value="">Select</option>' +
@@ -215,6 +215,7 @@ async function ensureAuth(){
       .from("delivery_rules")
       .select("*")
       .is("customer_id", null)
+      .eq("is_active", true)
       .order("updated_at", { ascending: false })
       .order("id", { ascending: false })
       .limit(1)
@@ -245,10 +246,12 @@ async function ensureAuth(){
       const min_subtotal = money($("defMin").value);
       const fee = money($("defFee").value);
 
+      // Always save to the newest ACTIVE default rule if it exists, otherwise create a new one.
       const { data: newest, error: newestErr } = await supabase
         .from("delivery_rules")
         .select("id")
         .is("customer_id", null)
+        .eq("is_active", true)
         .order("updated_at", { ascending: false })
         .order("id", { ascending: false })
         .limit(1)
@@ -260,33 +263,48 @@ async function ensureAuth(){
         return;
       }
 
-      let saveErr = null;
+      let savedId = null;
 
       if(newest?.id){
-        const { error } = await supabase
+        const { data: updated, error } = await supabase
           .from("delivery_rules")
           .update({ min_subtotal, fee, is_active: true, updated_at: new Date().toISOString() })
-          .eq("id", newest.id);
-        saveErr = error;
+          .eq("id", newest.id)
+          .select("id")
+          .single();
+        if(error){
+          console.error("saveDefault error:", error);
+          showStatus("danger", "Save failed (check console).");
+          return;
+        }
+        savedId = updated?.id || newest.id;
       } else {
-        const { error } = await supabase
+        const { data: inserted, error } = await supabase
           .from("delivery_rules")
-          .insert({ customer_id: null, min_subtotal, fee, is_active: true });
-        saveErr = error;
+          .insert({ customer_id: null, min_subtotal, fee, is_active: true })
+          .select("id")
+          .single();
+        if(error){
+          console.error("saveDefault error:", error);
+          showStatus("danger", "Save failed (check console).");
+          return;
+        }
+        savedId = inserted?.id || null;
       }
 
-      if(saveErr){
-        console.error("saveDefault error:", saveErr);
-        showStatus("danger", "Save failed (check console).");
-        return;
-      }
+      // Deactivate other default rules (so main site doesn't read an old one)
+      if(savedId){
+        const { error: deactErr } = await supabase
+          .from("delivery_rules")
+          .update({ is_active: false })
+          .is("customer_id", null)
+          .neq("id", savedId);
 
-      // Best-effort deactivate other default rules (so main site doesn't read old one)
-      await supabase
-        .from("delivery_rules")
-        .update({ is_active: false })
-        .is("customer_id", null)
-        .neq("id", newest?.id ?? -1);
+        if(deactErr){
+          console.warn("deactivate other defaults warning:", deactErr);
+          // not fatal
+        }
+      }
 
       showStatus("success", `Saved default rule: free delivery over <b>$${min_subtotal}</b>, fee <b>$${fee}</b>.`);
       await loadDefault();
