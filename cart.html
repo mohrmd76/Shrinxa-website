@@ -1608,6 +1608,7 @@ async function doSignOut() {
     return Number(row.qty ?? row.quantity ?? 0) || 0;
   }
     let WHOLESALE_THRESHOLD = 50; // default fallback
+let CUSTOMER_TIER = "standard"; // default fallback
 
 let DELIVERY_RULE = { min_subtotal: 300, fee: 30 }; // fallback
 
@@ -1680,6 +1681,56 @@ async function loadDeliveryRule(sb){
       return (Number.isFinite(v) && v >= 1) ? v : 50;
     } catch (e) {
       return 50;
+    }
+  }
+
+
+  async function loadCustomerTier(sb, userId){
+    try {
+      const { data, error } = await sb
+        .from("profiles")
+        .select("tier")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (error) return "standard";
+      const t = String(data?.tier || "standard").trim().toLowerCase();
+      return t || "standard";
+    } catch (e) {
+      return "standard";
+    }
+  }
+
+  function applyPaymentMethodOptions(tier){
+    const sel = document.getElementById("paymentMethod");
+    if (!sel) return;
+
+    const t = String(tier || "standard").trim().toLowerCase();
+    const allowPayLater = (t === "std_pay_later" || t === "gold" || t === "platinum");
+
+    const prev = String(sel.value || "").trim() || "pay_now";
+
+    // rebuild options cleanly
+    sel.innerHTML = "";
+
+    const optNow = document.createElement("option");
+    optNow.value = "pay_now";
+    optNow.textContent = "Pay now";
+    sel.appendChild(optNow);
+
+    if (allowPayLater) {
+      const optLater = document.createElement("option");
+      optLater.value = "pay_later";
+      optLater.textContent = "Pay later at delivery";
+      sel.appendChild(optLater);
+      sel.disabled = false;
+
+      // keep previous selection if still valid
+      sel.value = (prev === "pay_later") ? "pay_later" : "pay_now";
+    } else {
+      // standard: pay_now only
+      sel.disabled = true;
+      sel.value = "pay_now";
     }
   }
 
@@ -1926,6 +1977,15 @@ const DELIVERY_FEE = Number(DELIVERY_RULE.fee || 0);
 
         const { data: sessData } = await sb.auth.getSession();
         const session = sessData && sessData.session;
+
+        // Ensure payment options are correct for this customer tier
+        try {
+          const uid = session?.user?.id;
+          if (uid) {
+            CUSTOMER_TIER = await loadCustomerTier(sb, uid);
+            applyPaymentMethodOptions(CUSTOMER_TIER);
+          }
+        } catch (e) {}
 
         // Customer info for invoice (minimal)
         const customerEmail = session.user.email;
