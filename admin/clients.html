@@ -166,10 +166,12 @@
       display: flex;
       gap: 16px;
       margin-bottom: 24px;
+      flex-wrap: wrap;
     }
 
     .stat-card {
       flex: 1;
+      min-width: 220px;
       background: var(--bg-panel);
       border: 1px solid var(--border-color);
       border-radius: 16px;
@@ -567,6 +569,10 @@
 
     .order-table th {
       font-size: 12px;
+      background: var(--bg-panel-header);
+      position: sticky;
+      top: 0;
+      z-index: 2;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -761,6 +767,27 @@
       .page-wrap { padding: 16px; }
       .page-header { flex-direction: column; align-items: flex-start; }
     }
+  
+    /* --- TOP NAV (override to match new admin theme) --- */
+    header{
+      position: sticky;
+      top: 0;
+      z-index: 80;
+      background: #111;
+      box-shadow: 0 10px 30px rgba(0,0,0,.18);
+    }
+    header a{
+      color:#fff;
+      text-decoration:none;
+      opacity:.85;
+      padding:6px 8px;
+      border-radius:10px;
+      white-space:nowrap;
+      transition: background .15s ease, opacity .15s ease;
+    }
+    header a:hover{ opacity:1; background: rgba(255,255,255,.08); text-decoration:none; }
+    header a.active{ opacity:1; background: rgba(255,255,255,.14); text-decoration:none; }
+
   </style>
 </head>
 
@@ -784,7 +811,7 @@
           <a href="./delivery-admin.html">Delivery Rules</a>
           <a href="./inventory.html">Inventory</a>
           <a href="./income.html">Income</a>
-          <a href="./clients.html" style="text-decoration:underline; opacity:1;">Clients</a>
+          <a href="./clients.html" class="active">Clients</a>
         </div>
 
         <div class="ms-auto d-flex align-items-center gap-2">
@@ -920,7 +947,10 @@
             </div>
             <div class="panel-bd">
               <div class="search-filter-row">
-                <input id="productSearch" class="search-input" placeholder="Search products…">
+                <div style="flex:1; min-width: 220px; position: relative;">
+  <input id="productSearch" class="search-input" placeholder="Search products… (type to filter)">
+</div>
+<button id="clearProductSearch" class="btn btn-outline-secondary" type="button" style="height:44px; border-radius:12px;">Clear</button>
                 <select id="productCategory" class="filter-select">
                   <option value="all">All Categories</option>
                 </select>
@@ -938,7 +968,7 @@
         </div>
 
         <!-- RIGHT COLUMN -->
-        <div class="panel" style="position: sticky; top: 20px;">
+        <div class="panel" style="position: sticky; top: 92px;">
           <div class="panel-hd">
             <div class="panel-hd-icon order">🛒</div>
             Order Builder
@@ -1821,6 +1851,10 @@
 
     productSearch?.addEventListener("input", renderProductsGrid);
     productCategory?.addEventListener("change", renderProductsGrid);
+    document.getElementById("clearProductSearch")?.addEventListener("click", () => {
+      if (productSearch) productSearch.value = "";
+      renderProductsGrid();
+    });
 
     openCreateClientBtn?.addEventListener("click", () => {
       setStatus(createClientStatus, 'info', 'Fill required fields then create.');
