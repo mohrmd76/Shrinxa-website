@@ -203,9 +203,14 @@ async function ensureAuth(){
     customerMap.clear();
     data.forEach(c => customerMap.set(c.id, `${(c.full_name || "").trim()} — ${(c.email || "").trim()}`.replace(/^\s*—\s*$/, c.id)));
 
-    $("cust").innerHTML =
-      '<option value="">Select</option>' +
-      data.map(c => `<option value="${c.id}">${(c.full_name || c.email || c.id)}</option>`).join("");
+   $("cust").innerHTML =
+  '<option value="">Select</option>' +
+  data.map(c => {
+    const name = (c.full_name || "").trim();
+    const email = (c.email || "").trim();
+    const label = (name && email) ? `${name} — ${email}` : (name || email || c.id);
+    return `<option value="${c.id}">${label}</option>`;
+  }).join("");
   }
 
   async function loadDefault(){
