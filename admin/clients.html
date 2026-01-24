@@ -79,12 +79,8 @@
       transition: background 0.3s ease, color 0.3s ease;
       min-height: 100vh;
     }
-
-    header { background:#111; }
-    header a { color:#fff; text-decoration:none; opacity:.9; }
-    header a:hover { opacity:1; text-decoration:underline; }
-    .nav-links { gap:14px; flex-wrap:wrap; }
-    .hidden { display: none !important; }
+    /* header styling comes from shared admin theme */
+.hidden { display: none !important; }
 
     /* --- PAGE LAYOUT --- */
     .page-wrap { 
@@ -768,12 +764,12 @@
       .page-header { flex-direction: column; align-items: flex-start; }
     }
   
-    /* --- TOP NAV (override to match new admin theme) --- */
+    /* --- Standard header (matches other admin pages) --- */
     header{
+      background: var(--brand, #111);
       position: sticky;
       top: 0;
-      z-index: 80;
-      background: #111;
+      z-index: 60;
       box-shadow: 0 10px 30px rgba(0,0,0,.18);
     }
     header a{
@@ -783,10 +779,10 @@
       padding:6px 8px;
       border-radius:10px;
       white-space:nowrap;
-      transition: background .15s ease, opacity .15s ease;
     }
-    header a:hover{ opacity:1; background: rgba(255,255,255,.08); text-decoration:none; }
-    header a.active{ opacity:1; background: rgba(255,255,255,.14); text-decoration:none; }
+    header a:hover{ opacity:1; background:rgba(255,255,255,.08); text-decoration:none; }
+    header a.active{ opacity:1; background:rgba(255,255,255,.14); text-decoration:none; }
+    .nav-links{ gap:6px; flex-wrap:wrap; }
 
   </style>
 </head>
@@ -798,28 +794,28 @@
 
   <div id="admin" class="hidden">
     <header class="py-3">
-      <div class="container-fluid px-4 d-flex align-items-center gap-3">
-        <div class="text-white fw-bold">Shrinxa Admin</div>
+  <div class="container-fluid px-4 d-flex align-items-center gap-3">
+    <div class="text-white fw-bold">Shrinxa Admin</div>
 
-        <!-- IMPORTANT: Clients link is LAST -->
-        <div class="d-flex nav-links">
-          <a href="./dashboard.html">Dashboard</a>
-          <a href="./orders.html">Orders</a>
-          <a href="./customers.html">Customers</a>
-          <a href="./products-admin.html">Products</a>
-          <a href="./platinum.html">Platinum</a>
-          <a href="./delivery-admin.html">Delivery Rules</a>
-          <a href="./inventory.html">Inventory</a>
-          <a href="./income.html">Income</a>
-          <a href="./clients.html" class="active">Clients</a>
-        </div>
+    <div class="d-flex nav-links">
+      <a href="./dashboard.html">Dashboard</a>
+      <a href="./orders.html">Orders</a>
+      <a href="./customers.html">Customers</a>
+      <a href="./products-admin.html">Products</a>
+      <a href="./platinum.html">Platinum</a>
+      <a href="./delivery-admin.html">Delivery Rules</a>
+      <a href="./inventory.html">Inventory</a>
+      <a href="./income.html" class="active">Income</a>
+	<a href="./clients.html" class="active">Clients</a>
 
-        <div class="ms-auto d-flex align-items-center gap-2">
-          <span id="adminEmail" class="text-white small"></span>
-          <button id="logoutBtn" class="btn btn-sm btn-outline-light">Logout</button>
-        </div>
-      </div>
-    </header>
+    </div>
+
+    <div class="ms-auto d-flex align-items-center gap-2">
+      <span id="adminEmail" class="text-white small"></span>
+      <button id="logoutBtn" class="btn btn-sm btn-outline-light">Logout</button>
+    </div>
+  </div>
+</header>
 
     <div class="page-wrap">
       <!-- Page Header -->
