@@ -19,7 +19,7 @@
   </main>
 
   <script>
-    (() => {
+    (async () => {
       const params = new URLSearchParams(window.location.search);
       const sid = params.get("sid");
 
@@ -33,49 +33,54 @@
         return;
       }
 
-      // Poll stripe_sessions for invoice_id, then redirect to the invoice page
-      const SUPABASE_URL = "https://fgrjojxwevllnjdixiyd.supabase.co";
-      const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZncmpvanh3ZXZsbG5qZGl4aXlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0ODU4MjgsImV4cCI6MjA4MTA2MTgyOH0.DfqCgNf_GpnaMqFbePxCrwNcRJbptiS9fzdSwpj6lbQ"; // <-- replace this once
-
-      const checkOnce = async () => {
-        const url =
-          `${SUPABASE_URL}/rest/v1/stripe_sessions` +
-          `?select=invoice_id,status&stripe_session_id=eq.${encodeURIComponent(sid)}&limit=1`;
-
-        const res = await fetch(url, {
-          headers: {
-            apikey: ANON_KEY,
-            Authorization: `Bearer ${ANON_KEY}`,
-          },
-        });
-
-        if (!res.ok) return null;
-        const rows = await res.json().catch(() => []);
-        return rows && rows.length ? rows[0] : null;
-      };
+      const STATUS_FN = "https://fgrjojxwevllnjdixiyd.supabase.co/functions/v1/paynow-status";
 
       let tries = 0;
-      const maxTries = 24; // ~60 seconds (24 * 2.5s)
+      const maxTries = 40;     // ~100 seconds
+      const delayMs = 2500;
 
       const tick = async () => {
         tries++;
 
-        const row = await checkOnce();
-        if (row && row.invoice_id) {
-          // Redirect to public invoice page (adjust if your invoice page URL differs)
-          window.location.href = `/invoice.html?id=${row.invoice_id}`;
-          return;
-        }
+        try {
+          const res = await fetch(STATUS_FN, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ stripe_session_id: sid }),
+          });
 
-        if (tries >= maxTries) {
+          const text = await res.text();
+          let data = null;
+          try { data = JSON.parse(text); } catch { data = { raw: text }; }
+
+          if (res.ok && data && data.invoice_id) {
+            // Redirect to your public invoice page
+            window.location.href = `/invoice.html?id=${data.invoice_id}`;
+            return;
+          }
+
+          // Still processing
+          if (tries < maxTries) {
+            setTimeout(tick, delayMs);
+            return;
+          }
+
+          // Timed out
           line1.textContent = "Payment received ✅";
           line2.textContent = "Your invoice is still processing. Please check your email shortly.";
           details.style.display = "block";
           details.textContent = "If you don't receive an email within a few minutes, contact support.";
-          return;
-        }
 
-        setTimeout(tick, 2500);
+        } catch (e) {
+          if (tries < maxTries) {
+            setTimeout(tick, delayMs);
+            return;
+          }
+          line1.textContent = "Payment received ✅";
+          line2.textContent = "Your invoice is still processing. Please check your email shortly.";
+          details.style.display = "block";
+          details.textContent = `Error: ${String(e)}`;
+        }
       };
 
       tick();
