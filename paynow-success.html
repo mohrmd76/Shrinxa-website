@@ -19,7 +19,7 @@
   </main>
 
   <script>
-    (async () => {
+    (() => {
       const params = new URLSearchParams(window.location.search);
       const sid = params.get("sid");
 
@@ -27,50 +27,17 @@
       const line2 = document.getElementById("statusLine2");
       const details = document.getElementById("details");
 
+      details.style.display = "none";
+      details.textContent = "";
+
       if (!sid) {
         line1.textContent = "Missing session id (sid).";
-        line2.textContent = "Please check your email. If you didn’t receive anything, contact support.";
+        line2.textContent = "Please contact support.";
         return;
       }
 
-      try {
-        const res = await fetch(
-          "https://fgrjojxwevllnjdixiyd.supabase.co/functions/v1/finalize-paynow",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ stripe_session_id: sid }),
-          }
-        );
-
-        const text = await res.text();
-        let data = null;
-        try { data = JSON.parse(text); } catch { data = { raw: text }; }
-
-        if (!res.ok) {
-          line1.textContent = "We received your payment, but invoice finalization failed.";
-          line2.textContent = "Please check your email shortly. If nothing arrives, contact support.";
-          details.style.display = "block";
-          details.textContent = `finalize-paynow failed (${res.status}): ${text}`;
-          return;
-        }
-
-        // Success
-        const invoiceId = data?.invoice_id || null;
-
-        line1.textContent = "Your paid invoice is ready ✅";
-        line2.textContent = "Please check your email now.";
-
-        if (invoiceId) {
-          details.style.display = "block";
-          details.textContent = `Invoice ID: ${invoiceId}`;
-        }
-      } catch (e) {
-        line1.textContent = "We received your payment, but invoice finalization failed.";
-        line2.textContent = "Please check your email shortly. If nothing arrives, contact support.";
-        details.style.display = "block";
-        details.textContent = `Error: ${String(e)}`;
-      }
+      line1.textContent = "Payment received ✅";
+      line2.textContent = "Your paid invoice is being prepared. Please check your email shortly.";
     })();
   </script>
 </body>
