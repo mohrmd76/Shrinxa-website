@@ -133,8 +133,8 @@
       // Find invoice by invoice_number OR number (your admin uses both sometimes)
       const { data, error } = await supabase
         .from("invoices")
-        .select("id, invoice_number, number, bill_to_email, bill_to_name, status, payment_status, total_amount, total, amount_total, grand_total")
-        .or(`invoice_number.eq.${invoiceNo},number.eq.${invoiceNo}`)
+       .select("id, invoice_number, bill_to_email, bill_to_name, status, payment_status, total, currency")
+	.eq("invoice_number", invoiceNo)
         .limit(1);
 
       if (error) {
@@ -156,8 +156,8 @@
       custEmailEl.textContent = inv.bill_to_email || "—";
       custNameEl.textContent = inv.bill_to_name || "—";
 
-      const baseTotal =
-        Number(inv.total_amount ?? inv.total ?? inv.amount_total ?? inv.grand_total ?? 0) || 0;
+     const baseTotal = Number(inv.total ?? 0) || 0;
+
 
       // Customer-pays Stripe fee approximation (cards pricing model).
       // Stripe Checkout will show the fee line item we add in the session (next step).
