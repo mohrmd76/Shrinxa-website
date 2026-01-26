@@ -10,9 +10,68 @@
   <main class="container py-5" style="max-width:820px;">
     <div class="card p-4" style="border-radius:18px;">
       <h3 class="mb-2" style="font-weight:800;">Payment received ✅</h3>
-      <p class="mb-1">We are preparing your paid invoice now.</p>
-      <p class="text-muted mb-0">If you are not redirected automatically, check your email in a moment.</p>
+
+      <p id="statusLine1" class="mb-1">We are preparing your paid invoice now.</p>
+      <p id="statusLine2" class="text-muted mb-0">If you are not redirected automatically, check your email in a moment.</p>
+
+      <div id="details" class="mt-3 small text-muted" style="display:none;"></div>
     </div>
   </main>
+
+  <script>
+    (async () => {
+      const params = new URLSearchParams(window.location.search);
+      const sid = params.get("sid");
+
+      const line1 = document.getElementById("statusLine1");
+      const line2 = document.getElementById("statusLine2");
+      const details = document.getElementById("details");
+
+      if (!sid) {
+        line1.textContent = "Missing session id (sid).";
+        line2.textContent = "Please check your email. If you didn’t receive anything, contact support.";
+        return;
+      }
+
+      try {
+        const res = await fetch(
+          "https://fgrjojxwevllnjdixiyd.supabase.co/functions/v1/finalize-paynow",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ stripe_session_id: sid }),
+          }
+        );
+
+        const text = await res.text();
+        let data = null;
+        try { data = JSON.parse(text); } catch { data = { raw: text }; }
+
+        if (!res.ok) {
+          line1.textContent = "We received your payment, but invoice finalization failed.";
+          line2.textContent = "Please check your email shortly. If nothing arrives, contact support.";
+          details.style.display = "block";
+          details.textContent = `finalize-paynow failed (${res.status}): ${text}`;
+          return;
+        }
+
+        // Success
+        const invoiceId = data?.invoice_id || null;
+
+        line1.textContent = "Your paid invoice is ready ✅";
+        line2.textContent = "Please check your email now.";
+
+        if (invoiceId) {
+          details.style.display = "block";
+          details.textContent = `Invoice ID: ${invoiceId}`;
+        }
+      } catch (e) {
+        line1.textContent = "We received your payment, but invoice finalization failed.";
+        line2.textContent = "Please check your email shortly. If nothing arrives, contact support.";
+        details.style.display = "block";
+        details.textContent = `Error: ${String(e)}`;
+      }
+    })();
+  </script>
 </body>
 </html>
