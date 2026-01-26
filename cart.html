@@ -2219,18 +2219,30 @@ if (method === "pay_now") {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${token}`
     },
-    body: JSON.stringify({
-      cart_id: cartId,
-      currency: "CAD",
-      total,
-      bill_to_name: customerName,
-      bill_to_email: customerEmail,
+  
+body: JSON.stringify({
+  cart_id: cartId,
+  currency: "CAD",
 
-      // Stripe redirect pages
-      // (We will build the finalize/paid invoice redirect in the next step)
-      success_url: `${location.origin}/paynow-success.html?sid={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${location.origin}/cart.html`
-    })
+  // ✅ needed to build invoice AFTER payment
+  subtotal,
+  delivery: deliveryFee,
+  tax: hst,
+  total,
+
+  // ✅ full billing/delivery info for invoice + order email AFTER payment
+  bill_to_name: customerName,
+  bill_to_email: customerEmail,
+  bill_to_phone: customerPhone,
+  bill_to_address: customerAddress,
+  bill_to_city: customerCity,
+  bill_to_postal: customerPostal,
+  bill_to_company: customerCompany,
+
+  success_url: `${location.origin}/paynow-success.html?sid={CHECKOUT_SESSION_ID}`,
+  cancel_url: `${location.origin}/cart.html`
+})
+
   });
 
   const out = await resp.json().catch(() => ({}));
@@ -2242,6 +2254,8 @@ if (method === "pay_now") {
 }
 
 // PAY LATER keeps existing behavior: create invoice immediately
+
+
 const resp = await fetch("https://fgrjojxwevllnjdixiyd.supabase.co/functions/v1/create-invoice", {
   method: "POST",
   headers: {
@@ -2273,7 +2287,8 @@ await loadCart();
 setCartCount(0);
 
 window.location.href = `/invoice.html?id=${encodeURIComponent(out2.invoice_id)}`;
-    
+ 
+   
       } catch (e) {
         console.error(e);
         if (checkoutMsg) checkoutMsg.textContent = String(e && e.message ? e.message : e);
