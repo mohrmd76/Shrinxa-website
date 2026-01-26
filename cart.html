@@ -2211,43 +2211,69 @@ for (const r of (items || [])) {
 
         const token = session.access_token;
 
-        const resp = await fetch("https://fgrjojxwevllnjdixiyd.supabase.co/functions/v1/create-invoice", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            cart_id: cartId,
-            payment_method: method,
-            subtotal,
-            delivery_fee: deliveryFee,
-            hst,
-            total,
-            currency: "CAD",
-            bill_to_name: customerName,
-            bill_to_email: customerEmail,
-            bill_to_phone: customerPhone,
-            bill_to_address: customerAddress,
-            bill_to_city: customerCity,
-            bill_to_postal: customerPostal,
-            bill_to_company: customerCompany
-          })
-        });
+       // PAY NOW must NOT create invoice before payment
+if (method === "pay_now") {
+  const resp = await fetch("https://fgrjojxwevllnjdixiyd.supabase.co/functions/v1/stripe-paynow-session", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      cart_id: cartId,
+      currency: "CAD",
+      total,
+      bill_to_name: customerName,
+      bill_to_email: customerEmail,
 
-        const out = await resp.json().catch(() => ({}));
-        if (!resp.ok || !out.ok) throw new Error(out.error || "Could not create invoice");
+      // Stripe redirect pages
+      // (We will build the finalize/paid invoice redirect in the next step)
+      success_url: `${location.origin}/paynow-success.html?sid={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${location.origin}/cart.html`
+    })
+  });
 
-	await loadCart();      // refresh UI cart from server (will become empty)
-	setCartCount(0);       // force badge to 0 immediately
+  const out = await resp.json().catch(() => ({}));
+  if (!resp.ok || !out.ok || !out.url) throw new Error(out.error || "Could not start Stripe checkout");
 
+  // DO NOT clear cart here. Do NOT send emails. Do NOT reduce stock.
+  window.location.href = out.url;
+  return;
+}
 
-        if (method === "pay_now") {
-          window.location.href = `payment.html?invoice_no=${encodeURIComponent(out.invoice_no || "")}`;
-          return;
-        }
+// PAY LATER keeps existing behavior: create invoice immediately
+const resp = await fetch("https://fgrjojxwevllnjdixiyd.supabase.co/functions/v1/create-invoice", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    cart_id: cartId,
+    payment_method: method,
+    subtotal,
+    delivery_fee: deliveryFee,
+    hst,
+    total,
+    currency: "CAD",
+    bill_to_name: customerName,
+    bill_to_email: customerEmail,
+    bill_to_phone: customerPhone,
+    bill_to_address: customerAddress,
+    bill_to_city: customerCity,
+    bill_to_postal: customerPostal,
+    bill_to_company: customerCompany
+  })
+});
 
-        window.location.href = `/invoice.html?id=${encodeURIComponent(out.invoice_id)}`;
+const out2 = await resp.json().catch(() => ({}));
+if (!resp.ok || !out2.ok) throw new Error(out2.error || "Could not create invoice");
+
+await loadCart();
+setCartCount(0);
+
+window.location.href = `/invoice.html?id=${encodeURIComponent(out2.invoice_id)}`;
+    
       } catch (e) {
         console.error(e);
         if (checkoutMsg) checkoutMsg.textContent = String(e && e.message ? e.message : e);
