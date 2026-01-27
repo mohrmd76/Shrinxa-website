@@ -2217,7 +2217,7 @@ if (method === "pay_now") {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-  "x-create-invoice-secret": "shrinxa_create_invoice_9f3a1c7b8d"
+      "Authorization": `Bearer ${token}`
     },
   
 body: JSON.stringify({
@@ -2260,7 +2260,7 @@ const resp = await fetch("https://fgrjojxwevllnjdixiyd.supabase.co/functions/v1/
   method: "POST",
   headers: {
     "Content-Type": "application/json",
-    "Authorization": `Bearer ${token}`
+	"x-create-invoice-secret": "shrinxa_create_invoice_9f3a1c7b8d"
   },
   body: JSON.stringify({
     cart_id: cartId,
