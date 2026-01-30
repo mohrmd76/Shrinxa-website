@@ -1357,6 +1357,8 @@
 </div>
 </div>
 
+</section>
+
 <section class="trust-strip page-section" data-page="home" aria-label="Trust signals">
   <div class="trust-inner">
     <div class="trust-left">
@@ -1390,8 +1392,6 @@
       </div>
     </div>
   </div>
-</section>
-
 </section>
 <section class="factory-hero page-section" data-page="home">
 <div class="factory-image-wrap">
@@ -2024,6 +2024,9 @@ document.addEventListener("DOMContentLoaded", () => {
    - premium motion, glow, trust strip
    - visible, but still professional
    ================================ */
+/* Revert to original background (disable animated ambient layers) */
+body::before, body::after { content: none !important; display: none !important; }
+
 
 /* Animated ambient background (subtle, noticeable) */
 body::before,
@@ -2134,11 +2137,11 @@ body::after{
 
 /* Hover lift: stronger + glow outline */
 @media (hover:hover) and (pointer:fine){
-  .product-card,.why-card,.delivery,.contact-card,.quote-card,.factory-image-wrap,.trust-card{
+  .product-card,.why-card,.delivery,.contact-card,.quote-card,.factory-image-wrap,.trust-card,.factory-points div{
     transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, filter .18s ease;
     will-change: transform;
   }
-  .product-card:hover,.why-card:hover,.delivery:hover,.contact-card:hover,.quote-card:hover,.factory-image-wrap:hover,.trust-card:hover{
+  .product-card:hover,.why-card:hover,.delivery:hover,.contact-card:hover,.quote-card:hover,.factory-image-wrap:hover,.trust-card:hover,.factory-points div:hover{
     transform: translateY(-10px);
     border-color: rgba(87,186,255,.95);
     box-shadow: 0 30px 90px rgba(0,0,0,.85), 0 0 0 1px rgba(71,231,255,.18);
@@ -2150,8 +2153,15 @@ body::after{
 .trust-strip{
   margin-top: -0.8rem;
   margin-bottom: 2.4rem;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  padding: 0 1.25rem;
 }
+
 .trust-inner{
+  max-width: 1200px;
+  margin: 0 auto;
+
   border-radius: 1.35rem;
   border: 1px solid rgba(72,92,140,.65);
   background: linear-gradient(135deg, rgba(8,16,40,.92), rgba(5,8,20,.92));
