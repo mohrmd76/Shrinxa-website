@@ -1356,6 +1356,42 @@
 <img alt="Shrinxa logo decorative" src="shrinxa_transparent_4000px.png"/>
 </div>
 </div>
+
+<section class="trust-strip page-section" data-page="home" aria-label="Trust signals">
+  <div class="trust-inner">
+    <div class="trust-left">
+      <div class="trust-kicker">Built for warehouses &amp; 3PLs</div>
+      <h2 class="trust-title">Fast, reliable packaging supply — with delivery you can count on.</h2>
+      <p class="trust-sub">
+        Premium stretch films, pre-stretch wrap and tape rolls for high-volume operations.
+        Clear pricing, quick turnaround, and support that answers fast.
+      </p>
+    </div>
+    <div class="trust-cards">
+      <div class="trust-card">
+        <div class="trust-icon" aria-hidden="true">🚚</div>
+        <div class="trust-card-title">Fast GTA delivery</div>
+        <div class="trust-card-sub">Free delivery over <strong>$300</strong> in our service area.</div>
+      </div>
+      <div class="trust-card">
+        <div class="trust-icon" aria-hidden="true">📦</div>
+        <div class="trust-card-title">Warehouse-ready</div>
+        <div class="trust-card-sub">Optimized roll sizes &amp; consistent quality for daily use.</div>
+      </div>
+      <div class="trust-card">
+        <div class="trust-icon" aria-hidden="true">🧾</div>
+        <div class="trust-card-title">Clear invoices</div>
+        <div class="trust-card-sub">Simple checkout, clean receipts, easy re-orders.</div>
+      </div>
+      <div class="trust-card">
+        <div class="trust-icon" aria-hidden="true">🛡️</div>
+        <div class="trust-card-title">Secure checkout</div>
+        <div class="trust-card-sub">Payments processed securely with modern standards.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
 </section>
 <section class="factory-hero page-section" data-page="home">
 <div class="factory-image-wrap">
@@ -1983,40 +2019,259 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 <style>
-/* === MICRO MOTION + CTA + SCROLL REVEAL + HERO ORBIT === */
-@media (hover:hover){
-.product-card,.why-card,.delivery,.contact-card,.quote-card,.factory-image-wrap{
-transition:transform .18s ease,box-shadow .18s ease;
+/* ================================
+   BIG VISUAL UPGRADE PACK (1–6)
+   - premium motion, glow, trust strip
+   - visible, but still professional
+   ================================ */
+
+/* Animated ambient background (subtle, noticeable) */
+body::before,
+body::after{
+  content:"";
+  position:fixed;
+  inset:-20%;
+  z-index:-1;
+  pointer-events:none;
+  filter: blur(40px);
+  opacity:.45;
+  transform: translate3d(0,0,0);
 }
-.product-card:hover,.why-card:hover,.delivery:hover,.contact-card:hover,.quote-card:hover,.factory-image-wrap:hover{
-transform:translateY(-6px);
-box-shadow:0 26px 70px rgba(0,0,0,.85);
+body::before{
+  background:
+    radial-gradient(circle at 20% 20%, rgba(71,143,255,.55), transparent 45%),
+    radial-gradient(circle at 80% 30%, rgba(71,231,255,.35), transparent 48%),
+    radial-gradient(circle at 50% 85%, rgba(111,66,193,.45), transparent 52%);
+  animation: bgFloatA 14s ease-in-out infinite;
 }
+body::after{
+  background:
+    radial-gradient(circle at 10% 70%, rgba(30,166,255,.35), transparent 55%),
+    radial-gradient(circle at 90% 85%, rgba(225,245,255,.22), transparent 55%);
+  animation: bgFloatB 18s ease-in-out infinite;
+  opacity:.28;
+}
+@keyframes bgFloatA{
+  0%,100%{transform: translate3d(-2%, -2%, 0) scale(1)}
+  50%{transform: translate3d(2%, 2%, 0) scale(1.03)}
+}
+@keyframes bgFloatB{
+  0%,100%{transform: translate3d(2%, -1%, 0) scale(1)}
+  50%{transform: translate3d(-2%, 1.5%, 0) scale(1.04)}
+}
+
+/* Hero polish: glowing border + spotlight */
+.hero{
+  position:relative;
+  overflow:hidden;
+}
+.hero::before{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  border-radius:inherit;
+  background: linear-gradient(135deg, rgba(71,143,255,.55), rgba(71,231,255,.18), rgba(111,66,193,.35));
+  opacity:.55;
+  filter: blur(22px);
+  z-index:0;
+}
+.hero::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255,255,255,.08), transparent 45%),
+    radial-gradient(circle at 85% 25%, rgba(71,231,255,.10), transparent 40%),
+    radial-gradient(circle at 40% 90%, rgba(71,143,255,.08), transparent 45%);
+  z-index:0;
+}
+.hero > * { position:relative; z-index:1; }
+
+/* CTA shimmer (more visible than pulse) */
 .btn-primary{
-animation:ctaPulse 7s infinite;
+  position:relative;
+  overflow:hidden;
 }
-@keyframes ctaPulse{
-0%,92%,100%{box-shadow:0 14px 35px rgba(22,128,219,.6)}
-96%{box-shadow:0 18px 55px rgba(71,143,255,.95)}
+.btn-primary::after{
+  content:"";
+  position:absolute;
+  top:-60%;
+  left:-40%;
+  width:40%;
+  height:220%;
+  transform: rotate(18deg);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+  opacity:.0;
 }
-.reveal{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}
-.reveal.show{opacity:1;transform:none}
-.hero-orbit::after{animation:orbitSpin 60s linear infinite}
-@keyframes orbitSpin{to{transform:rotate(360deg)}}
-.cart-chip.bump{animation:cartBump .25s}
-@keyframes cartBump{50%{transform:scale(1.1)}}
+@media (hover:hover){
+  .btn-primary:hover::after{
+    opacity:.9;
+    animation: shimmer 950ms ease-out 1;
+  }
+}
+@keyframes shimmer{
+  0%{transform: translateX(-120%) rotate(18deg)}
+  100%{transform: translateX(420%) rotate(18deg)}
+}
+
+/* Orbit ring: make rotation visible */
+.hero-orbit::after{
+  transform-origin:center;
+  animation: orbitSpin 22s linear infinite;
+}
+@keyframes orbitSpin{ to { transform: rotate(360deg); } }
+
+/* Scroll reveal: more noticeable (still clean) */
+.reveal{
+  opacity:0;
+  transform: translateY(22px) scale(.985);
+  transition: opacity .65s ease, transform .65s ease;
+}
+.reveal.show{
+  opacity:1;
+  transform: translateY(0) scale(1);
+}
+
+/* Hover lift: stronger + glow outline */
+@media (hover:hover) and (pointer:fine){
+  .product-card,.why-card,.delivery,.contact-card,.quote-card,.factory-image-wrap,.trust-card{
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, filter .18s ease;
+    will-change: transform;
+  }
+  .product-card:hover,.why-card:hover,.delivery:hover,.contact-card:hover,.quote-card:hover,.factory-image-wrap:hover,.trust-card:hover{
+    transform: translateY(-10px);
+    border-color: rgba(87,186,255,.95);
+    box-shadow: 0 30px 90px rgba(0,0,0,.85), 0 0 0 1px rgba(71,231,255,.18);
+    filter: brightness(1.06);
+  }
+}
+
+/* Trust strip section */
+.trust-strip{
+  margin-top: -0.8rem;
+  margin-bottom: 2.4rem;
+}
+.trust-inner{
+  border-radius: 1.35rem;
+  border: 1px solid rgba(72,92,140,.65);
+  background: linear-gradient(135deg, rgba(8,16,40,.92), rgba(5,8,20,.92));
+  box-shadow: 0 26px 80px rgba(0,0,0,.72);
+  padding: 1.35rem 1.35rem 1.2rem;
+  display:grid;
+  grid-template-columns: minmax(0,1.2fr) minmax(0,1.4fr);
+  gap: 1.4rem;
+  position:relative;
+  overflow:hidden;
+}
+.trust-inner::before{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(71,143,255,.22), transparent 45%),
+    radial-gradient(circle at 90% 70%, rgba(111,66,193,.22), transparent 48%);
+  filter: blur(18px);
+  opacity:.9;
+  pointer-events:none;
+}
+.trust-left{position:relative; z-index:1;}
+.trust-kicker{
+  font-size:.78rem;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color: var(--accent);
+  margin-bottom:.35rem;
+}
+.trust-title{
+  margin:0 0 .35rem;
+  font-size: 1.55rem;
+  letter-spacing:.02em;
+}
+.trust-sub{
+  margin:0;
+  color: var(--text-muted);
+  max-width: 36rem;
+  font-size:.92rem;
+}
+.trust-cards{
+  position:relative;
+  z-index:1;
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: .8rem;
+}
+.trust-card{
+  border-radius: 1rem;
+  background: rgba(8,16,40,.92);
+  border: 1px solid rgba(63,95,170,.85);
+  padding: .85rem .9rem;
+  box-shadow: 0 14px 36px rgba(0,0,0,.6);
+}
+.trust-icon{
+  font-size: 1.15rem;
+  margin-bottom: .35rem;
+}
+.trust-card-title{
+  font-weight: 700;
+  color: var(--text-main);
+  font-size: .92rem;
+  margin-bottom: .15rem;
+}
+.trust-card-sub{
+  color: var(--text-muted);
+  font-size: .82rem;
+  line-height: 1.35;
+}
+.trust-card-sub strong{ color: var(--accent); }
+
+@media (max-width: 980px){
+  .trust-inner{grid-template-columns: minmax(0,1fr); }
+  .trust-cards{grid-template-columns: repeat(2, minmax(0,1fr));}
+}
+@media (max-width: 520px){
+  .trust-cards{grid-template-columns: minmax(0,1fr);}
+}
+
+/* Cart feedback: badge + chip bump */
+.cart-chip.bump{
+  animation: cartBump .28s ease-out;
+}
+@keyframes cartBump{
+  0%{transform:scale(1)}
+  45%{transform:scale(1.12)}
+  100%{transform:scale(1)}
 }
 </style>
+
 <script>
+/* Scroll reveal + cart bump */
 document.addEventListener("DOMContentLoaded",()=>{
-document.querySelectorAll("section").forEach(s=>s.classList.add("reveal"));
-const io=new IntersectionObserver(es=>es.forEach(e=>e.isIntersecting&&e.target.classList.add("show")),{threshold:.15});
-document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
-const cart=document.getElementById("cartCount");
-if(cart){
-const o=new MutationObserver(()=>{cart.parentElement.classList.add("bump");setTimeout(()=>cart.parentElement.classList.remove("bump"),300)});
-o.observe(cart,{childList:true});
-}
+  // Reveal only big sections and feature groups (more impact)
+  const targets = [
+    ...document.querySelectorAll(".hero, .trust-strip, .factory-hero, section")
+  ];
+  targets.forEach(el => el.classList.add("reveal"));
+
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.classList.add("show");
+        io.unobserve(e.target);
+      }
+    });
+  },{threshold:0.18});
+  document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
+
+  // Cart badge bump whenever count changes
+  const countEl = document.getElementById("cartCount");
+  if(countEl && countEl.parentElement){
+    const host = countEl.closest(".cart-chip") || countEl.parentElement;
+    const mo = new MutationObserver(()=>{
+      host.classList.add("bump");
+      setTimeout(()=>host.classList.remove("bump"), 320);
+    });
+    mo.observe(countEl, {childList:true, characterData:true, subtree:true});
+  }
 });
 </script>
 
