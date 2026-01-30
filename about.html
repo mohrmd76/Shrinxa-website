@@ -1885,6 +1885,7 @@
 <div class="mobile-menu-panel" id="mobileMenuPanel" aria-hidden="true">
   <div class="mobile-menu-inner">
     <a href="index.html">Home</a>
+
     <div class="mobile-menu-group">
       <button class="mobile-menu-group-btn" type="button" id="mobileProductsBtn" aria-expanded="false">
         Products <span aria-hidden="true">▾</span>
@@ -1896,8 +1897,17 @@
         <a href="products.html?cat=tape">Tape Rolls</a>
       </div>
     </div>
-    </div>
+
+    <a href="about.html">About</a>
+    <a href="delivery.html">Delivery</a>
+    <a href="contactus.html">Contact us</a>
+    <a class="nav-signin" href="login.html">Sign in</a>
+  </div>
 </div>
+
+
+
+
     </div>
 </div>
 <main>
@@ -2164,56 +2174,6 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 <script>
-/* === MOBILE MENU TOGGLE === */
-document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("mobileMenuBtn");
-  const panel = document.getElementById("mobileMenuPanel");
-  const prodBtn = document.getElementById("mobileProductsBtn");
-  const prodSub = document.getElementById("mobileProductsSub");
-  if(!btn || !panel) return;
-
-  const closeAll = () => {
-    panel.classList.remove("open");
-    btn.setAttribute("aria-expanded", "false");
-    panel.setAttribute("aria-hidden", "true");
-    if(prodSub) prodSub.classList.remove("open");
-    if(prodBtn) prodBtn.setAttribute("aria-expanded","false");
-  };
-
-  btn.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const isOpen = panel.classList.toggle("open");
-    btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
-    panel.setAttribute("aria-hidden", isOpen ? "false" : "true");
-    if(!isOpen){
-      if(prodSub) prodSub.classList.remove("open");
-      if(prodBtn) prodBtn.setAttribute("aria-expanded","false");
-    }
-  });
-
-  prodBtn && prodBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const isOpen = prodSub.classList.toggle("open");
-    prodBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
-  });
-
-  document.addEventListener("click", (e) => {
-    if(panel.classList.contains("open")){
-      if(!panel.contains(e.target) && !btn.contains(e.target)) closeAll();
-    }
-  });
-
-  window.addEventListener("keydown", (e) => {
-    if(e.key === "Escape") closeAll();
-  });
-
-  panel.querySelectorAll("a").forEach(a => a.addEventListener("click", closeAll));
-});
-</script>
-
-<script>
 (() => {
   const SUPABASE_URL = "https://fgrjojxwevllnjdixiyd.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_k5D9JKO5lMCHlju-WhlSAQ_XEiEruT_";
@@ -2320,56 +2280,6 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 <script>
-/* === MOBILE MENU TOGGLE === */
-document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("mobileMenuBtn");
-  const panel = document.getElementById("mobileMenuPanel");
-  const prodBtn = document.getElementById("mobileProductsBtn");
-  const prodSub = document.getElementById("mobileProductsSub");
-  if(!btn || !panel) return;
-
-  const closeAll = () => {
-    panel.classList.remove("open");
-    btn.setAttribute("aria-expanded", "false");
-    panel.setAttribute("aria-hidden", "true");
-    if(prodSub) prodSub.classList.remove("open");
-    if(prodBtn) prodBtn.setAttribute("aria-expanded","false");
-  };
-
-  btn.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const isOpen = panel.classList.toggle("open");
-    btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
-    panel.setAttribute("aria-hidden", isOpen ? "false" : "true");
-    if(!isOpen){
-      if(prodSub) prodSub.classList.remove("open");
-      if(prodBtn) prodBtn.setAttribute("aria-expanded","false");
-    }
-  });
-
-  prodBtn && prodBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const isOpen = prodSub.classList.toggle("open");
-    prodBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
-  });
-
-  document.addEventListener("click", (e) => {
-    if(panel.classList.contains("open")){
-      if(!panel.contains(e.target) && !btn.contains(e.target)) closeAll();
-    }
-  });
-
-  window.addEventListener("keydown", (e) => {
-    if(e.key === "Escape") closeAll();
-  });
-
-  panel.querySelectorAll("a").forEach(a => a.addEventListener("click", closeAll));
-});
-</script>
-
-<script>
 (() => {
   const SUPABASE_URL = "https://fgrjojxwevllnjdixiyd.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_k5D9JKO5lMCHlju-WhlSAQ_XEiEruT_";
@@ -2458,6 +2368,58 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => host.classList.remove("bump"), 320);
   });
   mo.observe(countEl, { childList: true, characterData: true, subtree: true });
+});
+</script>
+
+
+
+<script>
+/* === MOBILE MENU TOGGLE === */
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("mobileMenuBtn");
+  const panel = document.getElementById("mobileMenuPanel");
+  const prodBtn = document.getElementById("mobileProductsBtn");
+  const prodSub = document.getElementById("mobileProductsSub");
+  if(!btn || !panel) return;
+
+  const closeAll = () => {
+    panel.classList.remove("open");
+    btn.setAttribute("aria-expanded", "false");
+    panel.setAttribute("aria-hidden", "true");
+    if(prodSub) prodSub.classList.remove("open");
+    if(prodBtn) prodBtn.setAttribute("aria-expanded","false");
+  };
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const isOpen = panel.classList.toggle("open");
+    btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    panel.setAttribute("aria-hidden", isOpen ? "false" : "true");
+    if(!isOpen){
+      if(prodSub) prodSub.classList.remove("open");
+      if(prodBtn) prodBtn.setAttribute("aria-expanded","false");
+    }
+  });
+
+  prodBtn && prodBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const isOpen = prodSub.classList.toggle("open");
+    prodBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  });
+
+  document.addEventListener("click", (e) => {
+    if(panel.classList.contains("open")){
+      if(!panel.contains(e.target) && !btn.contains(e.target)) closeAll();
+    }
+  });
+
+  window.addEventListener("keydown", (e) => {
+    if(e.key === "Escape") closeAll();
+  });
+
+  panel.querySelectorAll("a").forEach(a => a.addEventListener("click", closeAll));
 });
 </script>
 
