@@ -2632,5 +2632,39 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
+
+<style>
+/* === MOBILE FIX: ACCOUNT PROFILE OFF-SCREEN === */
+@media (max-width: 820px){
+  html, body{ overflow-x:hidden !important; }
+  #accountMain{ overflow-x:hidden !important; }
+
+  /* Force profile panel to ONE column on mobile (override inline + earlier !important) */
+  body #profilePanel{
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  body #profilePanel > div{ width:100% !important; max-width:100% !important; min-width:0 !important; }
+
+  /* Make forms single column on mobile to prevent squeeze */
+  body #profileForm{
+    grid-template-columns: 1fr !important;
+  }
+  body #profileForm label{ grid-column: auto / auto !important; }
+  body #profileForm label[style*="grid-column: 1 / -1"]{ grid-column: auto / auto !important; }
+  body #profileForm .full-row,
+  body #profileForm .full{ grid-column: auto / auto !important; }
+
+  /* Account section padding tighter */
+  #accountMain section{
+    padding: 0 12px !important;
+    margin: 18px auto 40px !important;
+  }
+}
+</style>
+
 </body>
 </html>
