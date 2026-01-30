@@ -1327,10 +1327,39 @@
 <a class="nav-anchor nav-contact" data-nav="contact" href="contactus.html">Contact us</a>
 
 <a class="nav-anchor nav-signin" data-nav="signin" href="login.html">Sign in</a></nav>
-<div class="nav-right"><div class="user-menu" id="user-menu" style="display:none; position:relative;"><button class="user-menu-toggle" id="userMenuToggle" type="button"><span id="userMenuName">Profile</span> ▾</button><div class="user-menu-dropdown" id="userMenuDropdown"><button class="user-menu-item" type="button" data-action="profile">Profile</button><button class="user-menu-item" type="button" data-action="history">Purchase History</button><button class="user-menu-item" type="button" data-action="signout">Sign out</button></div></div><div class="user-greeting" id="user-greeting"></div><button class="cart-chip" id="openCartBtn">
+<div class="nav-right">
+
+<button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Open menu" aria-expanded="false">
+  <span class="mm-bar"></span>
+  <span class="mm-bar"></span>
+  <span class="mm-bar"></span>
+</button>
+<div class="user-menu" id="user-menu" style="display:none; position:relative;"><button class="user-menu-toggle" id="userMenuToggle" type="button"><span id="userMenuName">Profile</span> ▾</button><div class="user-menu-dropdown" id="userMenuDropdown"><button class="user-menu-item" type="button" data-action="profile">Profile</button><button class="user-menu-item" type="button" data-action="history">Purchase History</button><button class="user-menu-item" type="button" data-action="signout">Sign out</button></div></div><div class="user-greeting" id="user-greeting"></div><button class="cart-chip" id="openCartBtn">
       🧺 Cart <span class="badge" id="cartCount">0</span>
 </button></div></div>
 </header>
+
+<div class="mobile-menu-panel" id="mobileMenuPanel" aria-hidden="true">
+  <div class="mobile-menu-inner">
+    <a href="index.html">Home</a>
+    <div class="mobile-menu-group">
+      <button class="mobile-menu-group-btn" type="button" id="mobileProductsBtn" aria-expanded="false">
+        Products <span aria-hidden="true">▾</span>
+      </button>
+      <div class="mobile-menu-sub" id="mobileProductsSub">
+        <a href="products.html?cat=all">All Products</a>
+        <a href="products.html?cat=stretch">Stretch Wrap</a>
+        <a href="products.html?cat=prestretch">Pre-Stretch Wrap</a>
+        <a href="products.html?cat=tape">Tape Rolls</a>
+      </div>
+    </div>
+    <a href="about.html">About</a>
+    <a href="delivery.html">Delivery</a>
+    <a href="contactus.html">Contact us</a>
+    <a class="nav-signin" href="login.html">Sign in</a>
+  </div>
+</div>
+
 <main id="homeMain">
 <section class="hero page-section" data-page="home" id="top">
 <div>
@@ -2282,6 +2311,161 @@ document.addEventListener("DOMContentLoaded",()=>{
     });
     mo.observe(countEl, {childList:true, characterData:true, subtree:true});
   }
+});
+</script>
+
+
+<style>
+/* === MOBILE HEADER MENU === */
+.mobile-menu-btn{
+  display:none;
+  width:42px;
+  height:38px;
+  border-radius: 12px;
+  border: 1px solid rgba(71,143,255,0.6);
+  background: rgba(12,25,52,0.75);
+  box-shadow: 0 0 0 1px rgba(16,85,204,0.35);
+  cursor:pointer;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+}
+.mobile-menu-btn .mm-bar{
+  display:block;
+  width:18px;
+  height:2px;
+  background: rgba(245,247,251,0.92);
+  border-radius: 999px;
+}
+.mobile-menu-panel{
+  display:none;
+  position: fixed;
+  top: 68px; /* just under header */
+  left: 0;
+  right: 0;
+  z-index: 30;
+  padding: 10px 12px 14px;
+  background: linear-gradient(180deg, rgba(5,9,20,0.98), rgba(8,16,40,0.98));
+  border-bottom: 1px solid rgba(46,56,86,0.8);
+  backdrop-filter: blur(18px);
+}
+.mobile-menu-panel.open{ display:block; }
+.mobile-menu-inner{
+  max-width: 1200px;
+  margin: 0 auto;
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+}
+.mobile-menu-inner a,
+.mobile-menu-group-btn{
+  color: var(--text-main);
+  text-decoration:none;
+  font-size: 0.95rem;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(63,87,145,0.65);
+  background: rgba(8,16,40,0.75);
+}
+.mobile-menu-inner a:hover,
+.mobile-menu-group-btn:hover{
+  border-color: rgba(87,186,255,0.95);
+}
+.mobile-menu-group{ display:flex; flex-direction:column; gap:10px; }
+.mobile-menu-group-btn{
+  width:100%;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background: rgba(8,16,40,0.75);
+  cursor:pointer;
+}
+.mobile-menu-sub{
+  display:none;
+  flex-direction:column;
+  gap: 8px;
+  padding-left: 6px;
+}
+.mobile-menu-sub.open{ display:flex; }
+.mobile-menu-sub a{
+  background: rgba(5,12,32,0.8);
+  border-color: rgba(63,87,145,0.55);
+  font-size: 0.92rem;
+}
+@media (max-width: 820px){
+  .nav-links{ display:none !important; }
+  .mobile-menu-btn{ display:inline-flex; }
+  .nav-inner{ padding: 0.65rem 0.9rem; }
+  .nav-logo{ width:40px; height:40px; }
+  .cart-chip{ padding: 0.35rem 0.75rem; }
+}
+</style>
+
+
+<style>
+/* === CART CHIP VISUAL FIX === */
+.cart-chip{
+  color: var(--text-main) !important;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.cart-chip:hover{ filter: brightness(1.08); }
+.cart-chip .badge{
+  box-shadow: 0 10px 22px rgba(30,166,255,0.35);
+}
+</style>
+
+
+<script>
+/* === MOBILE MENU TOGGLE === */
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("mobileMenuBtn");
+  const panel = document.getElementById("mobileMenuPanel");
+  const prodBtn = document.getElementById("mobileProductsBtn");
+  const prodSub = document.getElementById("mobileProductsSub");
+  if(!btn || !panel) return;
+
+  const closeAll = () => {
+    panel.classList.remove("open");
+    btn.setAttribute("aria-expanded", "false");
+    panel.setAttribute("aria-hidden", "true");
+    if(prodSub) prodSub.classList.remove("open");
+    if(prodBtn) prodBtn.setAttribute("aria-expanded","false");
+  };
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    const isOpen = panel.classList.toggle("open");
+    btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    panel.setAttribute("aria-hidden", isOpen ? "false" : "true");
+    if(!isOpen){
+      if(prodSub) prodSub.classList.remove("open");
+      if(prodBtn) prodBtn.setAttribute("aria-expanded","false");
+    }
+  });
+
+  prodBtn && prodBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    const isOpen = prodSub.classList.toggle("open");
+    prodBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  });
+
+  // Close when clicking outside
+  document.addEventListener("click", (e) => {
+    if(panel.classList.contains("open")){
+      if(!panel.contains(e.target) && !btn.contains(e.target)) closeAll();
+    }
+  });
+
+  // Close on ESC
+  window.addEventListener("keydown", (e) => {
+    if(e.key === "Escape") closeAll();
+  });
+
+  // Close after clicking a link
+  panel.querySelectorAll("a").forEach(a => {
+    a.addEventListener("click", () => closeAll());
+  });
 });
 </script>
 
