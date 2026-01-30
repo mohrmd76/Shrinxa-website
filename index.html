@@ -1981,5 +1981,44 @@ document.addEventListener("DOMContentLoaded", () => {
 })();
 </script>
 
+
+<style>
+/* === MICRO MOTION + CTA + SCROLL REVEAL + HERO ORBIT === */
+@media (hover:hover){
+.product-card,.why-card,.delivery,.contact-card,.quote-card,.factory-image-wrap{
+transition:transform .18s ease,box-shadow .18s ease;
+}
+.product-card:hover,.why-card:hover,.delivery:hover,.contact-card:hover,.quote-card:hover,.factory-image-wrap:hover{
+transform:translateY(-6px);
+box-shadow:0 26px 70px rgba(0,0,0,.85);
+}
+.btn-primary{
+animation:ctaPulse 7s infinite;
+}
+@keyframes ctaPulse{
+0%,92%,100%{box-shadow:0 14px 35px rgba(22,128,219,.6)}
+96%{box-shadow:0 18px 55px rgba(71,143,255,.95)}
+}
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}
+.reveal.show{opacity:1;transform:none}
+.hero-orbit::after{animation:orbitSpin 60s linear infinite}
+@keyframes orbitSpin{to{transform:rotate(360deg)}}
+.cart-chip.bump{animation:cartBump .25s}
+@keyframes cartBump{50%{transform:scale(1.1)}}
+}
+</style>
+<script>
+document.addEventListener("DOMContentLoaded",()=>{
+document.querySelectorAll("section").forEach(s=>s.classList.add("reveal"));
+const io=new IntersectionObserver(es=>es.forEach(e=>e.isIntersecting&&e.target.classList.add("show")),{threshold:.15});
+document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
+const cart=document.getElementById("cartCount");
+if(cart){
+const o=new MutationObserver(()=>{cart.parentElement.classList.add("bump");setTimeout(()=>cart.parentElement.classList.remove("bump"),300)});
+o.observe(cart,{childList:true});
+}
+});
+</script>
+
 </body>
 </html>
