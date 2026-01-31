@@ -238,6 +238,51 @@ font-size: 22px;
       a{ color:inherit; text-decoration:none; }
     }
   </style>
+
+
+<style>
+/* === MOBILE FIX: INVOICE NO OFF-SCREEN === */
+@media (max-width: 640px){
+  html, body{ overflow-x: hidden !important; }
+  .page{ margin: 12px auto !important; padding: 0 10px !important; }
+  .paper{ padding: 18px 14px 16px !important; border-radius: 12px !important; }
+
+  .top{
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 14px !important;
+  }
+  .meta{
+    text-align: left !important;
+    min-width: 0 !important;
+  }
+  .invoice-logo-right{
+    height: 90px !important;
+    margin: 0 0 6px 0 !important;
+    max-width: 100% !important;
+  }
+
+  .grid2{
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  table{ font-size: 13px !important; }
+  thead th, tbody td{ padding: 8px 8px !important; }
+  .col-qty{ width: 56px !important; }
+  .col-price, .col-total{ width: 92px !important; }
+
+  .totals{ justify-content: stretch !important; }
+  .totals table{ width: 100% !important; }
+
+  .actions{
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .btn{ width: 100% !important; }
+}
+</style>
+
 </head>
 
 <body>
