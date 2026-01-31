@@ -443,6 +443,130 @@
 }
 </style>
 <style>
+/* === CART PULSE LIKE INDEX (BUMP ANIMATION) === */
+.cart-chip.bump{ animation: cartBump .28s ease-out; }
+@keyframes cartBump{
+  0%{transform:scale(1)}
+  45%{transform:scale(1.12)}
+  100%{transform:scale(1)}
+}
+</style>
+<style>
+/* === CREATE ACCOUNT SHINE (BEST VISUAL) === */
+@media (prefers-reduced-motion: no-preference){
+  #submitBtn{
+    position: relative;
+    overflow: hidden;
+  }
+  #submitBtn::after{
+    content:"";
+    position:absolute;
+    top:-60%;
+    left:-40%;
+    width:40%;
+    height:220%;
+    transform: rotate(18deg);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.70), transparent);
+    opacity:0;
+    animation: createShine 4.9s ease-in-out infinite;
+  }
+  @keyframes createShine{
+    0%,76%,100%{opacity:0; transform: translateX(-140%) rotate(18deg);}
+    82%{opacity:0.9;}
+    92%{opacity:0.9; transform: translateX(420%) rotate(18deg);}
+    96%{opacity:0;}
+  }
+  #submitBtn:disabled::after{ display:none; }
+}
+</style>
+
+
+<style>
+/* === FORCE HEADER TO MATCH index.html (SIGNUP) === */
+header .nav-links{
+  display:flex !important;
+  gap: 1.25rem !important;
+  font-size: 0.9rem !important;
+  color: var(--text-muted) !important;
+  align-items:center !important;
+}
+header .nav-links a{
+  position: relative !important;
+  padding-bottom: 0.15rem !important;
+  color: var(--text-muted) !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+header .nav-links a::after{
+  content: "" !important;
+  position: absolute !important;
+  left: 0 !important;
+  bottom: 0 !important;
+  width: 0 !important;
+  height: 2px !important;
+  background: linear-gradient(90deg, var(--accent), #47e7ff) !important;
+  border-radius: 999px !important;
+  transition: width 0.2s ease-out !important;
+}
+header .nav-links a:hover::after{ width: 100% !important; }
+
+/* Products dropdown EXACT behavior */
+header .nav-dropdown{ position: relative !important; display:flex !important; align-items:center !important; }
+header .nav-dropdown-toggle{
+  background: none !important;
+  border: none !important;
+  color: var(--text-muted) !important;
+  font: inherit !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.2rem !important;
+}
+header .nav-dropdown-toggle:hover{ color: var(--text-main) !important; }
+
+header .nav-dropdown-menu{
+  position: absolute !important;
+  top: 150% !important;
+  left: 0 !important;
+  background: rgba(5,9,20,0.98) !important;
+  border-radius: 0.75rem !important;
+  padding: 0.4rem 0.35rem !important;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.55) !important;
+  display: none !important;
+  flex-direction: column !important;
+  min-width: 180px !important;
+  z-index: 40 !important;
+  border: 1px solid rgba(65,98,160,0.7) !important;
+}
+header .nav-dropdown-menu.open{ display: flex !important; }
+header .nav-dropdown-item{
+  display: block !important;
+  background: none !important;
+  border: none !important;
+  color: var(--text-muted) !important;
+  text-align: left !important;
+  padding: 0.35rem 0.75rem !important;
+  border-radius: 0.55rem !important;
+  font-size: 0.85rem !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+}
+header .nav-dropdown-item:hover{
+  background: var(--accent-soft) !important;
+  color: var(--text-main) !important;
+}
+
+/* Ensure no stray dropdown text ever shows under header */
+header .nav-dropdown-menu:not(.open){ visibility: hidden !important; }
+header .nav-dropdown-menu.open{ visibility: visible !important; }
+
+</style>
+
+
+
+<style>
 /* === MOBILE HEADER MENU (RESTORED) === */
 .mobile-menu-btn{
   display:none;
@@ -569,127 +693,6 @@
   .nav-logo{ width:46px; height:46px; }
 }
 </style>
-<style>
-/* === CART PULSE LIKE INDEX (BUMP ANIMATION) === */
-.cart-chip.bump{ animation: cartBump .28s ease-out; }
-@keyframes cartBump{
-  0%{transform:scale(1)}
-  45%{transform:scale(1.12)}
-  100%{transform:scale(1)}
-}
-</style>
-<style>
-/* === CREATE ACCOUNT SHINE (BEST VISUAL) === */
-@media (prefers-reduced-motion: no-preference){
-  #submitBtn{
-    position: relative;
-    overflow: hidden;
-  }
-  #submitBtn::after{
-    content:"";
-    position:absolute;
-    top:-60%;
-    left:-40%;
-    width:40%;
-    height:220%;
-    transform: rotate(18deg);
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.70), transparent);
-    opacity:0;
-    animation: createShine 4.9s ease-in-out infinite;
-  }
-  @keyframes createShine{
-    0%,76%,100%{opacity:0; transform: translateX(-140%) rotate(18deg);}
-    82%{opacity:0.9;}
-    92%{opacity:0.9; transform: translateX(420%) rotate(18deg);}
-    96%{opacity:0;}
-  }
-  #submitBtn:disabled::after{ display:none; }
-}
-</style>
-
-
-<style>
-/* === FORCE HEADER TO MATCH index.html (SIGNUP) === */
-header .nav-links{
-  display:flex !important;
-  gap: 1.25rem !important;
-  font-size: 0.9rem !important;
-  color: var(--text-muted) !important;
-  align-items:center !important;
-}
-header .nav-links a{
-  position: relative !important;
-  padding-bottom: 0.15rem !important;
-  color: var(--text-muted) !important;
-  background: none !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-header .nav-links a::after{
-  content: "" !important;
-  position: absolute !important;
-  left: 0 !important;
-  bottom: 0 !important;
-  width: 0 !important;
-  height: 2px !important;
-  background: linear-gradient(90deg, var(--accent), #47e7ff) !important;
-  border-radius: 999px !important;
-  transition: width 0.2s ease-out !important;
-}
-header .nav-links a:hover::after{ width: 100% !important; }
-
-/* Products dropdown EXACT behavior */
-header .nav-dropdown{ position: relative !important; display:flex !important; align-items:center !important; }
-header .nav-dropdown-toggle{
-  background: none !important;
-  border: none !important;
-  color: var(--text-muted) !important;
-  font: inherit !important;
-  cursor: pointer !important;
-  padding: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 0.2rem !important;
-}
-header .nav-dropdown-toggle:hover{ color: var(--text-main) !important; }
-
-header .nav-dropdown-menu{
-  position: absolute !important;
-  top: 150% !important;
-  left: 0 !important;
-  background: rgba(5,9,20,0.98) !important;
-  border-radius: 0.75rem !important;
-  padding: 0.4rem 0.35rem !important;
-  box-shadow: 0 18px 40px rgba(0,0,0,0.55) !important;
-  display: none !important;
-  flex-direction: column !important;
-  min-width: 180px !important;
-  z-index: 40 !important;
-  border: 1px solid rgba(65,98,160,0.7) !important;
-}
-header .nav-dropdown-menu.open{ display: flex !important; }
-header .nav-dropdown-item{
-  display: block !important;
-  background: none !important;
-  border: none !important;
-  color: var(--text-muted) !important;
-  text-align: left !important;
-  padding: 0.35rem 0.75rem !important;
-  border-radius: 0.55rem !important;
-  font-size: 0.85rem !important;
-  cursor: pointer !important;
-  white-space: nowrap !important;
-}
-header .nav-dropdown-item:hover{
-  background: var(--accent-soft) !important;
-  color: var(--text-main) !important;
-}
-
-/* Ensure no stray dropdown text ever shows under header */
-header .nav-dropdown-menu:not(.open){ visibility: hidden !important; }
-header .nav-dropdown-menu.open{ visibility: visible !important; }
-
-</style>
 
 </head>
 <body>
@@ -732,6 +735,7 @@ header .nav-dropdown-menu.open{ visibility: visible !important; }
       🧺 Cart <span class="badge" id="cartCount">0</span>
 </button></div></div>
 </header>
+
 <div class="mobile-menu-panel" id="mobileMenuPanel" aria-hidden="true">
   <div class="mobile-menu-inner">
     <a href="index.html">Home</a>
@@ -752,6 +756,9 @@ header .nav-dropdown-menu.open{ visibility: visible !important; }
     <a class="nav-signin" href="login.html">Sign in</a>
   </div>
 </div>
+
+
+
 
 <main>
   <div class="card">
@@ -950,55 +957,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 <script>
-/* === MOBILE MENU TOGGLE === */
-document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("mobileMenuBtn");
-  const panel = document.getElementById("mobileMenuPanel");
-  const prodBtn = document.getElementById("mobileProductsBtn");
-  const prodSub = document.getElementById("mobileProductsSub");
-  if(!btn || !panel) return;
-
-  const closeAll = () => {
-    panel.classList.remove("open");
-    btn.setAttribute("aria-expanded", "false");
-    panel.setAttribute("aria-hidden", "true");
-    if(prodSub) prodSub.classList.remove("open");
-    if(prodBtn) prodBtn.setAttribute("aria-expanded","false");
-  };
-
-  btn.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const isOpen = panel.classList.toggle("open");
-    btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
-    panel.setAttribute("aria-hidden", isOpen ? "false" : "true");
-    if(!isOpen){
-      if(prodSub) prodSub.classList.remove("open");
-      if(prodBtn) prodBtn.setAttribute("aria-expanded","false");
-    }
-  });
-
-  prodBtn && prodBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const isOpen = prodSub.classList.toggle("open");
-    prodBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
-  });
-
-  document.addEventListener("click", (e) => {
-    if(panel.classList.contains("open")){
-      if(!panel.contains(e.target) && !btn.contains(e.target)) closeAll();
-    }
-  });
-
-  window.addEventListener("keydown", (e) => {
-    if(e.key === "Escape") closeAll();
-  });
-
-  panel.querySelectorAll("a").forEach(a => a.addEventListener("click", closeAll));
-});
-</script>
-<script>
 (() => {
   const SUPABASE_URL = "https://fgrjojxwevllnjdixiyd.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_k5D9JKO5lMCHlju-WhlSAQ_XEiEruT_";
@@ -1092,5 +1050,57 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("pageshow", () => setTimeout(bump, 350));
 });
 </script>
+
+
+<script>
+/* === MOBILE MENU TOGGLE === */
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("mobileMenuBtn");
+  const panel = document.getElementById("mobileMenuPanel");
+  const prodBtn = document.getElementById("mobileProductsBtn");
+  const prodSub = document.getElementById("mobileProductsSub");
+  if(!btn || !panel) return;
+
+  const closeAll = () => {
+    panel.classList.remove("open");
+    btn.setAttribute("aria-expanded", "false");
+    panel.setAttribute("aria-hidden", "true");
+    if(prodSub) prodSub.classList.remove("open");
+    if(prodBtn) prodBtn.setAttribute("aria-expanded","false");
+  };
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const isOpen = panel.classList.toggle("open");
+    btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    panel.setAttribute("aria-hidden", isOpen ? "false" : "true");
+    if(!isOpen){
+      if(prodSub) prodSub.classList.remove("open");
+      if(prodBtn) prodBtn.setAttribute("aria-expanded","false");
+    }
+  });
+
+  prodBtn && prodBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const isOpen = prodSub.classList.toggle("open");
+    prodBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  });
+
+  document.addEventListener("click", (e) => {
+    if(panel.classList.contains("open")){
+      if(!panel.contains(e.target) && !btn.contains(e.target)) closeAll();
+    }
+  });
+
+  window.addEventListener("keydown", (e) => {
+    if(e.key === "Escape") closeAll();
+  });
+
+  panel.querySelectorAll("a").forEach(a => a.addEventListener("click", closeAll));
+});
+</script>
+
 </body>
 </html>
