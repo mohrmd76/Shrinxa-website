@@ -1700,6 +1700,53 @@
   font: inherit;
 }
 </style>
+
+
+<style>
+/* === CART1 VISUALS ONLY: ITEM HOVER + BUY NOW SHINE === */
+
+/* Item hover motion (desktop pointer only) */
+@media (hover:hover) and (pointer:fine){
+  .cart-row{
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, filter 180ms ease;
+    will-change: transform;
+  }
+  .cart-row:hover{
+    transform: translateY(-6px);
+    border-color: rgba(87,186,255,0.95) !important;
+    box-shadow: 0 22px 65px rgba(0,0,0,0.78), 0 0 0 1px rgba(71,231,255,0.18);
+    filter: brightness(1.04);
+  }
+}
+
+/* Buy now shine (best visual improvement) */
+@media (prefers-reduced-motion: no-preference){
+  #buyNowBtn{
+    position: relative;
+    overflow: hidden;
+  }
+  #buyNowBtn::after{
+    content:"";
+    position:absolute;
+    top:-60%;
+    left:-40%;
+    width:40%;
+    height:220%;
+    transform: rotate(18deg);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.70), transparent);
+    opacity:0;
+    animation: buyNowShine 4.8s ease-in-out infinite;
+  }
+  @keyframes buyNowShine{
+    0%,76%,100%{opacity:0; transform: translateX(-140%) rotate(18deg);}
+    82%{opacity:0.9;}
+    92%{opacity:0.9; transform: translateX(420%) rotate(18deg);}
+    96%{opacity:0;}
+  }
+  #buyNowBtn:disabled::after{ display:none; }
+}
+</style>
+
 </head>
 <body>
 <header>
@@ -2208,6 +2255,7 @@ await loadDeliveryRule(sb);
       totalQty += qty;
 
       const item = document.createElement("div");
+      item.classList.add("cart-row");
       // Applying compact styles
       item.style.display = "flex";
       item.style.justifyContent = "space-between";
