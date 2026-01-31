@@ -482,7 +482,8 @@
 
 
 <style>
-/* === FORCE HEADER TO MATCH index.html (SIGNUP) === */
+/* === FORCE HEADER TO MATCH index.html (SIGNUP) — DESKTOP ONLY === */
+@media (min-width: 821px){
 header .nav-links{
   display:flex !important;
   gap: 1.25rem !important;
@@ -561,7 +562,7 @@ header .nav-dropdown-item:hover{
 /* Ensure no stray dropdown text ever shows under header */
 header .nav-dropdown-menu:not(.open){ visibility: hidden !important; }
 header .nav-dropdown-menu.open{ visibility: visible !important; }
-
+}
 </style>
 
 
