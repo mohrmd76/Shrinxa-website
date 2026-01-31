@@ -1328,6 +1328,339 @@
 }
     
 </style>
+
+
+<style>
+/* === HEADER BRAND UPGRADE (LOGO + NAME) === */
+.nav-left{
+  gap: 0.95rem;
+}
+.nav-logo{
+  position: relative;
+  box-shadow:
+    0 0 0 2px rgba(30,166,255,0.45),
+    0 14px 32px rgba(30,166,255,0.22),
+    0 0 0 1px rgba(255,255,255,0.08) inset;
+}
+.nav-logo::after{
+  content:"";
+  position:absolute;
+  inset:-10px;
+  border-radius:999px;
+  background: radial-gradient(circle at 30% 30%, rgba(71,231,255,0.28), transparent 55%),
+              radial-gradient(circle at 70% 70%, rgba(111,66,193,0.22), transparent 60%);
+  filter: blur(10px);
+  opacity: .75;
+  z-index:-1;
+}
+.nav-brand-text strong{
+  font-size: 1.05rem;
+  letter-spacing: 0.22em;
+  background: linear-gradient(90deg, #39c9ff, #e1f5ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 10px 24px rgba(0,0,0,0.45);
+}
+.nav-brand-text span{
+  font-size: 0.78rem;
+  color: rgba(182,191,216,0.92);
+  letter-spacing: 0.02em;
+}
+
+/* Mobile: make brand feel premium + keep readable */
+@media (max-width: 820px){
+  .nav-inner{
+    gap: 0.85rem;
+  }
+  .nav-logo{
+    width: 46px;
+    height: 46px;
+  }
+  .nav-brand-text strong{
+    font-size: 1.02rem;
+    letter-spacing: 0.18em;
+  }
+  .nav-brand-text span{
+    font-size: 0.76rem;
+  }
+}
+
+/* === HAMBURGER ICON: STACK BARS VERTICALLY === */
+.mobile-menu-btn{
+  flex-direction: column !important;
+  gap: 5px !important;
+}
+</style>
+
+<style>
+/* === BRAND MOTION (LOGO + NAME) === */
+@media (prefers-reduced-motion: no-preference) {
+  .nav-left {
+    position: relative;
+  }
+
+  .nav-logo {
+    animation: brandGlow 3.8s ease-in-out infinite;
+    transform-origin: center;
+  }
+
+  .nav-logo img {
+    animation: brandFloat 4.6s ease-in-out infinite;
+    transform-origin: center;
+  }
+
+  .nav-brand-text strong {
+    position: relative;
+  }
+
+  .nav-brand-text strong::after{
+    content:"";
+    position:absolute;
+    left:-8px;
+    right:-8px;
+    bottom:-2px;
+    height:2px;
+    border-radius:999px;
+    background: linear-gradient(90deg, rgba(71,231,255,0), rgba(71,231,255,0.9), rgba(71,231,255,0));
+    opacity:.0;
+    animation: brandUnderline 3.8s ease-in-out infinite;
+  }
+
+  @keyframes brandGlow {
+    0%,100% {
+      box-shadow:
+        0 0 0 2px rgba(30,166,255,0.45),
+        0 14px 32px rgba(30,166,255,0.22),
+        0 0 0 1px rgba(255,255,255,0.08) inset;
+      filter: brightness(1);
+      transform: translateY(0) scale(1);
+    }
+    50% {
+      box-shadow:
+        0 0 0 2px rgba(71,231,255,0.70),
+        0 18px 46px rgba(71,143,255,0.32),
+        0 0 0 1px rgba(255,255,255,0.10) inset;
+      filter: brightness(1.05);
+      transform: translateY(-1px) scale(1.02);
+    }
+  }
+
+  @keyframes brandFloat {
+    0%,100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-1.5px) scale(1.01); }
+  }
+
+  @keyframes brandUnderline {
+    0%,100% { opacity: 0.05; transform: scaleX(0.6); }
+    50% { opacity: 0.75; transform: scaleX(1); }
+  }
+}
+
+/* Hover bonus (desktop only) */
+@media (hover:hover) and (pointer:fine){
+  .nav-left:hover .nav-logo{
+    filter: brightness(1.08);
+    transform: translateY(-2px) scale(1.03);
+  }
+}
+</style>
+
+<style>
+/* === MOBILE HEADER MENU (RESTORED) === */
+.mobile-menu-btn{
+  display:none;
+  width:42px;
+  height:38px;
+  border-radius: 12px;
+  border: 1px solid rgba(71,143,255,0.6);
+  background: rgba(12,25,52,0.75);
+  box-shadow: 0 0 0 1px rgba(16,85,204,0.35);
+  cursor:pointer;
+  align-items:center;
+  justify-content:center;
+  flex-direction: column; /* bars on top of each other */
+  gap: 5px;
+}
+.mobile-menu-btn .mm-bar{
+  display:block;
+  width:18px;
+  height:2px;
+  background: rgba(245,247,251,0.92);
+  border-radius: 999px;
+}
+
+.mobile-menu-panel{
+  display:none;
+  position: fixed;
+  top: 68px;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  padding: 10px 12px 14px;
+  background: linear-gradient(180deg, rgba(5,9,20,0.98), rgba(8,16,40,0.98));
+  border-bottom: 1px solid rgba(46,56,86,0.8);
+  backdrop-filter: blur(18px);
+}
+.mobile-menu-panel.open{ display:block; }
+
+.mobile-menu-inner{
+  max-width: 1200px;
+  margin: 0 auto;
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+}
+.mobile-menu-inner a,
+.mobile-menu-group-btn{
+  color: var(--text-main);
+  text-decoration:none;
+  font-size: 0.95rem;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(63,87,145,0.65);
+  background: rgba(8,16,40,0.75);
+}
+.mobile-menu-inner a:hover,
+.mobile-menu-group-btn:hover{
+  border-color: rgba(87,186,255,0.95);
+}
+.mobile-menu-group{ display:flex; flex-direction:column; gap:10px; }
+.mobile-menu-group-btn{
+  width:100%;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  cursor:pointer;
+}
+.mobile-menu-sub{
+  display:none;
+  flex-direction:column;
+  gap: 8px;
+  padding-left: 6px;
+}
+.mobile-menu-sub.open{ display:flex; }
+.mobile-menu-sub a{
+  background: rgba(5,12,32,0.8);
+  border-color: rgba(63,87,145,0.55);
+  font-size: 0.92rem;
+}
+
+@media (max-width: 820px){
+  .nav-links{ display:none !important; }
+  .mobile-menu-btn{ display:inline-flex; }
+
+  /* Keep everything INSIDE the screen (fix cart pushed right) */
+  .nav-inner{
+    padding: 0.65rem 0.9rem;
+    gap: 0.6rem;
+  }
+  .nav-left{ min-width: 0; }
+  .nav-brand-text{ min-width: 0; }
+  .nav-brand-text span{ display: none; } /* hide subtitle on mobile to save space */
+  .nav-brand-text strong{ white-space: nowrap; }
+
+  .nav-right{
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    flex-wrap: wrap;           /* allows wrap instead of overflowing */
+    row-gap: 6px;
+  }
+
+  /* Make the user pill compact */
+  #user-greeting{ display:none !important; }
+  .user-menu-toggle{
+    max-width: 170px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0.28rem 0.6rem;
+    font-size: 0.78rem;
+  }
+
+  /* Make cart compact but keep blue style */
+  .cart-chip{
+    padding: 0.32rem 0.65rem;
+    font-size: 0.78rem;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .nav-logo{ width:46px; height:46px; }
+}
+</style>
+
+<style>
+/* === CART PULSE LIKE INDEX (BUMP ANIMATION) === */
+.cart-chip.bump{ animation: cartBump .28s ease-out; }
+@keyframes cartBump{
+  0%{transform:scale(1)}
+  45%{transform:scale(1.12)}
+  100%{transform:scale(1)}
+}
+/* Desktop cart text white */
+.cart-chip{ color: var(--text-main) !important; }
+.cart-chip .badge{ color:#001225 !important; }
+</style>
+
+<style>
+/* === PRODUCTS: HOVER MOTION (CARDS + FILTER PILLS) === */
+@media (hover:hover) and (pointer:fine){
+  .product-card{
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, filter 180ms ease;
+    will-change: transform;
+  }
+  .product-card:hover{
+    transform: translateY(-10px);
+    border-color: rgba(87,186,255,0.95);
+    box-shadow: 0 30px 90px rgba(0,0,0,0.85), 0 0 0 1px rgba(71,231,255,0.18);
+    filter: brightness(1.06);
+  }
+
+  .pill{
+    transition: transform 160ms ease, border-color 160ms ease, filter 160ms ease, box-shadow 160ms ease;
+    will-change: transform;
+  }
+  .pill:hover{
+    transform: translateY(-3px);
+    border-color: rgba(87,186,255,0.95);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.55);
+    filter: brightness(1.06);
+  }
+}
+
+/* === ADD TO CART: SHINE (BEST VISUAL) === */
+@media (prefers-reduced-motion: no-preference){
+  .btn-add{
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-add::after{
+    content:"";
+    position:absolute;
+    top:-60%;
+    left:-40%;
+    width:40%;
+    height:220%;
+    transform: rotate(18deg);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.70), transparent);
+    opacity:0;
+    animation: addShine 4.8s ease-in-out infinite;
+  }
+  @keyframes addShine{
+    0%,76%,100%{opacity:0; transform: translateX(-140%) rotate(18deg);}
+    82%{opacity:0.9;}
+    92%{opacity:0.9; transform: translateX(420%) rotate(18deg);}
+    96%{opacity:0;}
+  }
+  .btn-add:disabled::after{ display:none; }
+}
+</style>
+
 </head>
 <body>
 <header>
@@ -1359,10 +1692,38 @@
 <a class="nav-anchor nav-contact" data-nav="contact" href="contactus.html">Contact us</a>
 
 <a class="nav-anchor nav-signin" data-nav="signin" href="login.html">Sign in</a></nav>
-<div class="nav-right"><div class="user-menu" id="user-menu" style="display:none; position:relative;"><button class="user-menu-toggle" id="userMenuToggle" type="button"><span id="userMenuName">Profile</span> ▾</button><div class="user-menu-dropdown" id="userMenuDropdown"><button class="user-menu-item" type="button" data-action="profile">Profile</button><button class="user-menu-item" type="button" data-action="history">Purchase History</button><button class="user-menu-item" type="button" data-action="signout">Sign out</button></div></div><div class="user-greeting" id="user-greeting"></div><button class="cart-chip" id="openCartBtn">
+<div class="nav-right">
+<button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Open menu" aria-expanded="false">
+  <span class="mm-bar"></span>
+  <span class="mm-bar"></span>
+  <span class="mm-bar"></span>
+</button>
+<div class="user-menu" id="user-menu" style="display:none; position:relative;"><button class="user-menu-toggle" id="userMenuToggle" type="button"><span id="userMenuName">Profile</span> ▾</button><div class="user-menu-dropdown" id="userMenuDropdown"><button class="user-menu-item" type="button" data-action="profile">Profile</button><button class="user-menu-item" type="button" data-action="history">Purchase History</button><button class="user-menu-item" type="button" data-action="signout">Sign out</button></div></div><div class="user-greeting" id="user-greeting"></div><button class="cart-chip" id="openCartBtn">
       🧺 Cart <span class="badge" id="cartCount">0</span>
 </button></div></div>
 </header>
+
+<div class="mobile-menu-panel" id="mobileMenuPanel" aria-hidden="true">
+  <div class="mobile-menu-inner">
+    <a href="index.html">Home</a>
+    <div class="mobile-menu-group">
+      <button class="mobile-menu-group-btn" type="button" id="mobileProductsBtn" aria-expanded="false">
+        Products <span aria-hidden="true">▾</span>
+      </button>
+      <div class="mobile-menu-sub" id="mobileProductsSub">
+        <a href="products.html?cat=all">All Products</a>
+        <a href="products.html?cat=stretch">Stretch Wrap</a>
+        <a href="products.html?cat=prestretch">Pre-Stretch Wrap</a>
+        <a href="products.html?cat=tape">Tape Rolls</a>
+      </div>
+    </div>
+    <a href="about.html">About</a>
+    <a href="delivery.html">Delivery</a>
+    <a href="contactus.html">Contact us</a>
+    <a class="nav-signin" href="login.html">Sign in</a>
+  </div>
+</div>
+
 <main>
 <section class="page-section" data-page="products" id="products">
 <h2>Product catalogue</h2>
@@ -1469,48 +1830,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 })();
-
-  // Ensure pricing runs AFTER auth is ready (critical for Platinum)
-  if (window.supabaseClient?.auth?.onAuthStateChange) {
-    window.supabaseClient.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user?.id) {
-        try {
-          await loadCustomerTier();
-        } catch (_) {}
-      }
-    });
-  }
-
-</script>
-
-
-<script>
-// Products dropdown toggle (site-wide)
-document.addEventListener("DOMContentLoaded", () => {
-  const toggle = document.querySelector(".nav-dropdown-toggle");
-  const menu = document.querySelector(".nav-dropdown-menu");
-  if (!toggle || !menu) return;
-
-  const close = () => {
-    menu.classList.remove("open");
-    toggle.setAttribute("aria-expanded", "false");
-  };
-
-  toggle.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const isOpen = menu.classList.toggle("open");
-    toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
-  });
-
-  document.addEventListener("click", (e) => {
-    if (!menu.contains(e.target) && !toggle.contains(e.target)) close();
-  });
-
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") close();
-  });
-});
 
   // Ensure pricing runs AFTER auth is ready (critical for Platinum)
   if (window.supabaseClient?.auth?.onAuthStateChange) {
@@ -2305,6 +2624,111 @@ document.addEventListener("DOMContentLoaded", () => {
 
 </script>
 
+
+
+
+<script>
+// Products dropdown toggle (index.html)
+document.addEventListener("DOMContentLoaded", () => {
+  const toggle = document.querySelector(".nav-dropdown-toggle");
+  const menu = document.querySelector(".nav-dropdown-menu");
+  if (!toggle || !menu) return;
+
+  const close = () => {
+    menu.classList.remove("open");
+    toggle.setAttribute("aria-expanded", "false");
+  };
+
+  toggle.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const isOpen = menu.classList.toggle("open");
+    toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!menu.contains(e.target) && !toggle.contains(e.target)) close();
+  });
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") close();
+  });
+});
+</script>
+
+<script>
+/* === MOBILE MENU TOGGLE === */
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("mobileMenuBtn");
+  const panel = document.getElementById("mobileMenuPanel");
+  const prodBtn = document.getElementById("mobileProductsBtn");
+  const prodSub = document.getElementById("mobileProductsSub");
+  if(!btn || !panel) return;
+
+  const closeAll = () => {
+    panel.classList.remove("open");
+    btn.setAttribute("aria-expanded", "false");
+    panel.setAttribute("aria-hidden", "true");
+    if(prodSub) prodSub.classList.remove("open");
+    if(prodBtn) prodBtn.setAttribute("aria-expanded","false");
+  };
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const isOpen = panel.classList.toggle("open");
+    btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    panel.setAttribute("aria-hidden", isOpen ? "false" : "true");
+    if(!isOpen){
+      if(prodSub) prodSub.classList.remove("open");
+      if(prodBtn) prodBtn.setAttribute("aria-expanded","false");
+    }
+  });
+
+  prodBtn && prodBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const isOpen = prodSub.classList.toggle("open");
+    prodBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  });
+
+  document.addEventListener("click", (e) => {
+    if(panel.classList.contains("open")){
+      if(!panel.contains(e.target) && !btn.contains(e.target)) closeAll();
+    }
+  });
+
+  window.addEventListener("keydown", (e) => {
+    if(e.key === "Escape") closeAll();
+  });
+
+  panel.querySelectorAll("a").forEach(a => a.addEventListener("click", closeAll));
+});
+</script>
+
+<script>
+/* === CART PULSE LIKE INDEX (BUMP ON LOAD + ON COUNT CHANGE) === */
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("openCartBtn");
+  const countEl = document.getElementById("cartCount");
+  if(!btn || !countEl) return;
+
+  const bump = () => {
+    btn.classList.add("bump");
+    setTimeout(() => btn.classList.remove("bump"), 320);
+  };
+
+  // bump once after load (even if count stays the same)
+  setTimeout(bump, 650);
+
+  // bump whenever the badge text changes
+  const mo = new MutationObserver(() => bump());
+  mo.observe(countEl, { childList:true, characterData:true, subtree:true });
+
+  // bump when returning via back button
+  window.addEventListener("pageshow", () => setTimeout(bump, 350));
+});
+</script>
 
 </body>
 </html>
