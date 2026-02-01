@@ -128,9 +128,21 @@
     const custom = safeText(el.getAttribute("data-admin-track") || "", 120);
 const eventName = custom || "admin_click";
 
-const auditEntity = el.getAttribute("data-audit-entity");
-const auditEntityId = el.getAttribute("data-audit-entity-id");
-const auditAction = el.getAttribute("data-audit-action");
+let auditEntity = el.getAttribute("data-audit-entity");
+let auditEntityId = el.getAttribute("data-audit-entity-id");
+let auditAction = el.getAttribute("data-audit-action");
+
+// HARD FALLBACK for Orders → Resend Email
+if (
+  !auditEntity &&
+  el.classList.contains("btnResend") &&
+  el.dataset.id
+) {
+  auditEntity = "invoice";
+  auditEntityId = el.dataset.id;
+  auditAction = "resend_email";
+}
+
 
 window.ShrinxaAdminTrack(
   eventName,
