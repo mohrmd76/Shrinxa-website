@@ -11,6 +11,7 @@
 
   // IMPORTANT: Replace with YOUR Supabase Project URL (same as in Secrets)
   const SUPABASE_URL = "https://fgrjojxwevllnjdixiyd.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZncmpvanh3ZXZsbG5qZGl4aXlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0ODU4MjgsImV4cCI6MjA4MTA2MTgyOH0.DfqCgNf_GpnaMqFbePxCrwNcRJbptiS9fzdSwpj6lbQ";
 
   // Edge Function endpoint
   const TRACK_URL = `${SUPABASE_URL}/functions/v1/track-analytics-event`;
@@ -84,7 +85,12 @@
 
       await fetch(TRACK_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+	headers: {
+  "Content-Type": "application/json",
+  "apikey": SUPABASE_ANON_KEY,
+  "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+},
+
         body: JSON.stringify(payload),
         keepalive: true, // helps send on page unload
       });
