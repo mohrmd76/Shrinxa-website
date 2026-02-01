@@ -532,7 +532,23 @@
          </button>`
   }
 
-  ${isCash ? "" : `<button type="button" class="btnResend btn btn-sm btn-outline-primary" data-id="${escapeHtml(inv.id)}">Resend Email</button>`}
+  ${isCash ? "" : `
+  <button
+    type="button"
+    class="btnResend btn btn-sm btn-outline-primary"
+    data-id="${escapeHtml(inv.id)}"
+    data-admin-track="admin_resend_invoice"
+    data-audit-entity="invoice"
+    data-audit-entity-id="${escapeHtml(inv.id)}"
+    data-audit-action="resend_email"
+  >
+    Resend Email
+  </button>
+`}
+
+
+
+
   ${isCash ? "" : `<button type="button" class="btnSaveStatus btn btn-sm btn-success" data-id="${escapeHtml(inv.id)}">Save Status</button>`}
   <button type="button" class="btnCancel btn btn-sm btn-outline-danger" data-id="${escapeHtml(inv.id)}">Cancel Order</button>
 </div>
