@@ -126,8 +126,21 @@
     const href = tag === "a" ? safeText(el.getAttribute("href") || "", 500) : "";
 
     const custom = safeText(el.getAttribute("data-admin-track") || "", 120);
-    const eventName = custom || "admin_click";
+const eventName = custom || "admin_click";
 
-    window.ShrinxaAdminTrack(eventName, { tag, text, id, class: cls, href });
+const auditEntity = el.getAttribute("data-audit-entity");
+const auditEntityId = el.getAttribute("data-audit-entity-id");
+const auditAction = el.getAttribute("data-audit-action");
+
+window.ShrinxaAdminTrack(
+  eventName,
+  { tag, text, id, class: cls, href },
+  auditEntity && auditAction ? {
+    entity: auditEntity,
+    entity_id: auditEntityId || null,
+    action: auditAction
+  } : null
+);
+
   });
 })();
