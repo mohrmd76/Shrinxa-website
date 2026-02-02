@@ -604,6 +604,16 @@
     const resendBtn = e.target?.closest?.(".btnResend");
     if (resendBtn) {
       const id = resendBtn.getAttribute("data-id");
+
+window.ShrinxaAdminTrack({
+  entity: "invoice",
+  entity_id: id,
+  action: "resend_email",
+  before: null,
+  after: null
+});
+
+
       show("Resending invoice email…");
       const { data, error } = await supabase.functions.invoke(RESEND_FUNCTION, {
         body: { action: "resend", invoice_id: id }
