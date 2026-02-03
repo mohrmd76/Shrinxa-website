@@ -832,72 +832,89 @@ btnUploadImg?.addEventListener("click", async () => {
       editing = null;
     }
 
-    async function saveDialog() {
-      show("Saving…");
+async function saveDialog() {
+  show("Saving…");
 
-      const payload = {
-        name: String(f_name.value || "").trim(),
-        is_active: String(f_active.value) === "true",
-        sort_order: Number(f_sort.value || 0),
-        currency: String(f_currency.value || "CAD").trim() || "CAD",
+  const beforeRaw = editing?._raw ? JSON.parse(JSON.stringify(editing._raw)) : null;
 
-        category: f_category.value || null,
+  const payload = {
+    name: String(f_name.value || "").trim(),
+    is_active: String(f_active.value) === "true",
+    sort_order: Number(f_sort.value || 0),
+    currency: String(f_currency.value || "CAD").trim() || "CAD",
 
-        retail_price: n(f_std_retail.value) ?? 0,
-        wholesale_price: n(f_std_wholesale.value) ?? 0,
+    category: f_category.value || null,
 
-        gold_retail_price: f_gold_retail.value === "" ? null : n(f_gold_retail.value),
-        gold_wholesale_price: f_gold_wholesale.value === "" ? null : n(f_gold_wholesale.value),
+    retail_price: n(f_std_retail.value) ?? 0,
+    wholesale_price: n(f_std_wholesale.value) ?? 0,
 
-        description: String(f_desc.value || ""),
-        specification: String(f_spec.value || ""),
-        features: String(f_features.value || ""),
-        rolls_per_box: f_rolls.value === "" ? null : Number(f_rolls.value),
-        image_url: String(f_image.value || "").trim() || null,
-      };
+    gold_retail_price: f_gold_retail.value === "" ? null : n(f_gold_retail.value),
+    gold_wholesale_price: f_gold_wholesale.value === "" ? null : n(f_gold_wholesale.value),
 
-      if (!payload.name) { show("ERROR: Name required"); return; }
+    description: String(f_desc.value || ""),
+    specification: String(f_spec.value || ""),
+    features: String(f_features.value || ""),
+    rolls_per_box: f_rolls.value === "" ? null : Number(f_rolls.value),
+    image_url: String(f_image.value || "").trim() || null,
+  };
 
-      if (editing?.id) {
-        const { error } = await supabase
-          .from("products")
-          .update(payload)
-          .eq("id", editing.id);
-        if (error) { show("ERROR: " + error.message); return; }
-      } else {
-        const { error } = await supabase
-          .from("products")
-          .insert(payload);
-        if (error) { show("ERROR: " + error.message); return; }
+  if (!payload.name) { show("ERROR: Name required"); return; }
+
+  let productId = editing?.id || null;
+
+  if (editing?.id) {
+    const { error } = await supabase
+      .from("products")
+      .update(payload)
+      .eq("id", editing.id);
+
+    if (error) { show("ERROR: " + error.message); return; }
+  } else {
+    const { data, error } = await supabase
+      .from("products")
+      .insert(payload)
+      .select("id")
+      .single();
+
+    if (error) { show("ERROR: " + error.message); return; }
+    productId = data?.id || null;
+  }
+
+  const afterRaw = beforeRaw ? { ...beforeRaw, ...payload } : { ...payload, id: productId };
+
+  // AUDIT: create/update product
+  if (window.ShrinxaAdminTrack) {
+    window.ShrinxaAdminTrack(
+      editing?.id ? "product_updated" : "product_created",
+      { product_id: productId, name: payload.name },
+      {
+        entity: "product",
+        entity_id: productId,
+        action: editing?.id ? "update_product" : "create_product",
+        before: beforeRaw,
+        after: afterRaw,
       }
+    );
+  }
 
-window.ShrinxaAdminTrack({
-  entity: "product",
-  entity_id: editing?.id || null,
-  action: editing?.id ? "update_product" : "create_product",
-  before: editing?._raw || null,
-  after: payload
-});
-
-
-
-      closeDialog();
-      await loadProducts();
-      show("Saved ✅");
-    }
+  closeDialog();
+  await loadProducts();
+  show("Saved ✅");
+}
+    
 
 async function deleteDialog() {
   if (!editing?.id) return;
 
-  const name = String(f_name.value || "").trim().toLowerCase();
+  const beforeRaw = editing?._raw ? JSON.parse(JSON.stringify(editing._raw)) : null;
 
- // Safety: only allow hard delete if product is inactive
-if (String(f_active.value) === "true") {
-  alert("Disable the product first (set Active = false), then delete.");
-  return;
-}
+  // Safety: only allow hard delete if product is inactive
+  if (String(f_active.value) === "true") {
+    alert("Disable the product first (set Active = false), then delete.");
+    return;
+  }
 
-  show("Deleting permanently…");
+  show("Deleting…");
 
   const { error } = await supabase
     .from("products")
@@ -906,14 +923,20 @@ if (String(f_active.value) === "true") {
 
   if (error) { show("ERROR: " + error.message); return; }
 
-window.ShrinxaAdminTrack({
-  entity: "product",
-  entity_id: editing.id,
-  action: "delete_product",
-  before: editing?._raw || null,
-  after: null
-});
-
+  // AUDIT: delete product
+  if (window.ShrinxaAdminTrack) {
+    window.ShrinxaAdminTrack(
+      "product_deleted",
+      { product_id: editing.id, name: beforeRaw?.name || null },
+      {
+        entity: "product",
+        entity_id: editing.id,
+        action: "delete_product",
+        before: beforeRaw,
+        after: null,
+      }
+    );
+  }
 
   closeDialog();
   await loadProducts();
@@ -921,25 +944,42 @@ window.ShrinxaAdminTrack({
 }
 
 
-    async function toggleActive(id, currentActive) {
-      show("Saving…");
-      const { error } = await supabase
-        .from("products")
-        .update({ is_active: !currentActive })
-        .eq("id", id);
-window.ShrinxaAdminTrack({
-  entity: "product",
-  entity_id: id,
-  action: currentActive ? "deactivate_product" : "activate_product",
-  before: { is_active: currentActive },
-  after: { is_active: !currentActive }
-});
+async function toggleActive(id, currentActive, beforeRaw) {
+  show("Saving…");
+
+  const nextActive = !currentActive;
+
+  const { error } = await supabase
+    .from("products")
+    .update({ is_active: nextActive })
+    .eq("id", id);
+
+  if (error) { show("ERROR: " + error.message); return; }
+
+  // AUDIT: toggle active
+  if (window.ShrinxaAdminTrack) {
+    const safeBefore = beforeRaw && typeof beforeRaw === "object" ? beforeRaw : { id, is_active: currentActive };
+    const afterRaw = { ...safeBefore, is_active: nextActive };
+
+    window.ShrinxaAdminTrack(
+      nextActive ? "product_activated" : "product_deactivated",
+      { product_id: id, is_active: nextActive },
+      {
+        entity: "product",
+        entity_id: id,
+        action: nextActive ? "activate_product" : "deactivate_product",
+        before: safeBefore,
+        after: afterRaw,
+      }
+    );
+  }
+
+  await loadProducts();
+  show("Saved ✅");
+}
 
 
-      if (error) { show("ERROR: " + error.message); return; }
-      await loadProducts();
-      show("Saved ✅");
-    }
+
 
     function downloadCsv(filename, rows) {
       const esc = (v) => {
@@ -988,23 +1028,45 @@ window.ShrinxaAdminTrack({
       downloadCsv("products_admin_export.csv", rows);
     }
 
-    tbody.addEventListener("click", async (e) => {
-      const editBtn = e.target?.closest?.(".btnEdit");
-      if (editBtn) {
-        const tr = editBtn.closest("tr");
-        const raw = JSON.parse(tr.dataset.raw || "{}");
-        openDialog(raw);
-        return;
-      }
 
-      const toggleBtn = e.target?.closest?.(".btnToggle");
-      if (toggleBtn) {
-        const id = toggleBtn.getAttribute("data-id");
-        const currentActive = toggleBtn.getAttribute("data-active") === "true";
-        await toggleActive(id, currentActive);
-        return;
-      }
-    });
+tbody.addEventListener("click", async (e) => {
+  const editBtn = e.target?.closest?.(".btnEdit");
+  if (editBtn) {
+    const tr = editBtn.closest("tr");
+    const raw = JSON.parse(tr?.dataset?.raw || "{}");
+    const productId = raw?.id || editBtn.getAttribute("data-id") || null;
+
+    openDialog(raw);
+
+    // AUDIT: open edit dialog
+    if (productId && window.ShrinxaAdminTrack) {
+      window.ShrinxaAdminTrack(
+        "product_edit_open",
+        { product_id: productId },
+        {
+          entity: "product",
+          entity_id: productId,
+          action: "open_edit",
+          before: raw || null,
+          after: null,
+        }
+      );
+    }
+    return;
+  }
+
+  const toggleBtn = e.target?.closest?.(".btnToggle");
+  if (toggleBtn) {
+    const tr = toggleBtn.closest("tr");
+    const raw = JSON.parse(tr?.dataset?.raw || "{}");
+    const id = toggleBtn.getAttribute("data-id");
+    const currentActive = toggleBtn.getAttribute("data-active") === "true";
+
+    await toggleActive(id, currentActive, raw);
+    return;
+  }
+});
+
 
     // Live search (debounced)
     qEl.addEventListener("input", () => {
