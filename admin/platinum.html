@@ -181,6 +181,7 @@
   </div>
 </main>
 
+<script src="/assets/admin-analytics.js" defer></script>
 <script type="module">
 import { supabase } from "../supabaseClient.js";
 const adminEmailEl = document.getElementById("adminEmail");
@@ -197,10 +198,34 @@ logoutBtn?.addEventListener("click", async () => {
     const rows = document.getElementById("rows");
 
     const show = (m) => status.textContent = m;
+    let currentUser = null;
+
+    // Audit hook (non-breaking): uses existing global audit/analytics layer if present.
+    async function audit(eventName, payload) {
+      try {
+        const enriched = {
+          ...payload,
+          admin_user_id: currentUser?.id || null,
+          admin_email: currentUser?.email || null,
+          at: new Date().toISOString(),
+        };
+
+        // Try common audit/analytics entry points without assuming DB schema.
+        if (window.adminAuditLog) return await window.adminAuditLog(eventName, enriched);
+        if (window.adminAudit) return await window.adminAudit(eventName, enriched);
+        if (window.trackAdminEvent) return window.trackAdminEvent(eventName, enriched);
+        if (window.adminAnalytics?.track) return window.adminAnalytics.track(eventName, enriched);
+      } catch (_) {
+        // never block UI actions
+      }
+    }
+
 
     async function mustBeAdmin() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { location.href = "../login.html"; throw ""; }
+      currentUser = user;
+
 if (adminEmailEl) adminEmailEl.textContent = user.email || "";
 
 
@@ -265,8 +290,14 @@ if (adminEmailEl) adminEmailEl.textContent = user.email || "";
         const retail = existing?.retail_price ?? "";
         const wholesale = existing?.wholesale_price ?? "";
 
-        const tr = document.createElement("tr");
+            const tr = document.createElement("tr");
         tr.dataset.pid = prod.id;
+
+        // store "before" values for audit logs
+        tr.dataset.beforeRetail = (retail === "" || retail === null || retail === undefined) ? "" : String(retail);
+        tr.dataset.beforeWholesale = (wholesale === "" || wholesale === null || wholesale === undefined) ? "" : String(wholesale);
+        tr.dataset.productName = String(prod.name || "");
+
         tr.innerHTML = `
           <td>${prod.name}</td>
           <td><input class="ret form-control form-control-sm" type="number" step="0.01" min="0" value="${retail}" style="width:120px"></td>
@@ -289,7 +320,12 @@ if (adminEmailEl) adminEmailEl.textContent = user.email || "";
       const tr = e.target.closest("tr");
       const productId = tr.dataset.pid;
 
-      if (clearBtn) {
+        if (clearBtn) {
+        const before = {
+          retail_price: tr.dataset.beforeRetail ?? "",
+          wholesale_price: tr.dataset.beforeWholesale ?? "",
+        };
+
         show("Clearing…");
         const { error } = await supabase
           .from("platinum_prices")
@@ -301,9 +337,23 @@ if (adminEmailEl) adminEmailEl.textContent = user.email || "";
 
         tr.querySelector(".ret").value = "";
         tr.querySelector(".wh").value = "";
+
+        // update stored "before" to reflect new state
+        tr.dataset.beforeRetail = "";
+        tr.dataset.beforeWholesale = "";
+
+        await audit("platinum_price_override_cleared", {
+          customer_id: customerId,
+          product_id: productId,
+          product_name: tr.dataset.productName || null,
+          before,
+          after: { retail_price: "", wholesale_price: "" },
+        });
+
         show("Cleared ✅");
         return;
       }
+
 
       const retail = Number(tr.querySelector(".ret").value || 0);
       const wholesale = Number(tr.querySelector(".wh").value || 0);
@@ -317,8 +367,31 @@ if (adminEmailEl) adminEmailEl.textContent = user.email || "";
         );
 
       if (error) { show("ERROR: " + error.message); return; }
+
+      const before = {
+        retail_price: tr.dataset.beforeRetail ?? "",
+        wholesale_price: tr.dataset.beforeWholesale ?? "",
+      };
+
+      const after = {
+        retail_price: String(retail),
+        wholesale_price: String(wholesale),
+      };
+
+      // update stored "before" to reflect new saved state
+      tr.dataset.beforeRetail = after.retail_price;
+      tr.dataset.beforeWholesale = after.wholesale_price;
+
+      await audit("platinum_price_override_saved", {
+        customer_id: customerId,
+        product_id: productId,
+        product_name: tr.dataset.productName || null,
+        before,
+        after,
+      });
+
       show("Saved ✅");
-    });
+        });
 
     loadBtn.addEventListener("click", async () => {
       await loadProductsAndPrices(customerSelect.value);
@@ -329,8 +402,7 @@ if (adminEmailEl) adminEmailEl.textContent = user.email || "";
       await loadPlatinumCustomers();
       show("Select a platinum customer");
     })().catch(err => show("ERROR: " + (err?.message || err)));
-</script>
-<script src="/assets/admin-analytics.js" defer></script>
 
+</script>
 </body>
 </html>
