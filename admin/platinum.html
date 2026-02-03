@@ -200,24 +200,36 @@ logoutBtn?.addEventListener("click", async () => {
     const show = (m) => status.textContent = m;
     let currentUser = null;
 
-     // Audit log writer (direct insert – matches existing audit_logs table)
+   
+    // Audit log writer (DEBUG) - shows the EXACT Supabase error (schema/RLS)
     async function writeAuditLog(action, data) {
-      try {
-        await supabase
-          .from("audit_logs")
-          .insert({
-            action: action,
-            entity: "platinum_prices",
-            entity_id: data.product_id || null,
-            customer_id: data.customer_id || null,
-            admin_id: currentUser?.id || null,
-            before_data: data.before || null,
-            after_data: data.after || null,
-            created_at: new Date().toISOString(),
-          });
-      } catch (e) {
-        // never block UI actions
+      const row = {
+        action: action,
+        entity: "platinum_prices",
+        entity_id: data.product_id || null,
+        customer_id: data.customer_id || null,
+        admin_id: currentUser?.id || null,
+        before_data: data.before || null,
+        after_data: data.after || null,
+        created_at: new Date().toISOString(),
+      };
+
+      const res = await supabase.from("audit_logs").insert(row);
+
+      if (res?.error) {
+        try { console.error("[AUDIT INSERT FAILED]", res.error); } catch (_) {}
+        try {
+          const msg =
+            (res.error.message || "") +
+            (res.error.details ? " | " + res.error.details : "") +
+            (res.error.hint ? " | " + res.error.hint : "") +
+            (res.error.code ? " | code=" + res.error.code : "");
+          show("AUDIT ERROR: " + msg);
+        } catch (_) {}
+        return;
       }
+
+      try { console.log("[AUDIT INSERT OK]", row); } catch (_) {}
     }
 
 
