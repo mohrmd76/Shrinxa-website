@@ -201,7 +201,7 @@ logoutBtn?.addEventListener("click", async () => {
     let currentUser = null;
 
    
-         // Audit log writer (matches your real audit_logs table columns)
+             // Audit log writer (FULL DEBUG)
     async function writeAuditLog(action, data) {
       const row = {
         admin_id: currentUser?.id || null,
@@ -216,13 +216,22 @@ logoutBtn?.addEventListener("click", async () => {
       const res = await supabase.from("audit_logs").insert(row);
 
       if (res?.error) {
-        try { console.error("[AUDIT INSERT FAILED]", res.error); } catch (_) {}
-        try { show("AUDIT ERROR: " + (res.error.message || "")); } catch (_) {}
+        try { console.error("[AUDIT INSERT FAILED]", res.error, row); } catch (_) {}
+        try {
+          const msg =
+            (res.error.message || "") +
+            (res.error.details ? " | " + res.error.details : "") +
+            (res.error.hint ? " | " + res.error.hint : "") +
+            (res.error.code ? " | code=" + res.error.code : "");
+          show("AUDIT ERROR: " + msg);
+        } catch (_) {}
         return;
       }
 
       try { console.log("[AUDIT INSERT OK]", row); } catch (_) {}
+      try { show("Saved ✅"); } catch (_) {}
     }
+
 
 
 
