@@ -200,9 +200,8 @@ logoutBtn?.addEventListener("click", async () => {
     const show = (m) => status.textContent = m;
     let currentUser = null;
 
-    // Audit log writer (DB-first, non-breaking).
-    // It tries common existing RPCs first (if your project already has one),
-    // then falls back to inserting into common audit tables.
+       // Audit log writer (debug version).
+    // Shows EXACT failures in Console + Status bar so we can fix it correctly.
     async function writeAuditLog(action, payload) {
       const enriched = {
         action,
@@ -212,46 +211,44 @@ logoutBtn?.addEventListener("click", async () => {
         created_at: new Date().toISOString(),
       };
 
-      // 1) Try existing RPCs (if your project already uses one)
-      try {
-        const rpcNames = [
-          "write_audit_log",
-          "admin_audit_log",
-          "audit_log",
-          "log_audit_event",
-        ];
+      const debug = (msg, obj) => {
+        try { console.log("[AUDIT]", msg, obj || ""); } catch (_) {}
+        try { show("AUDIT: " + msg); } catch (_) {}
+      };
 
-        for (const fn of rpcNames) {
-          const { error } = await supabase.rpc(fn, { event: action, payload: enriched });
-          if (!error) return; // success
+      // Try RPCs first
+      const rpcNames = ["write_audit_log", "admin_audit_log", "audit_log", "log_audit_event"];
+      for (const fn of rpcNames) {
+        try {
+          const res = await supabase.rpc(fn, { event: action, payload: enriched });
+          if (!res?.error) { debug(`RPC ok: ${fn}`); return; }
+          debug(`RPC failed: ${fn} -> ${res.error.message}`, res.error);
+        } catch (e) {
+          debug(`RPC exception: ${fn}`, e);
         }
-      } catch (_) {
-        // continue to fallback inserts
       }
 
-      // 2) Fallback: try inserting into common audit tables (non-breaking if not present)
-      try {
-        const tableNames = [
-          "audit_logs",
-          "admin_audit_logs",
-          "admin_audit_log",
-          "activity_logs",
-        ];
-
-        for (const t of tableNames) {
-          const { error } = await supabase.from(t).insert({
+      // Then try inserts
+      const tableNames = ["audit_logs", "admin_audit_logs", "admin_audit_log", "activity_logs"];
+      for (const t of tableNames) {
+        try {
+          const res = await supabase.from(t).insert({
             action: action,
             payload: enriched,
             admin_user_id: enriched.admin_user_id,
             admin_email: enriched.admin_email,
             created_at: enriched.created_at,
           });
-          if (!error) return; // success
+          if (!res?.error) { debug(`INSERT ok: ${t}`); return; }
+          debug(`INSERT failed: ${t} -> ${res.error.message}`, res.error);
+        } catch (e) {
+          debug(`INSERT exception: ${t}`, e);
         }
-      } catch (_) {
-        // never block UI actions
       }
+
+      debug("all audit methods failed (see console)");
     }
+
 
 
 
