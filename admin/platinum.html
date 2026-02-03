@@ -201,14 +201,15 @@ logoutBtn?.addEventListener("click", async () => {
     let currentUser = null;
 
    
-        // Audit log writer (matches your audit_logs table - minimal columns only)
+         // Audit log writer (matches your real audit_logs table columns)
     async function writeAuditLog(action, data) {
       const row = {
-        action: action,
+        admin_id: currentUser?.id || null,
         entity: "platinum_prices",
         entity_id: data.product_id || null,
-        customer_id: data.customer_id || null,
-        admin_id: currentUser?.id || null,
+        action: action,
+        before: data.before || null,
+        after: data.after || null,
         created_at: new Date().toISOString(),
       };
 
@@ -222,6 +223,7 @@ logoutBtn?.addEventListener("click", async () => {
 
       try { console.log("[AUDIT INSERT OK]", row); } catch (_) {}
     }
+
 
 
     async function mustBeAdmin() {
