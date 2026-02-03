@@ -871,6 +871,16 @@ btnUploadImg?.addEventListener("click", async () => {
         if (error) { show("ERROR: " + error.message); return; }
       }
 
+window.ShrinxaAdminTrack({
+  entity: "product",
+  entity_id: editing?.id || null,
+  action: editing?.id ? "update_product" : "create_product",
+  before: editing?._raw || null,
+  after: payload
+});
+
+
+
       closeDialog();
       await loadProducts();
       show("Saved ✅");
@@ -896,6 +906,15 @@ if (String(f_active.value) === "true") {
 
   if (error) { show("ERROR: " + error.message); return; }
 
+window.ShrinxaAdminTrack({
+  entity: "product",
+  entity_id: editing.id,
+  action: "delete_product",
+  before: editing?._raw || null,
+  after: null
+});
+
+
   closeDialog();
   await loadProducts();
   show("Deleted permanently ✅");
@@ -908,6 +927,15 @@ if (String(f_active.value) === "true") {
         .from("products")
         .update({ is_active: !currentActive })
         .eq("id", id);
+window.ShrinxaAdminTrack({
+  entity: "product",
+  entity_id: id,
+  action: currentActive ? "deactivate_product" : "activate_product",
+  before: { is_active: currentActive },
+  after: { is_active: !currentActive }
+});
+
+
       if (error) { show("ERROR: " + error.message); return; }
       await loadProducts();
       show("Saved ✅");
