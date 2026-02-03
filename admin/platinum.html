@@ -201,7 +201,7 @@ logoutBtn?.addEventListener("click", async () => {
     let currentUser = null;
 
    
-    // Audit log writer (DEBUG) - shows the EXACT Supabase error (schema/RLS)
+        // Audit log writer (matches your audit_logs table - minimal columns only)
     async function writeAuditLog(action, data) {
       const row = {
         action: action,
@@ -209,8 +209,6 @@ logoutBtn?.addEventListener("click", async () => {
         entity_id: data.product_id || null,
         customer_id: data.customer_id || null,
         admin_id: currentUser?.id || null,
-        before_data: data.before || null,
-        after_data: data.after || null,
         created_at: new Date().toISOString(),
       };
 
@@ -218,14 +216,7 @@ logoutBtn?.addEventListener("click", async () => {
 
       if (res?.error) {
         try { console.error("[AUDIT INSERT FAILED]", res.error); } catch (_) {}
-        try {
-          const msg =
-            (res.error.message || "") +
-            (res.error.details ? " | " + res.error.details : "") +
-            (res.error.hint ? " | " + res.error.hint : "") +
-            (res.error.code ? " | code=" + res.error.code : "");
-          show("AUDIT ERROR: " + msg);
-        } catch (_) {}
+        try { show("AUDIT ERROR: " + (res.error.message || "")); } catch (_) {}
         return;
       }
 
@@ -354,13 +345,11 @@ if (adminEmailEl) adminEmailEl.textContent = user.email || "";
         tr.dataset.beforeRetail = "";
         tr.dataset.beforeWholesale = "";
 
-         await writeAuditLog("platinum_price_override_cleared", {
+             await writeAuditLog("platinum_price_override_cleared", {
           customer_id: customerId,
           product_id: productId,
-          product_name: tr.dataset.productName || null,
-          before,
-          after: { retail_price: "", wholesale_price: "" },
         });
+
 
 
         show("Cleared ✅");
@@ -441,13 +430,11 @@ if (adminEmailEl) adminEmailEl.textContent = user.email || "";
       tr.dataset.beforeWholesale = after.wholesale_price;
 
 
-        await writeAuditLog("platinum_price_override_saved", {
+         await writeAuditLog("platinum_price_override_saved", {
         customer_id: customerId,
         product_id: productId,
-        product_name: tr.dataset.productName || null,
-        before,
-        after,
       });
+
 
 
       show("Saved ✅");
