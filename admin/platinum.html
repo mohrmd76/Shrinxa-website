@@ -200,25 +200,59 @@ logoutBtn?.addEventListener("click", async () => {
     const show = (m) => status.textContent = m;
     let currentUser = null;
 
-    // Audit hook (non-breaking): uses existing global audit/analytics layer if present.
-    async function audit(eventName, payload) {
-      try {
-        const enriched = {
-          ...payload,
-          admin_user_id: currentUser?.id || null,
-          admin_email: currentUser?.email || null,
-          at: new Date().toISOString(),
-        };
+    // Audit log writer (DB-first, non-breaking).
+    // It tries common existing RPCs first (if your project already has one),
+    // then falls back to inserting into common audit tables.
+    async function writeAuditLog(action, payload) {
+      const enriched = {
+        action,
+        ...payload,
+        admin_user_id: currentUser?.id || null,
+        admin_email: currentUser?.email || null,
+        created_at: new Date().toISOString(),
+      };
 
-        // Try common audit/analytics entry points without assuming DB schema.
-        if (window.adminAuditLog) return await window.adminAuditLog(eventName, enriched);
-        if (window.adminAudit) return await window.adminAudit(eventName, enriched);
-        if (window.trackAdminEvent) return window.trackAdminEvent(eventName, enriched);
-        if (window.adminAnalytics?.track) return window.adminAnalytics.track(eventName, enriched);
+      // 1) Try existing RPCs (if your project already uses one)
+      try {
+        const rpcNames = [
+          "write_audit_log",
+          "admin_audit_log",
+          "audit_log",
+          "log_audit_event",
+        ];
+
+        for (const fn of rpcNames) {
+          const { error } = await supabase.rpc(fn, { event: action, payload: enriched });
+          if (!error) return; // success
+        }
+      } catch (_) {
+        // continue to fallback inserts
+      }
+
+      // 2) Fallback: try inserting into common audit tables (non-breaking if not present)
+      try {
+        const tableNames = [
+          "audit_logs",
+          "admin_audit_logs",
+          "admin_audit_log",
+          "activity_logs",
+        ];
+
+        for (const t of tableNames) {
+          const { error } = await supabase.from(t).insert({
+            action: action,
+            payload: enriched,
+            admin_user_id: enriched.admin_user_id,
+            admin_email: enriched.admin_email,
+            created_at: enriched.created_at,
+          });
+          if (!error) return; // success
+        }
       } catch (_) {
         // never block UI actions
       }
     }
+
 
 
     async function mustBeAdmin() {
@@ -342,7 +376,50 @@ if (adminEmailEl) adminEmailEl.textContent = user.email || "";
         tr.dataset.beforeRetail = "";
         tr.dataset.beforeWholesale = "";
 
-        await audit("platinum_price_override_cleared", {
+         await writeAuditLog("platinum_price_override_cleared", {
+          customer_id: customerId,
+          product_id: productId,
+          product_name: tr.dataset.productName || null,
+          before,
+          after: { retail_price: "", wholesale_price: "" },
+        });
+
+
+        show("Cleared ✅");
+        return;
+      }
+
+
+           const retailRaw = tr.querySelector(".ret").value;
+      const wholesaleRaw = tr.querySelector(".wh").value;
+
+      const retail = (retailRaw === "" ? null : Number(retailRaw));
+      const wholesale = (wholesaleRaw === "" ? null : Number(wholesaleRaw));
+
+
+            // If both fields are blank, treat Save as Clear (delete override)
+      if (retail === null && wholesale === null) {
+        const before = {
+          retail_price: tr.dataset.beforeRetail ?? "",
+          wholesale_price: tr.dataset.beforeWholesale ?? "",
+        };
+
+        show("Clearing…");
+        const { error } = await supabase
+          .from("platinum_prices")
+          .delete()
+          .eq("customer_id", customerId)
+          .eq("product_id", productId);
+
+        if (error) { show("ERROR: " + error.message); return; }
+
+        tr.querySelector(".ret").value = "";
+        tr.querySelector(".wh").value = "";
+
+        tr.dataset.beforeRetail = "";
+        tr.dataset.beforeWholesale = "";
+
+        await writeAuditLog("platinum_price_override_cleared", {
           customer_id: customerId,
           product_id: productId,
           product_name: tr.dataset.productName || null,
@@ -354,41 +431,46 @@ if (adminEmailEl) adminEmailEl.textContent = user.email || "";
         return;
       }
 
-
-      const retail = Number(tr.querySelector(".ret").value || 0);
-      const wholesale = Number(tr.querySelector(".wh").value || 0);
-
       show("Saving…");
       const { error } = await supabase
         .from("platinum_prices")
         .upsert(
-          { customer_id: customerId, product_id: productId, retail_price: retail, wholesale_price: wholesale },
+          {
+            customer_id: customerId,
+            product_id: productId,
+            retail_price: retail,
+            wholesale_price: wholesale,
+          },
           { onConflict: "customer_id,product_id" }
         );
 
       if (error) { show("ERROR: " + error.message); return; }
+
 
       const before = {
         retail_price: tr.dataset.beforeRetail ?? "",
         wholesale_price: tr.dataset.beforeWholesale ?? "",
       };
 
-      const after = {
-        retail_price: String(retail),
-        wholesale_price: String(wholesale),
+            const after = {
+        retail_price: (retail === null ? "" : String(retail)),
+        wholesale_price: (wholesale === null ? "" : String(wholesale)),
       };
 
+
       // update stored "before" to reflect new saved state
-      tr.dataset.beforeRetail = after.retail_price;
+         tr.dataset.beforeRetail = after.retail_price;
       tr.dataset.beforeWholesale = after.wholesale_price;
 
-      await audit("platinum_price_override_saved", {
+
+        await writeAuditLog("platinum_price_override_saved", {
         customer_id: customerId,
         product_id: productId,
         product_name: tr.dataset.productName || null,
         before,
         after,
       });
+
 
       show("Saved ✅");
         });
