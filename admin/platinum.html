@@ -200,36 +200,25 @@ logoutBtn?.addEventListener("click", async () => {
     const show = (m) => status.textContent = m;
     let currentUser = null;
 
-            // Audit log writer (DEBUG - shows exact insert failure)
+     // Audit log writer (direct insert – matches existing audit_logs table)
     async function writeAuditLog(action, data) {
-      const row = {
-        action: action,
-        entity: "platinum_prices",
-        entity_id: data.product_id || null,
-        customer_id: data.customer_id || null,
-        admin_id: currentUser?.id || null,
-        admin_email: currentUser?.email || null,
-        before_data: data.before || null,
-        after_data: data.after || null,
-        created_at: new Date().toISOString(),
-      };
-
-      // Do NOT block the UI action, but show the real error if it fails
-      const { error } = await supabase.from("audit_logs").insert(row);
-
-      if (error) {
-        try { console.error("[AUDIT INSERT FAILED]", error); } catch (_) {}
-        try { show("AUDIT ERROR: " + error.message); } catch (_) {}
-        return;
+      try {
+        await supabase
+          .from("audit_logs")
+          .insert({
+            action: action,
+            entity: "platinum_prices",
+            entity_id: data.product_id || null,
+            customer_id: data.customer_id || null,
+            admin_id: currentUser?.id || null,
+            before_data: data.before || null,
+            after_data: data.after || null,
+            created_at: new Date().toISOString(),
+          });
+      } catch (e) {
+        // never block UI actions
       }
-
-      try { console.log("[AUDIT INSERT OK]", row); } catch (_) {}
-      try { show("Saved ✅ (audit ok)"); } catch (_) {}
     }
-
-
-
-
 
 
     async function mustBeAdmin() {
