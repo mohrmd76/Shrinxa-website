@@ -201,39 +201,57 @@ logoutBtn?.addEventListener("click", async () => {
     let currentUser = null;
 
    
-             // Audit log writer (FULL DEBUG)
+         // Audit log writer (uses existing admin analytics pipeline that writes to audit_logs via Edge Function)
     async function writeAuditLog(action, data) {
-      const row = {
-        admin_id: currentUser?.id || null,
-        entity: "platinum_prices",
-        entity_id: data.product_id || null,
-        action: action,
-        before: data.before || null,
-        after: data.after || null,
-        created_at: new Date().toISOString(),
-      };
+      try {
+        const payload = {
+          // Required by your Edge Function / analytics pipeline
+          event_name: "admin_audit",
+          page_path: location.pathname,
 
-      const res = await supabase.from("audit_logs").insert(row);
+          // Required for audit_logs insert in index.ts
+          entity: "platinum_prices",
+          entity_id: data.product_id || null,
+          action: action,
+          before: data.before || null,
+          after: data.after || null,
 
-      if (res?.error) {
-        try { console.error("[AUDIT INSERT FAILED]", res.error, row); } catch (_) {}
-        try {
-          const msg =
-            (res.error.message || "") +
-            (res.error.details ? " | " + res.error.details : "") +
-            (res.error.hint ? " | " + res.error.hint : "") +
-            (res.error.code ? " | code=" + res.error.code : "");
-          show("AUDIT ERROR: " + msg);
-        } catch (_) {}
+          // Extra metadata (safe)
+          metadata: {
+            source: "platinum.html",
+            customer_id: data.customer_id || null,
+            product_name: data.product_name || null,
+          },
+        };
+
+        // Try common global entry points (admin-analytics.js)
+        if (window.adminAnalytics?.track) {
+          // usually: track(eventName, payload)
+          return await window.adminAnalytics.track("admin_audit", payload);
+        }
+
+        if (window.trackAdminEvent) {
+          // usually: trackAdminEvent(eventName, payload)
+          return await window.trackAdminEvent("admin_audit", payload);
+        }
+
+        if (window.adminAuditLog) {
+          // usually: adminAuditLog(eventName, payload)
+          return await window.adminAuditLog("admin_audit", payload);
+        }
+
+        if (window.adminAudit) {
+          // usually: adminAudit(eventName, payload)
+          return await window.adminAudit("admin_audit", payload);
+        }
+
+        // If nothing exists, don't break actions
         return;
+      } catch (_) {
+        // never block UI actions
       }
-
-      try { console.log("[AUDIT INSERT OK]", row); } catch (_) {}
-      try { show("Saved ✅"); } catch (_) {}
     }
-
-
-
+ 
 
     async function mustBeAdmin() {
       const { data: { user } } = await supabase.auth.getUser();
