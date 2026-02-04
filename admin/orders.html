@@ -315,7 +315,9 @@
   </div>
 </main>
 
+<script src="/assets/admin-analytics.js" defer></script>
 <script type="module">
+
   import { supabase } from "../supabaseClient.js";
 	window.supabaseClient = supabase;
 
@@ -346,6 +348,30 @@
   const btnClear = document.getElementById("btnClear");
 
   function show(msg) { statusEl.textContent = msg; }
+  // Admin audit helper (uses /assets/admin-analytics.js)
+  async function auditLog(action, data) {
+    try {
+      if (typeof window.ShrinxaAdminTrack !== "function") return;
+
+      const metadata = {
+        source: "orders.html",
+      };
+
+      const audit = {
+        entity: "invoice",
+        entity_id: data.invoice_id || null,
+        action: action,
+        before: data.before ?? null,
+        after: data.after ?? null,
+      };
+
+      // Correct signature: (eventName, metadata, audit)
+      await window.ShrinxaAdminTrack("admin_action", metadata, audit);
+    } catch (_) {
+      // never block UI actions
+    }
+  }
+
 
   // Live (debounced) search like customers page
   let _loadTimer = null;
@@ -587,9 +613,16 @@
       return;
     }
 
+      await auditLog("open_invoice", {
+      invoice_id: id,
+      before: null,
+      after: null,
+    });
+
     const url = `${INVOICE_PAGE}?id=${encodeURIComponent(id)}`;
     window.open(url, "_blank");
     return;
+
   }
 
   const cashDetailsBtn = e.target?.closest?.(".btnCashDetails");
@@ -597,22 +630,28 @@
     const id = cashDetailsBtn.getAttribute("data-id");
     if (!id) return;
 
+       await auditLog("open_cash_receipt", {
+      invoice_id: id,
+      before: null,
+      after: null,
+    });
+
     // Admin-only CASH receipt / details page
     window.open(`/admin/cash-receipt.html?id=${encodeURIComponent(id)}`, "_blank");
     return;
+
   }
 
     const resendBtn = e.target?.closest?.(".btnResend");
     if (resendBtn) {
       const id = resendBtn.getAttribute("data-id");
 
-window.ShrinxaAdminTrack({
-  entity: "invoice",
-  entity_id: id,
-  action: "resend_email",
-  before: null,
-  after: null
-});
+      await auditLog("resend_email", {
+        invoice_id: id,
+        before: null,
+        after: null,
+      });
+
 
 
       show("Resending invoice email…");
@@ -634,6 +673,11 @@ window.ShrinxaAdminTrack({
       const newStatus = (sel?.value || "").trim().toLowerCase();
 
       show("Saving status…");
+      await auditLog("change_status", {
+        invoice_id: id,
+        before: { status: prevStatus || null },
+        after: { status: newStatus || null },
+      });
 
       const { error: upErr } = await supabase
         .from("invoices")
@@ -646,33 +690,47 @@ window.ShrinxaAdminTrack({
 
       if (upErr) { show("ERROR: " + upErr.message); return; }
 
+    
+
       show("Status saved ✅");
       if (sel) sel.dataset.prev = newStatus;
+
+      // keep row snapshot in sync
+      try {
+        const raw = JSON.parse(tr?.dataset?.raw || "{}");
+        raw.status = newStatus || null;
+        raw.payment_status = newStatus || null;
+        tr.dataset.raw = JSON.stringify(raw);
+      } catch (_) {}
+
       return;
+
     }
 
     const cancelBtn = e.target?.closest?.(".btnCancel");
     if (!cancelBtn) return;
 
     const id = cancelBtn.getAttribute("data-id");
-    const row = cancelBtn.closest("tr");
-    const sel = row?.querySelector?.(".stSel");
-    const currentStatus = (sel?.value || "").trim().toLowerCase();
-
     const tr = cancelBtn.closest("tr");
-const rawJson = tr?.dataset?.raw || "{}";
-let invRow = {};
-try { invRow = JSON.parse(rawJson); } catch (_) {}
+    const sel = tr?.querySelector?.(".stSel");
 
-const isCash = String(invRow.sale_type || "").toLowerCase() === "cash";
+    const rawJson = tr?.dataset?.raw || "{}";
+    let invRow = {};
+    try { invRow = JSON.parse(rawJson); } catch (_) {}
 
-if (currentStatus === "paid" && !isCash) {
-  alert("This order is PAID. If you need a refund, do not cancel/delete it here.");
-  show("Cancelled blocked (paid order).");
-  return;
-}
+    const isCash = String(invRow.sale_type || "").toLowerCase() === "cash";
 
-    const invoiceLabel = row?.querySelector?.("td .mono")?.textContent?.trim() || id;
+    const currentStatus = (
+      sel?.value || invRow.status || invRow.payment_status || ""
+    ).trim().toLowerCase();
+
+    if (currentStatus === "paid" && !isCash) {
+      alert("This order is PAID. If you need a refund, do not cancel/delete it here.");
+      show("Cancelled blocked (paid order).");
+      return;
+    }
+
+    const invoiceLabel = tr?.querySelector?.("td .mono")?.textContent?.trim() || id;
 
     const ok = confirm(
       `Cancel + delete this order?\n\nInvoice: ${invoiceLabel}\n\nThis will remove it from Admin list and the customer's purchase history.`
@@ -681,6 +739,12 @@ if (currentStatus === "paid" && !isCash) {
 
     try {
       show("Cancelling…");
+
+      await auditLog("cancel_order", {
+        invoice_id: id,
+        before: { status: currentStatus || null },
+        after: { status: "cancelled" },
+      });
 
       const { error: upErr } = await supabase
         .from("invoices")
@@ -702,11 +766,13 @@ if (currentStatus === "paid" && !isCash) {
         return;
       }
 
-      row?.remove?.();
+      tr?.remove?.();
       show("Order cancelled + deleted ✅");
     } catch (err) {
       show("ERROR: " + (err?.message || String(err)));
     }
+
+
   });
 
   // Live search (debounced)
@@ -740,7 +806,6 @@ btnLoad.addEventListener("click", loadOrders);
     await loadOrders();
   })();
 </script>
-<script src="/assets/admin-analytics.js" defer></script>
 
 </body>
 </html>
