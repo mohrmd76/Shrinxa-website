@@ -208,11 +208,12 @@
   window.addEventListener("load", function () {
     if (typeof window.ShrinxaAdminTrack !== "function") return;
 
-    window.ShrinxaAdminTrack(
-      "admin_page_open",
-      { page: "inventory" },
-      { entity: "page", entity_id: "inventory", action: "open" }
-    );
+    window.ShrinxaAdminTrack("page_open", {
+      entity: "page",
+      entity_id: "inventory",
+      action: "open",
+      page: "inventory"
+    });
   });
 </script>
 
