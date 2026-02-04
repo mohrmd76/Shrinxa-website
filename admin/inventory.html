@@ -204,6 +204,18 @@
     import "./inventory.js";
   </script>
 <script src="/assets/admin-analytics.js" defer></script>
+<script>
+  window.addEventListener("load", function () {
+    if (typeof window.ShrinxaAdminTrack !== "function") return;
+
+    window.ShrinxaAdminTrack(
+      "admin_page_open",
+      { page: "inventory" },
+      { entity: "page", entity_id: "inventory", action: "open" }
+    );
+  });
+</script>
+
 
 </body>
 </html>
