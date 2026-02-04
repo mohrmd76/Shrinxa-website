@@ -184,6 +184,7 @@
 <script src="/assets/admin-analytics.js" defer></script>
 <script type="module">
 import { supabase } from "../supabaseClient.js";
+window.supabaseClient = supabase;
 const adminEmailEl = document.getElementById("adminEmail");
 const logoutBtn = document.getElementById("logoutBtn");
 
@@ -201,7 +202,7 @@ logoutBtn?.addEventListener("click", async () => {
     let currentUser = null;
 
    
-           // Audit log writer (uses /assets/admin-analytics.js)
+              // Audit log writer (uses /assets/admin-analytics.js exactly as implemented)
     // admin-analytics exposes: window.ShrinxaAdminTrack(eventName, metadata, audit)
     async function writeAuditLog(action, data) {
       try {
@@ -228,6 +229,7 @@ logoutBtn?.addEventListener("click", async () => {
         // never block UI actions
       }
     }
+
 
  
 
