@@ -3,6 +3,37 @@ import { supabase } from "../supabaseClient.js";
 // Elements
 const tbody = document.querySelector("#inventoryTable tbody");
 
+function auditProductFieldChange({
+  product_id,
+  field,
+  before_ui,
+  after_ui,
+  before_db,
+  after_db,
+}) {
+  if (typeof window === "undefined") return;
+  if (typeof window.ShrinxaAdminTrack !== "function") return;
+
+  window.ShrinxaAdminTrack(
+    "inventory_field_change",
+    {
+      field: String(field || ""),
+      before_ui,
+      after_ui,
+      before_db,
+      after_db,
+      page: "inventory",
+    },
+    {
+      entity: "product",
+      entity_id: String(product_id || ""),
+      action: "field_change",
+    }
+  );
+}
+
+
+
 async function loadInventory() {
   if (!tbody) return;
 
@@ -31,10 +62,16 @@ async function loadInventory() {
   </div>
 </td>
 
-      <td><input data-field="stock_on_hand" data-id="${p.id}" type="number" step="1" value="${num(p.stock_on_hand)}" style="width:110px"></td>
-	<td><input data-field="low_stock_threshold" data-id="${p.id}" type="number" step="1" value="${num(p.low_stock_threshold)}" style="width:110px"></td>
-     <td><input data-field="cost_product" data-id="${p.id}" data-spec="${escapeHtml(p.specification || "")}" type="number" step="0.0001" value="${num4(perRoll(p.cost_product, p.specification))}" style="width:140px"></td>
-<td><input data-field="cost_import" data-id="${p.id}" data-spec="${escapeHtml(p.specification || "")}" type="number" step="0.0001" value="${num4(perRoll(p.cost_import, p.specification))}" style="width:140px"></td>
+      <td><input data-field="stock_on_hand" data-id="${p.id}" data-prev="${num(p.stock_on_hand)}" type="number" step="1" value="${num(p.stock_on_hand)}" style="width:110px"></td>
+
+	<td><input data-field="low_stock_threshold" data-id="${p.id}" data-prev="${num(p.low_stock_threshold)}" type="number" step="1" value="${num(p.low_stock_threshold)}" style="width:110px"></td>
+
+<td><input data-field="cost_product" data-id="${p.id}" data-spec="${escapeHtml(p.specification || "")}" data-prev="${num4(perRoll(p.cost_product, p.specification))}" type="number" step="0.0001" value="${num4(perRoll(p.cost_product, p.specification))}" style="width:140px"></td>
+
+
+<td><input data-field="cost_import" data-id="${p.id}" data-spec="${escapeHtml(p.specification || "")}" data-prev="${num4(perRoll(p.cost_import, p.specification))}" type="number" step="0.0001" value="${num4(perRoll(p.cost_import, p.specification))}" style="width:140px"></td>
+     
+
 <td><input type="number" step="0.0001" value="${num4(perRoll(p.cost_total, p.specification))}" style="width:140px" disabled></td>
 <td><input type="number" step="0.0001" value="${num4(costPerBox(p.cost_total, p.specification))}" style="width:160px" disabled></td>
 
@@ -55,6 +92,9 @@ async function onEditField(e) {
   const field = input.getAttribute("data-field");
 
   if (!id || !field) return;
+const beforeUIRaw = input.getAttribute("data-prev");
+const beforeUI = beforeUIRaw === null ? null : beforeUIRaw;
+
 
   // Parse value
   let value;
@@ -77,6 +117,9 @@ async function onEditField(e) {
   }
 
 
+const afterUI = input.value;
+const beforeDB = beforeUI;
+
   input.disabled = true;
 
   const { error } = await supabase
@@ -92,6 +135,21 @@ async function onEditField(e) {
   }
 
   // Reload to reflect generated cost_total
+
+
+// Log audit (after successful DB update)
+auditProductFieldChange({
+  product_id: id,
+  field,
+  before_ui: beforeUI,
+  after_ui: afterUI,
+  before_db: beforeDB,
+  after_db: String(value),
+});
+
+// Update "prev" so repeat edits log correctly without needing reload timing
+input.setAttribute("data-prev", afterUI);
+
   await loadInventory();
 }
 
