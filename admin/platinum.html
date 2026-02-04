@@ -201,56 +201,34 @@ logoutBtn?.addEventListener("click", async () => {
     let currentUser = null;
 
    
-         // Audit log writer (uses existing admin analytics pipeline that writes to audit_logs via Edge Function)
+           // Audit log writer (uses /assets/admin-analytics.js)
+    // admin-analytics exposes: window.ShrinxaAdminTrack(eventName, metadata, audit)
     async function writeAuditLog(action, data) {
       try {
-        const payload = {
-          // Required by your Edge Function / analytics pipeline
-          event_name: "admin_audit",
-          page_path: location.pathname,
+        if (typeof window.ShrinxaAdminTrack !== "function") return;
 
-          // Required for audit_logs insert in index.ts
+        const eventName = "admin_action";
+
+        const metadata = {
+          source: "platinum.html",
+          customer_id: data.customer_id || null,
+          product_name: data.product_name || null,
+        };
+
+        const audit = {
           entity: "platinum_prices",
           entity_id: data.product_id || null,
           action: action,
           before: data.before || null,
           after: data.after || null,
-
-          // Extra metadata (safe)
-          metadata: {
-            source: "platinum.html",
-            customer_id: data.customer_id || null,
-            product_name: data.product_name || null,
-          },
         };
 
-        // Try common global entry points (admin-analytics.js)
-        if (window.adminAnalytics?.track) {
-          // usually: track(eventName, payload)
-          return await window.adminAnalytics.track("admin_audit", payload);
-        }
-
-        if (window.trackAdminEvent) {
-          // usually: trackAdminEvent(eventName, payload)
-          return await window.trackAdminEvent("admin_audit", payload);
-        }
-
-        if (window.adminAuditLog) {
-          // usually: adminAuditLog(eventName, payload)
-          return await window.adminAuditLog("admin_audit", payload);
-        }
-
-        if (window.adminAudit) {
-          // usually: adminAudit(eventName, payload)
-          return await window.adminAudit("admin_audit", payload);
-        }
-
-        // If nothing exists, don't break actions
-        return;
+        await window.ShrinxaAdminTrack(eventName, metadata, audit);
       } catch (_) {
         // never block UI actions
       }
     }
+
  
 
     async function mustBeAdmin() {
