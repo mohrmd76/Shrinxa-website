@@ -14,20 +14,28 @@ function auditProductFieldChange({
   if (typeof window === "undefined") return;
   if (typeof window.ShrinxaAdminTrack !== "function") return;
 
+  const f = String(field || "");
+
   window.ShrinxaAdminTrack(
     "inventory_field_change",
     {
-      field: String(field || ""),
-      before_ui,
-      after_ui,
-      before_db,
-      after_db,
       page: "inventory",
+      field: f,
     },
     {
-      entity: "product",
+      entity: "inventory",
       entity_id: String(product_id || ""),
       action: "field_change",
+      before: {
+        field: f,
+        ui: before_ui,
+        db: before_db,
+      },
+      after: {
+        field: f,
+        ui: after_ui,
+        db: after_db,
+      },
     }
   );
 }
