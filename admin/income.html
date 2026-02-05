@@ -464,7 +464,6 @@ const newCategoryName = document.getElementById("newCategoryName");
 const btnAddCategory = document.getElementById("btnAddCategory");
 const btnDeleteCategory = document.getElementById("btnDeleteCategory");
 
-
 btnAddCategory.addEventListener("click", async () => {
   const name = (newCategoryName.value || "").trim();
   if (!name) return;
@@ -478,6 +477,13 @@ btnAddCategory.addEventListener("click", async () => {
 
     if (error) throw error;
 
+    auditIncomeExpense("category_add", {
+      entity_id: name,
+      before: null,
+      after: { name },
+      meta: { page: "income", section: "expenses", what: "category" },
+    });
+
     newCategoryName.value = "";
     await loadExpenseCategories();
     show("Category added ✅");
@@ -486,6 +492,7 @@ btnAddCategory.addEventListener("click", async () => {
     show("ERROR: " + (e?.message || String(e)));
   }
 });
+
 
 btnDeleteCategory.addEventListener("click", async () => {
   const name = (expCategory.value || "").trim();
@@ -500,6 +507,13 @@ btnDeleteCategory.addEventListener("click", async () => {
       .eq("name", name);
 
     if (error) throw error;
+
+    auditIncomeExpense("category_delete", {
+      entity_id: name,
+      before: { name },
+      after: null,
+      meta: { page: "income", section: "expenses", what: "category" },
+    });
 
     await loadExpenseCategories();
     show("Category deleted ✅");
@@ -518,6 +532,38 @@ let lastYearly = [];
 
 
   function show(msg) { statusEl.textContent = msg; }
+
+function auditIncomeExpense(action, { entity_id, before, after, meta } = {}) {
+  if (typeof window === "undefined") return;
+  if (typeof window.ShrinxaAdminTrack !== "function") return;
+
+  window.ShrinxaAdminTrack(
+    "income_expenses",
+    meta || {},
+    {
+      entity: "income",
+      entity_id: String(entity_id || ""),
+      action: String(action || ""),
+      before: before ?? null,
+      after: after ?? null,
+    }
+  );
+}
+
+
+
+function getExpenseFormSnapshot() {
+  return {
+    id: (expId.value || "").trim() || null,
+    expense_date: expDate.value || null,
+    category: expCategory.value || null,
+    amount: expAmount.value === "" ? null : Number(expAmount.value || 0),
+    currency: expCurrency.value || null,
+    vendor: (expVendor.value || "").trim() || null,
+    receipt_url: (expReceipt.value || "").trim() || null,
+    notes: (expNotes.value || "").trim() || null,
+  };
+}
 
   function money(v) {
     const n = Number(v);
@@ -863,55 +909,121 @@ kpiNetProfit.textContent = money(invAgg.invProfit + invAgg.deliveryIncome - expe
     expNotes.value = r.notes || "";
   });
 
-  btnClearExpense.addEventListener("click", () => clearForm());
+btnClearExpense.addEventListener("click", () => {
+  const before = getExpenseFormSnapshot();
 
-  btnSaveExpense.addEventListener("click", async () => {
-    const payload = {
-      expense_date: expDate.value || toISODate(new Date()),
-      category: expCategory.value,
-      amount: Number(expAmount.value || 0),
-      currency: expCurrency.value,
-      vendor: (expVendor.value || "").trim() || null,
-      receipt_url: (expReceipt.value || "").trim() || null,
-      notes: (expNotes.value || "").trim() || null,
-    };
+  clearForm();
 
-    try {
-      show("Saving…");
-      const id = (expId.value || "").trim();
-
-      if (id) {
-        const { error } = await supabase.from("expenses").update(payload).eq("id", id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("expenses").insert(payload);
-        if (error) throw error;
-      }
-
-      clearForm();
-      await loadAll();
-    } catch (e) {
-      console.error(e);
-      show("ERROR: " + (e?.message || String(e)));
-    }
+  auditIncomeExpense("expense_clear", {
+    entity_id: before.id || "new",
+    before,
+    after: getExpenseFormSnapshot(),
+    meta: { page: "income", section: "expenses" },
   });
+});
 
-  btnDeleteExpense.addEventListener("click", async () => {
+
+btnSaveExpense.addEventListener("click", async () => {
+  const payload = {
+    expense_date: expDate.value || toISODate(new Date()),
+    category: expCategory.value,
+    amount: Number(expAmount.value || 0),
+    currency: expCurrency.value,
+    vendor: (expVendor.value || "").trim() || null,
+    receipt_url: (expReceipt.value || "").trim() || null,
+    notes: (expNotes.value || "").trim() || null,
+  };
+
+  try {
+    show("Saving…");
     const id = (expId.value || "").trim();
-    if (!id) { show("Select an expense row first."); return; }
 
-    try {
-      show("Deleting…");
-      const { error } = await supabase.from("expenses").delete().eq("id", id);
+    if (id) {
+      const { data: beforeRow, error: bErr } = await supabase
+        .from("expenses")
+        .select("id, expense_date, category, amount, currency, vendor, notes, receipt_url, created_at")
+        .eq("id", id)
+        .single();
+      if (bErr) throw bErr;
+
+      const { data: afterRow, error } = await supabase
+        .from("expenses")
+        .update(payload)
+        .eq("id", id)
+        .select("id, expense_date, category, amount, currency, vendor, notes, receipt_url, created_at")
+        .single();
       if (error) throw error;
 
-      clearForm();
-      await loadAll();
-    } catch (e) {
-      console.error(e);
-      show("ERROR: " + (e?.message || String(e)));
+      auditIncomeExpense("expense_save", {
+        entity_id: id,
+        before: beforeRow,
+        after: afterRow,
+        meta: { page: "income", section: "expenses", mode: "update" },
+      });
+    } else {
+      const { data: afterRow, error } = await supabase
+        .from("expenses")
+        .insert(payload)
+        .select("id, expense_date, category, amount, currency, vendor, notes, receipt_url, created_at")
+        .single();
+      if (error) throw error;
+
+      auditIncomeExpense("expense_save", {
+        entity_id: afterRow?.id || "new",
+        before: null,
+        after: afterRow || { ...payload },
+        meta: { page: "income", section: "expenses", mode: "insert" },
+      });
     }
-  });
+
+    clearForm();
+    await loadAll();
+    show("Saved ✅");
+  } catch (e) {
+    console.error(e);
+    show("ERROR: " + (e?.message || String(e)));
+  }
+});
+
+  
+btnDeleteExpense.addEventListener("click", async () => {
+  const id = (expId.value || "").trim();
+  if (!id) { show("Select an expense row first."); return; }
+
+  try {
+    show("Deleting…");
+
+    const { data: beforeRow, error: bErr } = await supabase
+      .from("expenses")
+      .select("id, expense_date, category, amount, currency, vendor, notes, receipt_url, created_at")
+      .eq("id", id)
+      .single();
+    if (bErr) throw bErr;
+
+    const { error } = await supabase
+      .from("expenses")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
+
+    auditIncomeExpense("expense_delete", {
+      entity_id: id,
+      before: beforeRow,
+      after: null,
+      meta: { page: "income", section: "expenses" },
+    });
+
+    clearForm();
+    await loadAll();
+    show("Deleted ✅");
+  } catch (e) {
+    console.error(e);
+    show("ERROR: " + (e?.message || String(e)));
+  }
+});
+
+  
 
   btnReload.addEventListener("click", loadAll);
 
