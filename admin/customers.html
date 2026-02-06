@@ -251,6 +251,11 @@
 
 <script type="module">
   import { supabase } from "../supabaseClient.js";
+  
+window.supabaseClient = supabase;
+
+
+
 
   const adminEmailEl = document.getElementById("adminEmail");
   const logoutBtn = document.getElementById("logoutBtn");
