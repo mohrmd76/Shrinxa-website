@@ -277,34 +277,20 @@
     }[c]));
   }
 
-   async function auditLog(action, entityId, details = {}) {
-    try {
-      const { data: { user }, error: userErr } = await supabase.auth.getUser();
-      if (userErr) {
-        show("AUDIT FAILED (getUser): " + userErr.message);
-        console.error("AUDIT FAILED (getUser):", userErr);
-        return;
-      }
+  async function auditLog(action, entityId, details = {}) {
+  if (typeof window.ShrinxaAdminTrack !== "function") return;
 
-      const row = {
-        actor_id: user?.id ?? null,
-        actor_email: user?.email ?? null,
-        entity: "customer",
-        entity_id: entityId,
-        action,
-        details
-      };
-
-      const { error } = await supabase.from("audit_logs").insert(row);
-      if (error) {
-        show("AUDIT FAILED (insert): " + error.message);
-        console.error("AUDIT FAILED (insert):", error);
-      }
-    } catch (e) {
-      show("AUDIT FAILED (exception): " + (e?.message || String(e)));
-      console.error("AUDIT FAILED (exception):", e);
+  window.ShrinxaAdminTrack(
+    "customers",
+    {
+      entity: "customer",
+      entity_id: entityId,
+      action,
+      details
     }
-  }
+  );
+}
+
 
 
   function tierSelect(current) {
