@@ -262,8 +262,43 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script type="module">
+
 import { supabase } from "../supabaseClient.js";
-  import "./admin-auth.js";
+import "./admin-auth.js";
+
+// Expose Supabase client for /assets/admin-analytics.js
+window.supabaseClient = supabase;
+
+function auditDeliveryRule(action, { entity_id, before, after, meta } = {}) {
+  if (typeof window === "undefined") return;
+  if (typeof window.ShrinxaAdminTrack !== "function") return;
+
+  const NULL_UUID = "00000000-0000-0000-0000-000000000000";
+  const uuidRe =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  const rawEntityId =
+    entity_id === undefined || entity_id === null ? "" : String(entity_id);
+  const entityIdUuid = uuidRe.test(rawEntityId) ? rawEntityId : NULL_UUID;
+
+  const metaOut = meta && typeof meta === "object" ? { ...meta } : {};
+  if (entityIdUuid === NULL_UUID && rawEntityId) metaOut.raw_entity_id = rawEntityId;
+
+  window.ShrinxaAdminTrack(
+    "delivery_rules",
+    metaOut,
+    {
+      entity: "delivery_rules",
+      entity_id: entityIdUuid,
+      action: String(action || ""),
+      before: before ?? null,
+      after: after ?? null,
+    }
+  );
+}
+
+
+
 const adminEmailEl = document.getElementById("adminEmail");
 const logoutBtn = document.getElementById("logoutBtn");
 
@@ -355,83 +390,103 @@ async function ensureAuth(){
     }
   }
 
-  async function saveDefault(){
-    const btn = $("saveDefault");
-    setBusy(btn, true);
+async function saveDefault(){
+  const btn = $("saveDefault");
+  setBusy(btn, true);
 
-    try{
-      if(!(await ensureAuth())) return;
+  let beforeRow = null;
+  let afterRow = null;
 
-      const min_subtotal = money($("defMin").value);
-      const fee = money($("defFee").value);
+  try{
+    if(!(await ensureAuth())) return;
 
-      // Always save to the newest ACTIVE default rule if it exists, otherwise create a new one.
-      const { data: newest, error: newestErr } = await supabase
+    const min_subtotal = money($("defMin").value);
+    const fee = money($("defFee").value);
+
+    // BEFORE snapshot (current active default)
+    const { data: beforeData } = await supabase
+      .from("delivery_rules")
+      .select("id, customer_id, min_subtotal, fee, is_active, updated_at")
+      .is("customer_id", null)
+      .eq("is_active", true)
+      .order("updated_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(1);
+
+    beforeRow = beforeData && beforeData[0] ? beforeData[0] : null;
+
+    let savedId = null;
+
+    if(beforeRow?.id){
+      const { data, error } = await supabase
         .from("delivery_rules")
-        .select("id")
-        .is("customer_id", null)
-        .eq("is_active", true)
-        .order("updated_at", { ascending: false })
-        .order("id", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .update({
+          min_subtotal,
+          fee,
+          is_active: true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", beforeRow.id)
+        .select("id, customer_id, min_subtotal, fee, is_active, updated_at")
+        .single();
 
-      if(newestErr){
-        console.error("newest default lookup error:", newestErr);
-        showStatus("danger", "Save failed (lookup error).");
-        return;
-      }
+      if(error) throw error;
 
-      let savedId = null;
+      afterRow = data;
+      savedId = data.id;
+    } else {
+      const { data, error } = await supabase
+        .from("delivery_rules")
+        .insert({
+          customer_id: null,
+          min_subtotal,
+          fee,
+          is_active: true,
+        })
+        .select("id, customer_id, min_subtotal, fee, is_active, updated_at")
+        .single();
 
-      if(newest?.id){
-        const { data: updated, error } = await supabase
-          .from("delivery_rules")
-          .update({ min_subtotal, fee, is_active: true, updated_at: new Date().toISOString() })
-          .eq("id", newest.id)
-          .select("id")
-          .single();
-        if(error){
-          console.error("saveDefault error:", error);
-          showStatus("danger", "Save failed (check console).");
-          return;
-        }
-        savedId = updated?.id || newest.id;
-      } else {
-        const { data: inserted, error } = await supabase
-          .from("delivery_rules")
-          .insert({ customer_id: null, min_subtotal, fee, is_active: true })
-          .select("id")
-          .single();
-        if(error){
-          console.error("saveDefault error:", error);
-          showStatus("danger", "Save failed (check console).");
-          return;
-        }
-        savedId = inserted?.id || null;
-      }
+      if(error) throw error;
 
-      // Deactivate other default rules (so main site doesn't read an old one)
-      if(savedId){
-        const { error: deactErr } = await supabase
-          .from("delivery_rules")
-          .update({ is_active: false })
-          .is("customer_id", null)
-          .neq("id", savedId);
-
-        if(deactErr){
-          console.warn("deactivate other defaults warning:", deactErr);
-          // not fatal
-        }
-      }
-
-      showStatus("success", `Saved default rule: free delivery over <b>$${min_subtotal}</b>, fee <b>$${fee}</b>.`);
-      await loadDefault();
-      await loadList();
-    } finally {
-      setBusy(btn, false);
+      afterRow = data;
+      savedId = data.id;
     }
+
+    // Deactivate other defaults
+    if(savedId){
+      await supabase
+        .from("delivery_rules")
+        .update({ is_active: false })
+        .is("customer_id", null)
+        .neq("id", savedId);
+    }
+
+    auditDeliveryRule("default_save", {
+      entity_id: afterRow?.id || "default",
+      before: beforeRow,
+      after: afterRow,
+      meta: { page: "delivery_rules", section: "default_rule" },
+    });
+
+    showStatus(
+      "success",
+      `Saved default rule: free delivery over <b>$${min_subtotal}</b>, fee <b>$${fee}</b>.`
+    );
+
+    await loadDefault();
+    await loadList();
+
+  } catch (e){
+    console.error(e);
+    showStatus("danger", "Save failed (check console).");
+  } finally {
+    setBusy(btn, false);
   }
+}
+  
+
+
+
 
   async function loadCustomerOverride(){
     const cid = $("cust").value;
@@ -459,6 +514,9 @@ async function ensureAuth(){
     const btn = $("saveCust");
     setBusy(btn, true);
 
+    let beforeRow = null;
+    let afterRow = null;
+
     try{
       if(!(await ensureAuth())) return;
 
@@ -468,43 +526,83 @@ async function ensureAuth(){
       const min_subtotal = money($("custMin").value);
       const fee = money($("custFee").value);
 
-      const { data: newest, error: newestErr } = await supabase
+      // BEFORE snapshot (newest override for this customer, if exists)
+      const { data: beforeData, error: bErr } = await supabase
         .from("delivery_rules")
-        .select("id")
+        .select("id, customer_id, min_subtotal, fee, is_active, updated_at")
         .eq("customer_id", cid)
         .order("updated_at", { ascending: false })
         .order("id", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(1);
 
-      if(newestErr){ console.error(newestErr); showStatus("danger", "Save failed (lookup error)."); return; }
-
-      let err = null;
-      if(newest?.id){
-        const { error } = await supabase
-          .from("delivery_rules")
-          .update({ min_subtotal, fee, is_active: true, updated_at: new Date().toISOString() })
-          .eq("id", newest.id);
-        err = error;
-      } else {
-        const { error } = await supabase
-          .from("delivery_rules")
-          .insert({ customer_id: cid, min_subtotal, fee, is_active: true });
-        err = error;
+      if(bErr){
+        console.error(bErr);
+        showStatus("danger", "Save failed (before lookup error).");
+        return;
       }
 
-      if(err){ console.error(err); showStatus("danger", "Save failed (check console)."); return; }
+      beforeRow = beforeData && beforeData[0] ? beforeData[0] : null;
+
+      if(beforeRow?.id){
+        const { data, error } = await supabase
+          .from("delivery_rules")
+          .update({
+            min_subtotal,
+            fee,
+            is_active: true,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", beforeRow.id)
+          .select("id, customer_id, min_subtotal, fee, is_active, updated_at")
+          .single();
+
+        if(error) throw error;
+
+        afterRow = data;
+      } else {
+        const { data, error } = await supabase
+          .from("delivery_rules")
+          .insert({
+            customer_id: cid,
+            min_subtotal,
+            fee,
+            is_active: true,
+          })
+          .select("id, customer_id, min_subtotal, fee, is_active, updated_at")
+          .single();
+
+        if(error) throw error;
+
+        afterRow = data;
+      }
+
+      auditDeliveryRule("override_save", {
+        entity_id: afterRow?.id || cid,
+        before: beforeRow,
+        after: afterRow || { customer_id: cid, min_subtotal, fee, is_active: true },
+        meta: {
+          page: "delivery_rules",
+          section: "customer_override",
+          customer_id: cid,
+          customer_label: customerMap.get(cid) || cid,
+        },
+      });
 
       showStatus("success", `Saved override for <b>${customerMap.get(cid) || cid}</b>.`);
       await loadList();
+    } catch (e){
+      console.error(e);
+      showStatus("danger", "Save failed (check console).");
     } finally {
       setBusy(btn, false);
     }
   }
-
+  
   async function delCust(){
     const btn = $("delCust");
     setBusy(btn, true);
+
+    let beforeRows = null;
 
     try{
       if(!(await ensureAuth())) return;
@@ -512,12 +610,39 @@ async function ensureAuth(){
       const cid = $("cust").value;
       if(!cid){ showStatus("warning", "Select a customer first."); return; }
 
+      // BEFORE snapshot (all overrides for this customer)
+      const { data: beforeData, error: bErr } = await supabase
+        .from("delivery_rules")
+        .select("id, customer_id, min_subtotal, fee, is_active, updated_at")
+        .eq("customer_id", cid)
+        .order("updated_at", { ascending: false });
+
+      if(bErr){
+        console.error(bErr);
+        showStatus("danger", "Delete failed (before lookup error).");
+        return;
+      }
+
+      beforeRows = beforeData || [];
+
       const { error } = await supabase
         .from("delivery_rules")
         .delete()
         .eq("customer_id", cid);
 
       if(error){ console.error(error); showStatus("danger", "Delete failed (check console)."); return; }
+
+      auditDeliveryRule("override_delete", {
+        entity_id: cid,
+        before: { rows: beforeRows },
+        after: null,
+        meta: {
+          page: "delivery_rules",
+          section: "customer_override",
+          customer_id: cid,
+          customer_label: customerMap.get(cid) || cid,
+        },
+      });
 
       showStatus("success", `Deleted override for <b>${customerMap.get(cid) || cid}</b>.`);
       $("cust").value = "";
@@ -528,6 +653,10 @@ async function ensureAuth(){
       setBusy(btn, false);
     }
   }
+
+
+
+ 
 
   async function loadList(){
     if(!(await ensureAuth())) return;
@@ -553,11 +682,81 @@ async function ensureAuth(){
   }
 
   $("saveDefault").addEventListener("click", (e)=>{ e.preventDefault(); saveDefault(); });
-  $("loadDefault").addEventListener("click", (e)=>{ e.preventDefault(); loadDefault(); });
+  $("loadDefault").addEventListener("click", async (e)=> {
+    e.preventDefault();
+
+    // BEFORE: current inputs (what admin currently has on screen)
+    const before = {
+      min_subtotal: $("defMin").value === "" ? null : Number($("defMin").value),
+      fee: $("defFee").value === "" ? null : Number($("defFee").value),
+    };
+
+    await loadDefault();
+
+    // AFTER: inputs after reload
+    const after = {
+      min_subtotal: $("defMin").value === "" ? null : Number($("defMin").value),
+      fee: $("defFee").value === "" ? null : Number($("defFee").value),
+    };
+
+    auditDeliveryRule("default_reload", {
+      entity_id: "default",
+      before,
+      after,
+      meta: { page: "delivery_rules", section: "default_rule" },
+    });
+  });
+
   $("saveCust").addEventListener("click", (e)=>{ e.preventDefault(); saveCust(); });
   $("delCust").addEventListener("click", (e)=>{ e.preventDefault(); delCust(); });
-  $("refreshList").addEventListener("click", (e)=>{ e.preventDefault(); loadList(); });
-  $("cust").addEventListener("change", loadCustomerOverride);
+  $("refreshList").addEventListener("click", async (e)=> {
+    e.preventDefault();
+
+    const before = {
+      row_count: document.querySelectorAll("#list tr").length,
+    };
+
+    await loadList();
+
+    const after = {
+      row_count: document.querySelectorAll("#list tr").length,
+    };
+
+    auditDeliveryRule("overrides_refresh", {
+      entity_id: "overrides_list",
+      before,
+      after,
+      meta: { page: "delivery_rules", section: "overrides_list" },
+    });
+  });
+
+  $("cust").addEventListener("change", async () => {
+    const cid = $("cust").value || "";
+
+    const before = {
+      selected_customer_id: null,
+      custMin: $("custMin").value === "" ? null : Number($("custMin").value),
+      custFee: $("custFee").value === "" ? null : Number($("custFee").value),
+    };
+
+    await loadCustomerOverride();
+
+    const after = {
+      selected_customer_id: cid || null,
+      customer_label: cid ? (customerMap.get(cid) || cid) : null,
+      custMin: $("custMin").value === "" ? null : Number($("custMin").value),
+      custFee: $("custFee").value === "" ? null : Number($("custFee").value),
+    };
+
+    auditDeliveryRule("customer_select", {
+      entity_id: cid || "none",
+      before,
+      after,
+      meta: { page: "delivery_rules", section: "customer_override" },
+    });
+  });
+
+
 
   (async function init(){
     if(!(await ensureAuth())) return;
