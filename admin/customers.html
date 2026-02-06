@@ -277,6 +277,29 @@
     }[c]));
   }
 
+  async function auditLog(action, entityId, details = {}) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const row = {
+        actor_id: user?.id ?? null,
+        actor_email: user?.email ?? null,
+        entity: "customer",
+        entity_id: entityId,
+        action,
+        details
+      };
+
+      const { error } = await supabase.from("audit_logs").insert(row);
+      if (error) {
+        // never break the page if audit table/columns differ
+        console.warn("audit_logs insert failed:", error.message);
+      }
+    } catch (e) {
+      console.warn("auditLog exception:", e);
+    }
+  }
+
   function tierSelect(current) {
     const v = String(current ?? "standard").toLowerCase();
     return `
@@ -400,10 +423,15 @@
     if (tierBtn) {
       const sel = tr.querySelector(".tierSel");
       const newTier = sel.value;
+      const oldTier = tr.dataset.tier ?? "";
 
       show("Saving tier…");
       const { error } = await supabase.from("profiles").update({ tier: newTier }).eq("id", id);
       if (error) return show("ERROR: " + error.message);
+
+      tr.dataset.tier = newTier;
+      await auditLog("customer_tier_updated", id, { from: oldTier, to: newTier });
+
       show("Tier saved ✅");
       return;
     }
@@ -413,12 +441,18 @@
       const newQty = parseInt(inp.value, 10);
       if (!Number.isFinite(newQty) || newQty < 1) return show("ERROR: invalid qty");
 
+      const oldQty = tr.dataset.wholesale_qty_threshold ?? "";
+
       show("Saving wholesale qty…");
       const { error } = await supabase
         .from("profiles")
         .update({ wholesale_qty_threshold: newQty })
         .eq("id", id);
       if (error) return show("ERROR: " + error.message);
+
+      tr.dataset.wholesale_qty_threshold = String(newQty);
+      await auditLog("customer_wholesale_qty_updated", id, { from: oldQty, to: newQty });
+
       show("Wholesale qty saved ✅");
       return;
     }
@@ -428,12 +462,18 @@
       const days = parseInt(inp.value, 10);
       if (!Number.isFinite(days) || days < 2) return show("ERROR: invalid days");
 
+      const oldDays = tr.dataset.payment_terms_days ?? "";
+
       show("Saving payment terms…");
       const { error } = await supabase
         .from("profiles")
         .update({ payment_terms_days: days })
         .eq("id", id);
       if (error) return show("ERROR: " + error.message);
+
+      tr.dataset.payment_terms_days = String(days);
+      await auditLog("customer_payment_terms_updated", id, { from: oldDays, to: days });
+
       show("Payment terms saved ✅");
       return;
     }
@@ -451,6 +491,15 @@
     }
 
     if (saveInfoBtn) {
+      const before = {
+        full_name: tr.dataset.orig_full ?? "",
+        company_name: tr.dataset.orig_company ?? "",
+        phone: tr.dataset.orig_phone ?? "",
+        address: tr.dataset.orig_address ?? "",
+        city: tr.dataset.orig_city ?? "",
+        province: tr.dataset.orig_province ?? "",
+      };
+
       const payload = {
         full_name: tr.querySelector(".editFull")?.value ?? "",
         company_name: tr.querySelector(".editCompany")?.value ?? "",
@@ -471,7 +520,10 @@
       tr.dataset.orig_city = payload.city;
       tr.dataset.orig_province = payload.province;
 
+      await auditLog("customer_profile_updated", id, { before, after: payload });
+
       setInfoCellsReadOnlyMode(tr);
+
       tr.dataset.search = [
         tr.dataset.email || "",
         payload.full_name || "",
@@ -510,6 +562,8 @@ WARNING: If this customer has invoices/orders linked, deletion may fail due to d
       if (error) return show("ERROR: " + error.message);
       if (!data?.ok) return show("ERROR: " + (data?.error || "Delete failed"));
 
+      await auditLog("customer_deleted", id, { email });
+
       tr.remove();
       applyFilter();
       show("Customer permanently deleted ✅");
@@ -547,6 +601,9 @@ WARNING: If this customer has invoices/orders linked, deletion may fail due to d
       const tr = document.createElement("tr");
       tr.dataset.id = c.id;
       tr.dataset.email = c.email ?? "";
+      tr.dataset.tier = String(c.tier ?? "");
+      tr.dataset.wholesale_qty_threshold = String(c.wholesale_qty_threshold ?? "");
+      tr.dataset.payment_terms_days = String(c.payment_terms_days ?? "");
 
       // used by search filter
       tr.dataset.search = [
@@ -595,6 +652,8 @@ WARNING: If this customer has invoices/orders linked, deletion may fail due to d
 
   load().catch(err => show("ERROR: " + err.message));
 </script>
+
+
 <script src="/assets/admin-analytics.js" defer></script>
 
 </body>
