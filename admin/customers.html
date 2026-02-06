@@ -277,9 +277,14 @@
     }[c]));
   }
 
-  async function auditLog(action, entityId, details = {}) {
+   async function auditLog(action, entityId, details = {}) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: userErr } = await supabase.auth.getUser();
+      if (userErr) {
+        show("AUDIT FAILED (getUser): " + userErr.message);
+        console.error("AUDIT FAILED (getUser):", userErr);
+        return;
+      }
 
       const row = {
         actor_id: user?.id ?? null,
@@ -292,13 +297,15 @@
 
       const { error } = await supabase.from("audit_logs").insert(row);
       if (error) {
-        // never break the page if audit table/columns differ
-        console.warn("audit_logs insert failed:", error.message);
+        show("AUDIT FAILED (insert): " + error.message);
+        console.error("AUDIT FAILED (insert):", error);
       }
     } catch (e) {
-      console.warn("auditLog exception:", e);
+      show("AUDIT FAILED (exception): " + (e?.message || String(e)));
+      console.error("AUDIT FAILED (exception):", e);
     }
   }
+
 
   function tierSelect(current) {
     const v = String(current ?? "standard").toLowerCase();
