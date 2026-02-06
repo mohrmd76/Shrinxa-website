@@ -277,18 +277,27 @@
     }[c]));
   }
 
-  async function auditLog(action, entityId, details = {}) {
-  if (typeof window.ShrinxaAdminTrack !== "function") return;
+async function auditLog(action, entityId, details = {}) {
+  const payload = {
+    entity: "customer",
+    entity_id: entityId,
+    action,
+    details
+  };
 
-  window.ShrinxaAdminTrack(
-    "customers",
-    {
-      entity: "customer",
-      entity_id: entityId,
-      action,
-      details
+  const tryLog = () => {
+    if (typeof window.ShrinxaAdminTrack === "function") {
+      window.ShrinxaAdminTrack("customers", payload);
+      return true;
     }
-  );
+    return false;
+  };
+
+  if (tryLog()) return;
+
+  setTimeout(() => {
+    tryLog();
+  }, 0);
 }
 
 
