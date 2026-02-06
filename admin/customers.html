@@ -283,26 +283,19 @@ window.supabaseClient = supabase;
   }
 
 async function auditLog(action, entityId, details = {}) {
-  const payload = {
-    entity: "customer",
-    entity_id: entityId,
-    action,
-    details
-  };
+  if (typeof window.ShrinxaAdminTrack !== "function") return;
 
-  const tryLog = () => {
-    if (typeof window.ShrinxaAdminTrack === "function") {
-      window.ShrinxaAdminTrack("customers", payload);
-      return true;
+  window.ShrinxaAdminTrack(
+    "customers",
+    { page: "customers" },   // ✅ REQUIRED meta argument
+    {
+      entity: "customer",
+      entity_id: String(entityId || ""),
+      action: String(action || ""),
+      before: null,
+      after: details ?? null
     }
-    return false;
-  };
-
-  if (tryLog()) return;
-
-  setTimeout(() => {
-    tryLog();
-  }, 0);
+  );
 }
 
 
